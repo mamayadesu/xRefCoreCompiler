@@ -6,7 +6,6 @@ use \IO\Console;
 use \IO\FileDirectory;
 use \Application\Application;
 use \Phar;
-use pocketmine\level\sound\EndermanTeleportSound;
 use \RecursiveIteratorIterator;
 use \Exception;
 
