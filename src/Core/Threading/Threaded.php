@@ -177,7 +177,7 @@ class Threaded
             switch ($q["act"])
             {
                 case "c":
-                    $result = call_user_func(array($this->handler, $q["method"]), $q["args"]);
+                    $result = call_user_func_array(array($this->handler, $q["method"]), $q["args"]);
                     break;
                     
                 case "g":
