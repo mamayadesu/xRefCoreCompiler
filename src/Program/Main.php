@@ -252,6 +252,10 @@ class Main
         $folderToMake = "";
         $fileContents = "";
         $f = null;
+        foreach ($otherProjectFolders as $folder)
+        {
+            FileDirectory::Copy($projectDir . $folder, $tempDir . $folder);
+        }
         try
         {
             $p = new Phar(Application::GetExecutableFileName());
@@ -288,10 +292,6 @@ class Main
         {
             Console::WriteLine("An error occured while packing (C1): " . $e->getMessage());
             exit;
-        }
-        foreach ($otherProjectFolders as $folder)
-        {
-            FileDirectory::Copy($projectDir . $folder, $tempDir . $folder);
         }
     }
 

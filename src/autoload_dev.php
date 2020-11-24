@@ -94,7 +94,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.7.4.1";
+    return "1.7.4.2";
 }
 
 echo "Checking for priorities...\n";

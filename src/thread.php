@@ -2,15 +2,11 @@
 
 error_reporting(E_ALL);
 
-$phar_file = \Phar::running(false);
-if ($phar_file == "")
-{
-    $file = basename(__FILE__);
-    if ($file != "autoload.php")
-    {
-        die("The name of autoload file must be 'autoload.php'");
-    }
-}
+$port = 0x0000;
+$__CLASSNAME = "";
+$__JSONNEWARGS = [];
+$__PARENTPID = 0x0000;
+// {RANDOMKEY}
 
 $_ALREADY_REGISTERED = [];
 function including($path)
@@ -59,17 +55,10 @@ function including($path)
 $_APP = json_decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . "app.json"), true);
 $__FILE__ = __FILE__;
 
-if (version_compare(phpversion(), $_APP["php_version"], '<'))
-{
-    die($_APP["app_name"] . " " . $_APP["app_version"] . " requires at least PHP " . $_APP["php_version"] . ". Your version of PHP is " . phpversion());
-}
-
 including(__DIR__ . DIRECTORY_SEPARATOR . "Core");
 
 $namespaces = $_APP["namespaces"];
 $priorities = $_APP["priorities"];
-
-\Application\Application::SetTitle($_APP["app_name"]);
 
 function __GET__APP()
 {
@@ -88,32 +77,60 @@ function __GET_FRAMEWORK_VERSION()
     return "1.7.4.2";
 }
 
-foreach ($priorities as $class)
+spl_autoload_register(function(string $className)
 {
-    $class = str_replace("\\", DIRECTORY_SEPARATOR, $class);
-    $class = $class . ".php";
-    $class = __DIR__ . DIRECTORY_SEPARATOR . $class;
-    require_once $class;
-    $_ALREADY_REGISTERED[] = $class;
-}
-
-foreach ($namespaces as $ns)
-{
-    if ($ns == "Program")
+    if (!class_exists($className))
     {
-        echo "Don't insert 'Program' into namespaces. It is deprecated\n";
-        continue;
+        require_once __DIR__ . DIRECTORY_SEPARATOR . $className . ".php";
     }
-    including(__DIR__ . DIRECTORY_SEPARATOR . $ns);
-}
+});
 
-including(__DIR__ . DIRECTORY_SEPARATOR . "Program");
-
-$args = [];
-
-if (isset($argv))
+if (!($sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
 {
-    $args = $argv;
+    $errorcode = socket_last_error();
+    $errormsg = socket_strerror($errorcode);
+    exit;
+}
+$mypid = getmypid() . '';
+if (!socket_connect($sock, '127.0.0.1', $port))
+{
+    $errorcode = socket_last_error();
+    $errormsg = socket_strerror($errorcode);
+    if ($errorcode != 0)
+    {
+        exit;
+    }
 }
 
-new \Program\Main($args);
+$data = array('receivedpid' => $mypid);
+$json = json_encode($data);
+$length = strlen($json);
+$lenstr = str_repeat("0", 16 - strlen($length . '')) . $length;
+
+if (!socket_send($sock, $lenstr, 16, 0))
+{
+    $errorcode = socket_last_error();
+    $errormsg = socket_strerror($errorcode);
+
+    if ($errorcode != 0)
+    {
+        exit;
+    }
+}
+
+if (!socket_send($sock, $json, $length, 0))
+{
+    $errorcode = socket_last_error();
+    $errormsg = socket_strerror($errorcode);
+
+    if ($errorcode != 0)
+    {
+        exit;
+    }
+}
+new \Threading\__DataManager2($sock);
+
+$__CLASSNAME::__SetParentThreadPid($__PARENTPID);
+$thread = new $__CLASSNAME();
+$thread->__setdata($sock, $port, new \Threading\ParentThreadedObject($sock, $port, $thread));
+$thread->Threaded($__JSONNEWARGS);

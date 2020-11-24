@@ -455,22 +455,14 @@ class Thread
             $pathToPharContent = "phar://" . $pathToPharContent;
         }
 
-        $autoload = file_get_contents($pathToPharContent . "autoload.php");
-        $noPharCheck = <<<EOT
-\$phar_file = \Phar::running(false);
-if (\$phar_file == "")
-{
-    \$file = basename(__FILE__);
-    if (\$file != "autoload.php")
-    {
-        die("The name of autoload file must be 'autoload.php'");
-    }
-}
-EOT;
+        $autoload = file_get_contents($pathToPharContent . "thread.php");
         $parentPid = getmypid();
-        $autoload = str_replace($noPharCheck, "", $autoload);
-        $autoload = str_replace("\Application\Application::SetTitle(\$_APP[\"app_name\"]);", "", $autoload);
         $jsonNewArgs = json_encode($newArgs);
+        
+        $autoload = str_replace("\$__PARENTPID = 0x0000", "\$__PARENTPID = " . $parentPid, $autoload);
+        $autoload = str_replace("\$__JSONNEWARGS = []", "\$__JSONNEWARGS = " . $jsonNewArgs, $autoload);
+        $autoload = str_replace("\$__CLASSNAME = \"\"", "\$__CLASSNAME = \"" . $className . "\"", $autoload);
+        $autoload = str_replace("{RANDOMKEY}", md5(microtime(true) . "" . rand(-100, 100)), $autoload);
 
         $port = 0;
         $initCode = "";
@@ -507,66 +499,7 @@ EOT;
             {
                 $port = $__dm->__GetPort();
             }
-
-            $initCode .= "
-if (!(\$sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
-{
-    \$errorcode = socket_last_error();
-    \$errormsg = socket_strerror(\$errorcode);
-    exit;
-}
-\$mypid = getmypid() . '';
-if (!socket_connect(\$sock, '127.0.0.1', $port))
-{
-    \$errorcode = socket_last_error();
-    \$errormsg = socket_strerror(\$errorcode);
-    if (\$errorcode != 0)
-    {
-        exit;
-    }
-}
-
-\$data = array('receivedpid' => \$mypid);
-\$json = json_encode(\$data);
-\$length = strlen(\$json);
-\$lenstr = str_repeat(\"0\", 16 - strlen(\$length . '')) . \$length;
-
-if (!socket_send(\$sock, \$lenstr, 16, 0))
-{
-    \$errorcode = socket_last_error();
-    \$errormsg = socket_strerror(\$errorcode);
-         
-    if (\$errorcode != 0)
-    {
-        exit;
-    }
-}
-
-if (!socket_send(\$sock, \$json, \$length, 0))
-{
-    \$errorcode = socket_last_error();
-    \$errormsg = socket_strerror(\$errorcode);
-         
-    if (\$errorcode != 0)
-    {
-        exit;
-    }
-}
-new \\Threading\\__DataManager2(\$sock);
-//socket_close(\$sock);
-        ";
         }
-
-
-        $initCode .= "
-$className::__SetParentThreadPid($parentPid);
-\$thread = new $className(); // " . md5(((rand(-100, 100) + time()) . "") . md5(rand(1, 100))) . "
-\$thread->__setdata(\$sock, $port, new \\Threading\\ParentThreadedObject(\$sock, $port, \$thread));
-\$thread->Threaded($jsonNewArgs);
-";
-
-        $autoload = str_replace("new \Program\Main(\$args);", $initCode, $autoload);
-        
         if (strtolower(substr($autoload, 0, 5)) == "<" . "?" . "php")
         {
             $autoload = substr($autoload, 5, strlen($autoload) - 5);
@@ -576,6 +509,7 @@ $className::__SetParentThreadPid($parentPid);
             $autoload = substr($autoload, 2, strlen($autoload) - 2);
         }
 
+        $autoload = str_replace("\$port = 0x0000", "\$port = " . $port, $autoload);
         $autoload = str_replace("__DIR__", "\"" . $pathToPharContent . "\"", $autoload);
         $autoload = str_replace("\"" . $pathToPharContent . "\" . DIRECTORY_SEPARATOR", "\"" . $pathToPharContent . "\"", $autoload);
         
