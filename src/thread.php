@@ -74,13 +74,17 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.7.4.2";
+    return "1.7.4.3";
 }
 
 spl_autoload_register(function(string $className)
 {
     if (!class_exists($className))
     {
+        if (DIRECTORY_SEPARATOR == "/")
+        {
+            $className = str_replace("\\", "/", $className);
+        }
         require_once __DIR__ . DIRECTORY_SEPARATOR . $className . ".php";
     }
 });
