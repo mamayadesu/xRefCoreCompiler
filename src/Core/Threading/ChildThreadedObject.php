@@ -2,6 +2,11 @@
 
 namespace Threading;
 
+use Threading\Exceptions\BadDataAccessException;
+use \Threading\Exceptions\InvalidArgumentsPassedException;
+use \Threading\Exceptions\AccessToClosedThreadException;
+use \Threading\Exceptions\BadMethodCallException;
+
 /**
  * Provides access to all methods and properties in child threaded class
  * @package Threading
@@ -46,7 +51,9 @@ class ChildThreadedObject
      * @param string $method
      * @param array $args
      * @return bool
-     * @throws \Exception
+     * @throws InvalidArgumentsPassedException
+     * @throws AccessToClosedThreadException
+     * @throws BadMethodCallException
      * @ignore
      */
     public function __call(string $method, array $args)
@@ -55,9 +62,10 @@ class ChildThreadedObject
         {
             if (!self::check($key) || !self::check($value))
             {
-                throw new \Exception("Arguments can be only string, integer, array, boolean, float, double or long");
+                throw new InvalidArgumentsPassedException("Arguments can be only string, integer, array, boolean, float, double or long");
             }
         }
+        $__dm = __DataManager1::GetInstance();
         $eventId = md5("" . time() . rand(0, 100) . rand(-100, 100));
         $query = array
         (
@@ -65,34 +73,32 @@ class ChildThreadedObject
             "method" => $method,
             "args" => $args,
             "event" => $eventId,
-            "pid" => getmypid()
+            "pid" => getmypid(),
+            "port" => $__dm->__GetPort()
         );
         $json = json_encode($query);
         if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
-                trigger_error("Unable to call a function from threaded class, because thread stopped (1)", E_USER_WARNING);
+                throw new AccessToClosedThreadException("Unable to call a function from threaded class, because child thread was closed");
             }
             else
             {
-                trigger_error("Failed to call a function from threaded class (1)", E_USER_WARNING);
+                throw new BadMethodCallException("Failed to call a method from threaded class");
             }
-            return false;
         }
         if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
-                trigger_error("Unable to call a function from threaded class, because thread stopped (1)", E_USER_WARNING);
+                throw new AccessToClosedThreadException("Unable to call a method from threaded class, because thread closed");
             }
             else
             {
-                trigger_error("Failed to call a function from threaded class (1)", E_USER_WARNING);
+                throw new BadMethodCallException("Failed to call a method from threaded class");
             }
-            return false;
         }
-        $__dm = __DataManager1::GetInstance();
         $r = $__dm->__Read($this->__0port);
         while ((!isset($r["r"]) || $r["event"] != $eventId) && (!isset($r["act"]) || $r["act"] != "threadstop"))
         {
@@ -101,8 +107,7 @@ class ChildThreadedObject
         $__dm->__Fetch();
         if (isset($r["act"]) && $r["act"] == "threadstop")
         {
-            trigger_error("Unable to call a function in threaded class, because thread stopped (3)", E_USER_WARNING);
-            return false;
+            throw new AccessToClosedThreadException("Unable to call a function in threaded class, because thread closed");
         }
         $type = $r["t"];
         if ($type != "void")
@@ -114,45 +119,46 @@ class ChildThreadedObject
 
     /**
      * @param string $property
+     * @throws AccessToClosedThreadException
+     * @throws BadDataAccessException
      * @return bool
      * @ignore
      */
     public function __get(string $property)
     {
         $eventId = md5("" . time() . rand(0, 100) . rand(-100, 100) . rand(-1000, 1000) . rand(-1000, 1000));
+        $__dm = __DataManager1::GetInstance();
         $query = array
         (
             "act" => "g",
             "prop" => $property,
             "event" => $eventId,
-            "pid" => getmypid()
+            "pid" => getmypid(),
+            "port" => $__dm->__GetPort()
         );
         $json = json_encode($query);
         if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
-                trigger_error("Unable to access data from threaded class, because thread stopped (1)", E_USER_WARNING);
+                throw new AccessToClosedThreadException("Unable to access data from threaded class, because thread closed");
             }
             else
             {
-                trigger_error("Failed to access data from threaded class (1)", E_USER_WARNING);
+                throw new BadDataAccessException("Failed to access data from threaded class");
             }
-            return false;
         }
         if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
-                trigger_error("Unable to access data from threaded class, because thread stopped (2)", E_USER_WARNING);
+                throw new AccessToClosedThreadException("Unable to access data from threaded class, because thread closed");
             }
             else
             {
-                trigger_error("Failed to access data from threaded class (2)", E_USER_WARNING);
+                throw new BadDataAccessException("Failed to access data from threaded class");
             }
-            return false;
         }
-        $__dm = __DataManager1::GetInstance();
         $r = $__dm->__Read($this->__0port);
         while ((!isset($r["r"]) || $r["event"] != $eventId) && (!isset($r["act"]) || $r["act"] != "threadstop"))
         {
@@ -161,8 +167,7 @@ class ChildThreadedObject
         $__dm->__Fetch();
         if (isset($r["act"]) && $r["act"] == "threadstop")
         {
-            trigger_error("Unable to get property from threaded class, because thread stopped (3)", E_USER_WARNING);
-            return false;
+            throw new AccessToClosedThreadException("Unable to get property from threaded class, because thread closed");
         }
         $type = $r["t"];
         if ($type != "void")
@@ -182,39 +187,40 @@ class ChildThreadedObject
     {
         if (!self::check($value))
         {
-            throw new \Exception("Value can be only string, integer, array, boolean, float, double or long");
+            throw new InvalidArgumentsPassedException("Value can be only string, integer, array, boolean, float, double or long");
         }
         $eventId = md5("" . time() . rand(0, 100) . rand(-100, 100) . rand(-1000, 1000) . rand(-1000, 1000));
+        $__dm = __DataManager1::GetInstance();
         $query = array
         (
             "act" => "s",
             "prop" => $property,
             "val" => $value,
             "event" => $eventId,
-            "pid" => getmypid()
+            "pid" => getmypid(),
+            "port" => $__dm->__GetPort()
         );
         $json = json_encode($query);
         if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
-                trigger_error("Unable to access data from threaded class, because thread stopped (1)", E_USER_WARNING);
+                throw new AccessToClosedThreadException("Unable to access data from threaded class, because thread closed");
             }
             else
             {
-                trigger_error("Failed to access data from threaded class (1)", E_USER_WARNING);
+                throw new BadDataAccessException("Failed to access data from threaded class");
             }
-            return;
         }
         if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
-                trigger_error("Unable to access data from threaded class, because thread stopped (2)", E_USER_WARNING);
+                throw new AccessToClosedThreadException("Unable to access data from threaded class, because thread closed");
             }
             else
             {
-                trigger_error("Failed to access data from threaded class (2)", E_USER_WARNING);
+                throw new BadDataAccessException("Failed to access data from threaded class");
             }
             return;
         }
@@ -227,8 +233,7 @@ class ChildThreadedObject
         $__dm->__Fetch();
         if (isset($r["act"]) && $r["act"] == "threadstop")
         {
-            trigger_error("Unable to set property in threaded class, because thread stopped (3)", E_USER_WARNING);
-            return;
+            throw new AccessToClosedThreadException("Unable to set property in threaded class, because thread stopped");
         }
     }
 

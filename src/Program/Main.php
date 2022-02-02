@@ -304,8 +304,7 @@ class Main
             "app_version" => "Version",
             "app_author" => "Author",
             "app_description" => "Description",
-            "namespaces" => "Using namespaces",
-            "priorities" => "Priority classes"
+            "namespaces" => "Using namespaces"
         );
     }
 
@@ -359,7 +358,7 @@ class Main
         $appJson = array();
         foreach ($this->appPropertyToName as $propRealName => $title)
         {
-            if ($propRealName == "namespaces" || $propRealName == "priorities")
+            if ($propRealName == "namespaces")
             {
                 if (!isset($appJson[$propRealName]))
                 {

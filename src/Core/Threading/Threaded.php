@@ -2,7 +2,9 @@
 
 namespace Threading;
 
-use IO\Console;
+use \Threading\Exceptions\AccessToClosedThreadException;
+use \Threading\Exceptions\InvalidResultReceivedException;
+use \Threading\Exceptions\BadDataAccessException;
 
 /**
  * Provides information and access to child thread
@@ -95,6 +97,16 @@ class Threaded
     }
 
     /**
+     * Returns port of child thread
+     *
+     * @return int Port of child thread
+     */
+    public function GetChildPort() : int
+    {
+        return $this->port;
+    }
+
+    /**
      * Returns list of arguments passed by the parent thread
      *
      * @return array<int, string> Arguments passed by the parent thread
@@ -147,14 +159,15 @@ class Threaded
     /**
      * Waits for the child thread to begin interacting with the parent thread. The parent thread will be frozen and wait for the child thread to finish synchronizing
      *
-     * @return bool|void Returns false if child thread is closed
+     * @return void
+     * @throws AccessToClosedThreadException
+     * @throws InvalidResultReceivedException
      */
     public function WaitForChildAccess()
     {
         if ($this->threadshutdown)
         {
-            trigger_error("Cannot synchronize with thread, because thread is closed", E_USER_WARNING);
-            return false;
+            throw new AccessToClosedThreadException("Cannot synchronize with thread, because thread is closed", E_USER_WARNING);
         }
         $__dm = __DataManager1::GetInstance();
         while (true)
@@ -212,9 +225,7 @@ class Threaded
             {
                 if (!self::check($result))
                 {
-                    trigger_error("Method result can be only void, string, integer, array, boolean, float, double or long", E_USER_WARNING);
-                    $type = "void";
-                    $result = "";
+                    throw new InvalidResultReceivedException("Method result can be only void, string, integer, array, boolean, float, double or long", E_USER_WARNING);
                 }
             }
 
@@ -225,19 +236,14 @@ class Threaded
                 "r" => $result
             );
             $json = json_encode($query);
-            if (!socket_sendto($this->sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->port))
-            {
-                //
-            }
-            if (!socket_sendto($this->sock, $json, strlen($json), 0, "127.0.0.1", $this->port))
-            {
-                //
-            }
+            socket_sendto($this->sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->port);
+            socket_sendto($this->sock, $json, strlen($json), 0, "127.0.0.1", $this->port);
         }
     }
 
     /**
      * Stop synchronization with child thread
+     * @throws BadDataAccessException
      */
     public function FinishSychnorization() : void
     {
@@ -254,9 +260,8 @@ class Threaded
             }
             else
             {
-                trigger_error("Failed to access data from threaded class (1)", E_USER_WARNING);
+                throw new BadDataAccessException("Failed to access data from threaded class");
             }
-            return;
         }
         if (!socket_sendto($this->sock, $json, strlen($json), 0, "127.0.0.1", $this->port))
         {
@@ -266,7 +271,7 @@ class Threaded
             }
             else
             {
-                trigger_error("Failed to access data from threaded class (2)", E_USER_WARNING);
+                throw new BadDataAccessException("Failed to access data from threaded class");
             }
             return;
         }

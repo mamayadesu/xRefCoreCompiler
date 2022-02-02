@@ -2,6 +2,10 @@
 
 namespace Threading;
 
+use CliForms\Exceptions\InvalidArgumentsPassed;
+use Threading\Exceptions\BadDataAccessException;
+use Threading\Exceptions\BadMethodCallException;
+
 /**
  * Provides access to all methods and properties in parent threaded object
  * @package Threading
@@ -46,7 +50,8 @@ class ParentThreadedObject
      * @param string $method
      * @param array $args
      * @return bool
-     * @throws \Exception
+     * @throws InvalidArgumentsPassed
+     * @throws BadMethodCallException
      * @ignore
      */
     public function __call(string $method, array $args)
@@ -55,7 +60,7 @@ class ParentThreadedObject
         {
             if (!self::check($key) || !self::check($value))
             {
-                throw new \Exception("Arguments can be only string, integer, array, boolean, float, double or long");
+                throw new InvalidArgumentsPassed("Arguments can be only string, integer, array, boolean, float, double or long");
             }
         }
         $eventId = md5("" . time() . rand(0, 100) . rand(-100, 100) . rand(-1000, 1000) . rand(-1000, 1000));
@@ -68,7 +73,7 @@ class ParentThreadedObject
             "pid" => getmypid()
         );
         $json = json_encode($query);
-        if (!socket_send($this->__0sock, self::LengthToString(strlen($json)), 16, 0))
+        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
             {
@@ -76,11 +81,10 @@ class ParentThreadedObject
             }
             else
             {
-                trigger_error("Failed to call a function from threaded class (1)", E_USER_WARNING);
+                throw new BadMethodCallException("Failed to call a function from parent threaded class");
             }
-            return false;
         }
-        if (!socket_send($this->__0sock, $json, strlen($json), 0))
+        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
             {
@@ -88,9 +92,8 @@ class ParentThreadedObject
             }
             else
             {
-                trigger_error("Failed to call a function from threaded class (2)", E_USER_WARNING);
+                throw new BadMethodCallException("Failed to call a function from parent threaded class");
             }
-            return false;
         }
         $__dm = __DataManager2::GetInstance();
         $r = $__dm->__Read();
@@ -110,6 +113,7 @@ class ParentThreadedObject
     /**
      * @param string $property
      * @return bool
+     * @throws BadDataAccessException
      * @ignore
      */
     public function __get(string $property)
@@ -123,7 +127,7 @@ class ParentThreadedObject
             "pid" => getmypid()
         );
         $json = json_encode($query);
-        if (!socket_send($this->__0sock, self::LengthToString(strlen($json)), 16, 0))
+        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
             {
@@ -131,11 +135,10 @@ class ParentThreadedObject
             }
             else
             {
-                trigger_error("Failed to access data from threaded class (1)", E_USER_WARNING);
+                throw new BadDataAccessException("Failed to access data from parent threaded class");
             }
-            return false;
         }
-        if (!socket_send($this->__0sock, $json, strlen($json), 0))
+        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
             {
@@ -143,9 +146,8 @@ class ParentThreadedObject
             }
             else
             {
-                trigger_error("Failed to access data from threaded class (2)", E_USER_WARNING);
+                throw new BadDataAccessException("Failed to access data from parent threaded class");
             }
-            return false;
         }
         $__dm = __DataManager2::GetInstance();
         $r = $__dm->__Read();
@@ -165,14 +167,15 @@ class ParentThreadedObject
     /**
      * @param string $property
      * @param $value
-     * @throws \Exception
+     * @throws BadMethodCallException
+     * @throws InvalidArgumentsPassed
      * @ignore
      */
     public function __set(string $property, $value)
     {
         if (!self::check($value))
         {
-            throw new \Exception("Value can be only string, integer, array, boolean, float, double or long");
+            throw new InvalidArgumentsPassed("Values can be only string, integer, array, boolean, float, double or long");
         }
         $eventId = md5("" . time() . rand(0, 100) . rand(-100, 100) . rand(-1000, 1000) . rand(-1000, 1000));
         $query = array
@@ -184,7 +187,7 @@ class ParentThreadedObject
             "pid" => getmypid()
         );
         $json = json_encode($query);
-        if (!socket_send($this->__0sock, self::LengthToString(strlen($json)), 16, 0))
+        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
             {
@@ -192,11 +195,10 @@ class ParentThreadedObject
             }
             else
             {
-                trigger_error("Failed to access data from threaded class (1)", E_USER_WARNING);
+                throw new BadMethodCallException("Failed to call method from threaded parent class");
             }
-            return;
         }
-        if (!socket_send($this->__0sock, $json, strlen($json), 0))
+        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
             {
@@ -204,9 +206,8 @@ class ParentThreadedObject
             }
             else
             {
-                trigger_error("Failed to access data from threaded class (2)", E_USER_WARNING);
+                throw new BadMethodCallException("Failed to call method from threaded parent class");
             }
-            return;
         }
         $__dm = __DataManager2::GetInstance();
         $r = $__dm->__Read();

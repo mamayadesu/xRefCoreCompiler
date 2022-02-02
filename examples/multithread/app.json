@@ -1,9 +1,0 @@
-{
-    "php_version": "7.4",
-    "app_name": "ThreadTest",
-    "app_version": "1.0",
-    "app_author": "xRef",
-    "app_description": "",
-    "namespaces": [],
-    "priorities": []
-}

@@ -20,14 +20,16 @@ final class __DataManager2
     private array $unreadData = array();
     private int $currentI = -1;
     private static ?__DataManager2 $instance = null;
+    private int $parentPort;
 
-    public function __construct($sock)
+    public function __construct($sock, int $parentPort)
     {
         if (self::$instance != null)
         {
             throw new \Exception("Do not use this class");
         }
         $this->sock = $sock;
+        $this->parentPort = $parentPort;
         self::$instance = $this;
     }
 
@@ -53,12 +55,15 @@ final class __DataManager2
         $info = array();
         if (!isset($this->unreadData[$this->currentI]))
         {
-            socket_recvfrom($this->sock, $queryLength1, 16, 0, $remote_ip, $remote_port);
+            @socket_recvfrom($this->sock, $queryLength1, 16, 0, $remote_ip, $remote_port);
             $queryLength = intval($queryLength1);
-            socket_recvfrom($this->sock, $query, $queryLength, 0, $remote_ip, $remote_port);
+            @socket_recvfrom($this->sock, $query, $queryLength, 0, $remote_ip, $remote_port);
             $data = json_decode($query, true);
             $this->Add(array("data" => $data));
-
+            if ($data == null)
+            {
+                die();
+            }
             return $data;
         }
         else
@@ -132,8 +137,8 @@ final class __DataManager2
         $json = json_encode($query);
         $length = strlen($json);
         $len = str_repeat("0", 16 - strlen($length . "")) . $length;
-        @socket_send($this->sock, $len, 16, 0);
-        @socket_send($this->sock, $json, $length, 0);
+        @socket_sendto($this->sock, $len, 16, 0, "127.0.0.1", $this->parentPort);
+        @socket_sendto($this->sock, $json, $length, 0, $this->parentPort);
         @socket_close($this->sock);
     }
 }
