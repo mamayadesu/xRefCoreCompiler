@@ -12,7 +12,7 @@ This program packs your application into PHAR with using xRefCore. You should no
 * Use `make.cmd` to fast build. Put the file to your project and replace your path to xRefCoreCompiler.phar<br>
 * If you are using PHPStorm, it's recommended to copy `Core` folder or create a symbal link. Download `link.cmd` and put your path to `Core`<br>
 * It's recommended to use next project structure:<br>
-<code>
+<pre><code>
 — PHPStorm<br>
  |<br>
  |— ProjectName<br>
@@ -24,4 +24,4 @@ This program packs your application into PHAR with using xRefCore. You should no
        |— <i>anything else...</i><br>
      |- make.cmd<br>
    |— link.cmd<br>
-</code>
+</code></pre>
