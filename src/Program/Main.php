@@ -2,6 +2,9 @@
 
 namespace Program;
 
+use Data\String\BackgroundColors;
+use Data\String\ColoredString;
+use Data\String\ForegroundColors;
 use \IO\Console;
 use \IO\FileDirectory;
 use \Application\Application;
@@ -12,15 +15,21 @@ use \Exception;
 class Main
 {
     private array $appPropertyToName;
-    private bool $debugMode;
+    private bool $debugMode = false;
 
     public function __construct(array $args)
     {
-        Console::WriteLine("********** xRefCoreCompiler **********");
-        Console::WriteLine("Version: " . Application::GetFrameworkVersion());
+        Console::WriteLine("********** xRefCoreCompiler **********", ForegroundColors::DARK_GREEN, BackgroundColors::LIGHT_GRAY);
+        if (!extension_loaded("mbstring"))
+        {
+            Console::WriteLine("Extension 'mbstring' is not loaded. Please, enable 'mbstring'.", ForegroundColors::RED);
+            exit;
+        }
+
+        Console::WriteLine(ColoredString::Get("Version: ", ForegroundColors::WHITE) . ColoredString::Get(Application::GetFrameworkVersion(), ForegroundColors::GRAY));
         $ds = DIRECTORY_SEPARATOR;
         $this->InitAppPropertyToName();
-        $projectDir = Application::GetExecutableDirectory();
+        $projectDir = getcwd() . $ds;
         $pargs = Application::ParseArguments($args, "--");
         $projectDirSetManually = false;
         if (isset($pargs["arguments"]["projectdir"]))
@@ -36,10 +45,9 @@ class Main
             }
             else
             {
-                Console::WriteLine("Folder " . $pargs["arguments"]["projectdir"] . " not found");
+                Console::WriteLine("Folder " . $pargs["arguments"]["projectdir"] . " not found", ForegroundColors::YELLOW);
             }
         }
-        $this->debugMode = false;
         if (isset($pargs["arguments"]["debug"]))
         {
             $this->debugMode = ($pargs["arguments"]["debug"] == "1");
@@ -79,7 +87,7 @@ class Main
         {
             if (!$skip)
             {
-                Console::WriteLine("File '" . $ds . "Program" . $ds . "Main.php' was found in this folder");
+                Console::WriteLine("File '" . $ds . "Program" . $ds . "Main.php' was found in this folder", ForegroundColors::BLUE);
                 Console::Write("Do you want to build application from this folder? (y - yes; n - no): ");
                 $a = strtolower(Console::ReadLine());
                 if ($a != "y")
@@ -92,11 +100,11 @@ class Main
         {
             if (!is_dir($projectDir))
             {
-                Console::WriteLine("Folder '" . $projectDir . "' not found");
+                Console::WriteLine("Folder '" . $projectDir . "' not found", ForegroundColors::YELLOW);
             }
             if (!file_exists($projectDir . "Program" . $ds . "Main.php"))
             {
-                Console::WriteLine("File '" . $ds . "Program" . $ds . "Main.php' not found in '" . $projectDir . "'");
+                Console::WriteLine("File '" . $ds . "Program" . $ds . "Main.php' not found in '" . $projectDir . "'", ForegroundColors::YELLOW);
             }
             $projectDir = $this->ProjectDir();
         }
@@ -120,7 +128,7 @@ class Main
                 $appJson = json_decode(file_get_contents($projectDir . "app.json"), true);
                 if ($appJson == null)
                 {
-                    Console::WriteLine("Incorrect 'app.json'");
+                    Console::WriteLine("Incorrect 'app.json'", ForegroundColors::RED);
                     $appJson = $this->AppJson();
                 }
                 else
@@ -135,7 +143,7 @@ class Main
                     }
                     if (count($notContainsProperties) > 0)
                     {
-                        Console::WriteLine("Error! 'app.json' doesn't contains next fields: " . implode(', ', $notContainsProperties));
+                        Console::WriteLine("Error! 'app.json' doesn't contains next fields: " . implode(', ', $notContainsProperties), ForegroundColors::RED);
                         Console::WriteLine("Fill application data manually.\n");
                         $appJson = $this->AppJson();
                     }
@@ -162,17 +170,11 @@ class Main
                 fwrite($f, $appJsonString);
             }
         }
-        if (!$skip)
-        {
-            Console::Write("Enable debug mode? (y - yes; n - no): ");
-            $this->debugMode = (Console::ReadLine() == "y");
-        }
         $appJsonString = json_encode($appJson, JSON_PRETTY_PRINT);
-        $tempDir = Application::GetExecutableDirectory() . $ds . md5($appJsonString) . $ds;
+        $tempDir = sys_get_temp_dir() . $ds . md5($appJsonString . rand(1, 100000) . time()) . $ds;
         while (is_dir($tempDir))
         {
-            Console::WriteLine("Temporary folder " . $tempDir . " already exists. Please, delete it and then press Enter to try again.");
-            Console::ReadLine();
+            $tempDir = sys_get_temp_dir() . $ds . md5($appJsonString . rand(1, 100000) . time()) . $ds;
         }
         $otherProjectFolders = [];
         foreach (scandir($projectDir) as $dirname)
@@ -183,24 +185,43 @@ class Main
             }
             $otherProjectFolders[] = $dirname;
         }
-        $appFileOutput = basename($projectDir) . ".phar";
+
+        $appName = $appJson["app_name"];
+        $appName = str_replace(array_merge(
+            array_map('chr', range(0, 31)),
+            array('<', '>', ':', '"', '/', '\\', '|', '?', '*')
+        ), "", $appName);
+        $ext = pathinfo($appName, PATHINFO_EXTENSION);
+        $appName = mb_strcut(pathinfo($appName, PATHINFO_FILENAME), 0, 255 - ($ext ? strlen($ext) + 1 : 0), mb_detect_encoding($appName)) . ($ext ? '.' . $ext : '');
+
+        $appFileOutput = $appName . ".phar";
         $appFileOutput = $projectDir . $appFileOutput;
-        Console::WriteLine("Copying files...");
-        $this->CopyFiles($projectDir, $tempDir, $otherProjectFolders);
+        Console::WriteLine("Copying files...", ForegroundColors::BLUE);
+        $isSuccess = $this->CopyFiles($projectDir, $tempDir, $otherProjectFolders);
+
+        if (!$isSuccess)
+        {
+            Console::WriteLine((!$skip ? "Press ENTER to close" : ""));
+            if (!$skip)
+            {
+                Console::ReadLine();
+            }
+        }
+
         $f = fopen($tempDir . "app.json", "w");
         fwrite($f, $appJsonString);
         fclose($f);
-        Console::WriteLine("Compiling...");
+        Console::WriteLine("Compiling...", ForegroundColors::BLUE);
         $isSuccess = $this->MakeApp($tempDir, $appFileOutput);
-        Console::WriteLine("Clearing...");
+        Console::WriteLine("Cleaing up...", ForegroundColors::BLUE);
         FileDirectory::Delete($tempDir);
 
         $text = "";
         if ($isSuccess)
         {
-            $text = "Done! Application was saved as " . $appFileOutput . ". ";
+            $text = ColoredString::Get("Done! Application was saved as " . $appFileOutput . ". ", ForegroundColors::GREEN);
         }
-        $text .= ($skip ? "Press ENTER to close" : "");
+        $text .= (!$skip ? "Press ENTER to close" : "");
         Console::WriteLine($text);
         if (!$skip)
         {
@@ -216,7 +237,7 @@ class Main
         }
         catch (Exception $e)
         {
-            Console::WriteLine("Failed to pack (C2). " . $e->getMessage());
+            Console::WriteLine("Failed to build (C2). " . $e->getMessage(), ForegroundColors::RED);
             @rmdir($dir);
             return false;
         }
@@ -228,7 +249,7 @@ class Main
         }
         catch (Exception $e)
         {
-            Console::WriteLine("Failed to pack (C3). " . $e->getMessage());
+            Console::WriteLine("Failed to build (C3). " . $e->getMessage(), ForegroundColors::RED);
             @rmdir($dir);
             return false;
         }
@@ -239,9 +260,13 @@ class Main
         return true;
     }
 
-    public function CopyFiles(string $projectDir, string $tempDir, array $otherProjectFolders)
+    public function CopyFiles(string $projectDir, string $tempDir, array $otherProjectFolders) : bool
     {
-        @mkdir($tempDir);
+        if (!@mkdir($tempDir))
+        {
+            Console::WriteLine("Failed to copy project files to temp directory. Check your permissions and try again.", ForegroundColors::RED);
+            return false;
+        }
         $ds = DIRECTORY_SEPARATOR;
         $p = null;
         $ptp = "phar://" . str_replace("\\", "/", Application::GetExecutableFileName()) . "/";
@@ -290,9 +315,10 @@ class Main
         }
         catch (Exception $e)
         {
-            Console::WriteLine("An error occured while packing (C1): " . $e->getMessage());
-            exit;
+            Console::WriteLine("An error occured while building application (C1): " . $e->getMessage(), ForegroundColors::RED);
+            return false;
         }
+        return true;
     }
 
     public function InitAppPropertyToName() : void
@@ -340,12 +366,12 @@ class Main
             }
             if (!is_dir($projectDir))
             {
-                Console::WriteLine("Directory not found");
+                Console::WriteLine("Directory not found", ForegroundColors::RED);
                 $projectDir = "";
             }
             if (!file_exists($projectDir . "Program" . $ds . "Main.php"))
             {
-                Console::WriteLine("File '" . $ds . "Program" . $ds . "Main.php' not found in project directory");
+                Console::WriteLine("File '" . $ds . "Program" . $ds . "Main.php' not found in project directory", ForegroundColors::RED);
                 $projectDir = "";
             }
         }
@@ -376,12 +402,12 @@ class Main
                     }
                     if ($a == "Program")
                     {
-                        Console::WriteLine("Do not put 'Program', because it is a default namespace.");
+                        Console::WriteLine("Do not put 'Program', because it is a default namespace.", ForegroundColors::YELLOW);
                         continue;
                     }
                     if (strpos("\\", $a) !== false || strpos("/", $a) !== false)
                     {
-                        Console::WriteLine("Input ONLY roots of namespaces.");
+                        Console::WriteLine("Input ONLY roots of namespaces.", ForegroundColors::RED);
                         continue;
                     }
                     if ($a == "#stop")

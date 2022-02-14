@@ -4,6 +4,7 @@ namespace CliForms\ListBox;
 
 use CliForms\Exceptions\InvalidArgumentsPassed;
 use \CliForms\Exceptions\InvalidHeaderTypeException;
+use CliForms\Exceptions\NoItemsAddedException;
 use \Data\String\BackgroundColors;
 use \Data\String\ForegroundColors;
 use \Data\String\ColoredString;
@@ -212,9 +213,14 @@ class ListBox
 
     /**
      * Builds and renders list
+     * @throws NoItemsAddedException
      */
     public function Render() : void
     {
+        if (count($this->items) == 0)
+        {
+            throw new NoItemsAddedException("No items added to items collection. Nothing to render.");
+        }
         $output = "";
         $this->_renderTitle($output);
         $this->_renderBody($output);

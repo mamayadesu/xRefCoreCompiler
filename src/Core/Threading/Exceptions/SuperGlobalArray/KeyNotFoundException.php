@@ -10,5 +10,5 @@ namespace Threading\Exceptions\SuperGlobalArray;
 class KeyNotFoundException extends \Exception
 {
     public $Key;
-    public string $PassedKeys;
+    public array $PassedKeys;
 }

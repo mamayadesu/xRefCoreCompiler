@@ -65,9 +65,9 @@ function including($path)
                 {
                     foreach ($_QUEUE as $notLoadedClass => $value)
                     {
-                        if (class_exists($notLoadedClass))
+                        if (class_exists($notLoadedClass) || interface_exists($notLoadedClass))
                         {
-                            foreach ($_QUEUE[$notLoadedClass] as $queueFileName => $value)
+                            foreach ($_QUEUE[$notLoadedClass] as $queueFileName => $value1)
                             {
                                 unset($_QUEUE[$notLoadedClass][$queueFileName]);
                                 if ($dev) echo "'" . $notLoadedClass . "' was loaded! Trying to register " . $queueFileName . "\n";
@@ -149,5 +149,36 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.8.0.0";
+    return "1.9.0.0";
+}
+
+$is_windows = (strtoupper(substr(PHP_OS, 0, 3)) == "WIN");
+
+function __CHECK_READKEY() : string
+{
+    global $dev;
+    $hash = "4c5b90bfc69c23b6e2487a490bcdf1af";
+    $readkey_path = sys_get_temp_dir() . "\\";
+    $readkey_file = $readkey_path . "readkey" . __GET_FRAMEWORK_VERSION() . ".exe";
+    if (!MAIN_THREAD)
+    {
+        return $readkey_file;
+    }
+    $check_file = file_exists($readkey_file);
+    $check_hash = false;
+    if ($check_file)
+    {
+        $check_hash = md5_file($readkey_file) == $hash;
+    }
+    if (!$check_file || !$check_hash)
+    {
+        if (!$check_hash)
+        {
+            if ($dev) echo "Deleting readkey.exe";
+            \IO\FileDirectory::Delete($readkey_file);
+        }
+        if ($dev) echo "Copying readkey.exe\n";
+        \IO\FileDirectory::Copy(dirname(__FILE__) . "/Core/IO/readkey.exe", $readkey_file);
+    }
+    return $readkey_file;
 }

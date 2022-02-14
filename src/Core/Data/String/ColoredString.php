@@ -15,8 +15,8 @@ class ColoredString
      * @param BackgroundColors $backgroundColor
      * @return string Colored string
      */
-    public static function Get(string $str, string $foregroundColor = "auto", string $backgroundColor = "auto") : string
+    public static function Get(string $str, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : string
     {
-        return "\033[" . $foregroundColor . "m" . ($backgroundColor != BackgroundColors::AUTO ? "\033[" . $backgroundColor . "m" : "") . $str . "\033[0m";
+        return ($foregroundColor != ForegroundColors::AUTO ? "\033[" . $foregroundColor . "m" : "") . ($backgroundColor != BackgroundColors::AUTO ? "\033[" . $backgroundColor . "m" : "") . $str . "\033[0m";
     }
 }

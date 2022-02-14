@@ -14,9 +14,17 @@ abstract class Enum
     /**
      * @ignore
      */
+    private static bool $preventException = false;
+
+    /**
+     * @ignore
+     */
     final public function __construct()
     {
-        throw new CreateEnumInstanceException("Cannot create instance of Enum");
+        if (!self::$preventException)
+        {
+            throw new CreateEnumInstanceException("Cannot create instance of Enum/" . get_class($this));
+        }
     }
 
     /**
@@ -26,7 +34,9 @@ abstract class Enum
     final public static function GetValues() : array
     {
         $class_name = get_called_class();
+        self::$preventException = true;
         $obj = new $class_name();
+        self::$preventException = false;
         $reflectionClass = new \ReflectionClass($obj);
         $arr = [];
         foreach ($reflectionClass->getConstants() as $key => $value)
@@ -38,6 +48,12 @@ abstract class Enum
         return $arr;
     }
 
+    /**
+     * Returns TRUE if Enum contains specified item
+     *
+     * @param $item
+     * @return bool
+     */
     final public static function HasItem($item) : bool
     {
         return in_array($item, self::GetValues());

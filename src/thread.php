@@ -2,6 +2,8 @@
 
 error_reporting(E_ALL);
 
+define("MAIN_THREAD", false);
+
 $dev = false;
 
 /* parent thread port */
@@ -20,8 +22,6 @@ $__PARENTPID = 0x0000;
 require __DIR__ . DIRECTORY_SEPARATOR . "common.php";
 
 including(__DIR__ . DIRECTORY_SEPARATOR . "Core");
-
-$is_windows = (strtoupper(substr(PHP_OS, 0, 3)) == "WIN");
 
 spl_autoload_register(function(string $className)
 {

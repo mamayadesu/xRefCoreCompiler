@@ -127,6 +127,7 @@ class Application
      */
     public static function ParseArguments(array $args, string $propertyNameDelimiter, bool $skipFirstElement = true) : array
     {
+        $c = 0;
         if ($skipFirstElement)
         {
             $c = 1; // skip first element, because it contents path to executable filename
@@ -140,7 +141,7 @@ class Application
         $pnd = strlen($propertyNameDelimiter);
         $currentPropertyName = "";
         $itemLength = 0;
-        for ($i = 1; $i < count($args); $i++)
+        for ($i = $c; $i < count($args); $i++)
         {
             $item = $args[$i];
             $itemLength = strlen($item);

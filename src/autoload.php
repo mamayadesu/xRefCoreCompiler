@@ -2,6 +2,8 @@
 
 error_reporting(E_ALL);
 
+define("MAIN_THREAD", true);
+
 if (!extension_loaded("sockets"))
 {
     die("Sockets extension is required!\n");
@@ -66,9 +68,22 @@ if ($dev) echo "Initializing super global array...\n";
 $superglobalarray = new \Threading\SuperGlobalArray();
 $superglobalarray->__setSga($superglobalarraythreaded);
 
+if ($is_windows)
+{
+    __CHECK_READKEY();
+}
+
 function __onshutdown()
 {
-    global $superglobalarraythreaded;
+    global $superglobalarray, $superglobalarraythreaded, $is_windows;
+    try
+    {
+        @\IO\FileDirectory::Delete($superglobalarray->__sysGet(["readkey", "path"]));
+    }
+    catch (\Exception $e)
+    {
+
+    }
     $superglobalarraythreaded->Kill();
 
     foreach (\Threading\Thread::GetAllChildThreads() as $threaded)
