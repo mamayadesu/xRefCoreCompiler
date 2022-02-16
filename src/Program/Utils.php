@@ -68,7 +68,7 @@ class Utils
             fwrite($f, base64_decode($main_code));
             fclose($f);
         }
-        Console::WriteLine("Done! IMPORTANT: Execute " . ColoredString::Get("cd " . $proj_name, ForegroundColors::YELLOW) . " for moving to your project code.\nUse " . ColoredString::Get("xrefcore-compiler", ForegroundColors::YELLOW) . ColoredString::Get(" --skip 1", ForegroundColors::BROWN) . " to compile application.");
+        Console::WriteLine("Done! IMPORTANT: Execute " . ColoredString::Get("cd " . $proj_name, ForegroundColors::YELLOW) . " for moving to your project code.\nUse " . ColoredString::Get("xrefcore-compiler", ForegroundColors::YELLOW) . ColoredString::Get(" --build", ForegroundColors::BROWN) . " to compile application.");
     }
 
     public static function Version() : void
