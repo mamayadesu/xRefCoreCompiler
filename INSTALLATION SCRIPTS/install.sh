@@ -68,6 +68,13 @@ rm $HOME/.xRefCoreCompiler/tests.php
 
 echo "[3/5] Installing..."
 
+if [ -d /usr/bin/xRefCoreCompiler ] 
+then
+    echo "Do nothing" > /dev/null
+else
+    mkdir /usr/bin/xRefCoreCompiler
+fi
+
 if [ -f /usr/bin/xRefCoreCompiler/xRefCoreCompiler.phar ]
 then
     rm /usr/bin/xRefCoreCompiler/xRefCoreCompiler.phar
