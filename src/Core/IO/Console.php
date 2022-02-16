@@ -91,10 +91,11 @@ class Console
         stream_set_blocking($stdin, false);
         system("stty cbreak -echo");
         $t = 1000000;
-        while (!($keypress = strtolower(fgets($stdin))))
+        while (!($keypress = fgets($stdin)))
         {
             time_nanosleep(0, 5 * $t);
         }
+        $keypress_lower = strtolower($keypress);
         stream_set_blocking($stdin, true);
         $translate = array(
             "й" => "q",
@@ -132,9 +133,9 @@ class Console
             "." => "/",
             "ё" => "`"
         );
-        if (isset($translate[$keypress]))
+        if (isset($translate[$keypress_lower]))
         {
-            $keypress = $translate[$keypress];
+            $keypress = $translate[$keypress_lower];
         }
         switch ($keypress) {
             case "\033[A":

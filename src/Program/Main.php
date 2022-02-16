@@ -19,6 +19,25 @@ class Main
 
     public function __construct(array $args)
     {
+        $pargs = Application::ParseArguments($args, "--");
+        if (in_array("configure", $pargs["uninitialized_keys"]))
+        {
+            Utils::Configure();
+            exit;
+        }
+
+        if (in_array("prepare-project", $pargs["uninitialized_keys"]))
+        {
+            Utils::PrepareProject();
+            exit;
+        }
+
+        if (in_array("version", $pargs["uninitialized_keys"]))
+        {
+            Utils::Version();
+            exit;
+        }
+
         Console::WriteLine("********** xRefCoreCompiler **********", ForegroundColors::DARK_GREEN, BackgroundColors::LIGHT_GRAY);
         if (!extension_loaded("mbstring"))
         {
@@ -30,7 +49,6 @@ class Main
         $ds = DIRECTORY_SEPARATOR;
         $this->InitAppPropertyToName();
         $projectDir = getcwd() . $ds;
-        $pargs = Application::ParseArguments($args, "--");
         $projectDirSetManually = false;
         if (isset($pargs["arguments"]["projectdir"]))
         {
@@ -56,6 +74,10 @@ class Main
         if (isset($pargs["arguments"]["skip"]))
         {
             $skip = ($pargs["arguments"]["skip"] == "1" ? true : false);
+        }
+        if (in_array("build", $pargs["uninitialized_keys"]))
+        {
+            $skip = true;
         }
         if (!$skip)
         {
@@ -231,6 +253,15 @@ class Main
 
     public function MakeApp(string $dir, string $filename) : bool
     {
+        if (file_exists($filename))
+        {
+            if (!FileDirectory::Delete($filename))
+            {
+                Console::WriteLine("Failed to delete " . $filename, ForegroundColors::RED);
+                @rmdir($dir);
+                return false;
+            }
+        }
         try
         {
             $phar = new \Phar($filename);
@@ -368,6 +399,7 @@ class Main
             {
                 Console::WriteLine("Directory not found", ForegroundColors::RED);
                 $projectDir = "";
+                continue;
             }
             if (!file_exists($projectDir . "Program" . $ds . "Main.php"))
             {

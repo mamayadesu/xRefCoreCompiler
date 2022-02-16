@@ -7,6 +7,7 @@ function including($path)
     global $_ALREADY_REGISTERED, $_QUEUE, $dev;
     $regex = "/Class \'(.*?)\' not found/";
     $regex1 = "/Interface \'(.*?)\' not found/";
+    $regex2 = "/Trait \'(.*?)\' not found/";
     $data = scandir($path);
     $splitFileName = [];
     $ext = "";
@@ -50,6 +51,10 @@ function including($path)
                     {
                         $missingClass = "\\" . preg_replace($regex1, "$1", $msg);
                     }
+                    else if (preg_match($regex2, $msg))
+                    {
+                        $missingClass = "\\" . preg_replace($regex2, "$1", $msg);
+                    }
                     else
                     {
                         die($e->getMessage());
@@ -85,6 +90,10 @@ function including($path)
                                     else if (preg_match($regex1, $msg))
                                     {
                                         $missingClass1 = "\\" . preg_replace($regex1, "$1", $msg);
+                                    }
+                                    else if (preg_match($regex2, $msg))
+                                    {
+                                        $missingClass1 = "\\" . preg_replace($regex2, "$1", $msg);
                                     }
                                     else
                                     {
@@ -149,7 +158,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.9.0.0";
+    return "1.9.1.0";
 }
 
 $is_windows = (strtoupper(substr(PHP_OS, 0, 3)) == "WIN");

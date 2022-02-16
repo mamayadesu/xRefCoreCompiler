@@ -42,29 +42,44 @@ class FileDirectory
     /**
      * Deletes file or directory (even if directory is not empty)
      *
-     * @param string $path Path to target
+     * @param string $path Path to target file or directory
+     * @return bool Returns TRUE if target was deleted successfully. Returns FALSE if an error occurred.
      */
-    public static function Delete(string $path) : void
+    public static function Delete(string $path) : bool
     {
+        $_result = true;
         if (file_exists($path) && !is_dir($path))
         {
-            unlink($path);
-            return;
+            $result = @unlink($path);
+            return $result;
         }
         foreach (glob($path . "*", GLOB_MARK) as $filename)
         {
             if (is_dir($filename))
             {
-                self::Delete($filename);
+                $result = self::Delete($filename);
+                if (!$result)
+                {
+                    $_result = false;
+                }
             }
             else
             {
-                unlink($filename);
+                $result = @unlink($filename);
+                if (!$result)
+                {
+                    $_result = false;
+                }
             }
         }
         if (is_dir($path))
         {
-            rmdir($path);
+            $result = rmdir($path);
+            if (!$result)
+            {
+                $_result = false;
+            }
         }
+        return $_result;
     }
 }
