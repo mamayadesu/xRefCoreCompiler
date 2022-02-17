@@ -51,7 +51,7 @@ fi
 
 wget -q -O $HOME/.xRefCoreCompiler/tests.php https://raw.githubusercontent.com/mamayadesu/xRefCoreCompiler/main/tests.php
 
-php $HOME/.xRefCoreCompiler/tests.php
+$PHP $HOME/.xRefCoreCompiler/tests.php
 
 if [ $? -eq 255 ]
 then
