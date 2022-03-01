@@ -191,7 +191,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.9.2.0";
+    return "1.9.2.1";
 }
 
 function __CHECK_READKEY() : string
@@ -269,27 +269,30 @@ function __EXCEPTION_HANDLER(Throwable $e) : void
             $row["line"] = "";
         }
         $arguments = [];
-        foreach ($row["args"] as $arg)
+        if (isset($row["args"]))
         {
-            switch (gettype($arg))
+            foreach ($row["args"] as $arg)
             {
-                case "string":
-                    $arguments[] = "\"" . $arg . "\"";
-                    break;
+                switch (gettype($arg))
+                {
+                    case "string":
+                        $arguments[] = "\"" . $arg . "\"";
+                        break;
 
-                case "integer":
-                case "float":
-                case "double":
-                    $arguments[] = $arg . "";
-                    break;
+                    case "integer":
+                    case "float":
+                    case "double":
+                        $arguments[] = $arg . "";
+                        break;
 
-                case "array":
-                    $arguments[] = "Array";
-                    break;
+                    case "array":
+                        $arguments[] = "Array";
+                        break;
 
-                case "object":
-                    $arguments[] = get_class($arg);
-                    break;
+                    case "object":
+                        $arguments[] = get_class($arg);
+                        break;
+                }
             }
         }
         $err .= "    ...in " . $row["file"] . " [" . $row["class"] . $row["type"] . $row["function"] . "(" . implode(", ", $arguments) . ")]" . $row["line"] . "\n";
