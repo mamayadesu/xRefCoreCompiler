@@ -3,8 +3,7 @@
 error_reporting(E_ALL);
 
 define("MAIN_THREAD", false);
-
-$dev = false;
+define("DEV_MODE", false);
 
 /* parent thread port */
 $port = 0x0000;
@@ -18,35 +17,6 @@ $__CLASSNAME = "";
 $__JSONNEWARGS = [];
 $__PARENTPID = 0x0000;
 /* {RANDOMKEY} */
-
-require __DIR__ . DIRECTORY_SEPARATOR . "common.php";
-
-including(__DIR__ . DIRECTORY_SEPARATOR . "Core");
-
-spl_autoload_register(function(string $className)
-{
-    $_className = "";
-    if (!class_exists($className))
-    {
-        $_className = __DIR__ . DIRECTORY_SEPARATOR . $className . ".php";
-
-        if (strtoupper(substr(PHP_OS, 0, 3)) != "WIN")
-        {
-            $_className = str_replace("\\", "/", $_className);
-        }
-        require_once $_className;
-    }
-});
-
-$gasock = socket_create(AF_INET, SOCK_DGRAM, 0);
-while (true)
-{
-    if (@socket_bind($gasock, "127.0.0.1", $garecport))
-    {
-        break;
-    }
-    $garecport = rand(10000, 60000);
-}
 
 if (!($sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
 {
@@ -90,6 +60,35 @@ if (!socket_sendto($sock, $json, $length, 0, "127.0.0.1", $port))
     {
         exit;
     }
+}
+
+require_once __DIR__ . DIRECTORY_SEPARATOR . "common.php";
+
+including(__DIR__ . DIRECTORY_SEPARATOR . "Core");
+
+spl_autoload_register(function(string $className)
+{
+    $_className = "";
+    if (!class_exists($className))
+    {
+        $_className = __DIR__ . DIRECTORY_SEPARATOR . $className . ".php";
+
+        if (strtoupper(substr(PHP_OS, 0, 3)) != "WIN")
+        {
+            $_className = str_replace("\\", "/", $_className);
+        }
+        require_once $_className;
+    }
+});
+
+$gasock = socket_create(AF_INET, SOCK_DGRAM, 0);
+while (true)
+{
+    if (@socket_bind($gasock, "127.0.0.1", $garecport))
+    {
+        break;
+    }
+    $garecport = rand(10000, 60000);
 }
 new \Threading\__DataManager1($gasock, $garecport);
 new \Threading\__DataManager2($sock, $port);

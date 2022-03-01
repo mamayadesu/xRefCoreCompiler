@@ -2,6 +2,8 @@
 
 namespace Threading;
 
+use Threading\Exceptions\SystemMethodCallException;
+
 /**
  * Class __DataManager1
  * @package Threading
@@ -28,7 +30,9 @@ final class __DataManager1
     {
         if (self::$instance != null)
         {
-            throw new \Exception("Do not use this class");
+            $e = new SystemMethodCallException("System class is not allowed for initializing");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $this->sock = $sock;
         $this->port = $port;

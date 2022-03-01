@@ -38,16 +38,16 @@ class Console
      */
     public static function ReadKey() : string
     {
-        if (strtoupper(substr(PHP_OS, 0, 3)) == "WIN")
+        if (IS_WINDOWS)
         {
             $exe = __CHECK_READKEY();
 
             $socket = socket_create(AF_INET, SOCK_DGRAM, 0);
-            $port = rand(100, 49151);
-            while (!@socket_bind($socket, "127.0.0.1", $port))
+            do
             {
                 $port = rand(100, 49151);
             }
+            while (!@socket_bind($socket, "127.0.0.1", $port));
             $cmd = "start /B /I " . $exe . " " . $port . " 1>&2";
             $proc = proc_open($cmd, [], $pipes);
             proc_close($proc);
@@ -201,7 +201,7 @@ class Console
     public static function Write(string $text, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : void
     {
         $text = ColoredString::Get($text, $foregroundColor, $backgroundColor);
-        if (strtoupper(substr(PHP_OS, 0, 3)) == "WIN" && !strpos(php_uname(), "Windows 10"))
+        if (IS_WINDOWS && !strpos(php_uname(), "Windows 10"))
         {
             $text = iconv("UTF-8", "CP866", $text);
         }
@@ -223,7 +223,7 @@ class Console
      */
     public static function ClearWindow() : void
     {
-        if (strtoupper(substr(PHP_OS, 0, 3)) == "WIN")
+        if (IS_WINDOWS)
         {
             echo chr(27) . chr(91) . 'H' . chr(27) . chr(91) . 'J';
         }

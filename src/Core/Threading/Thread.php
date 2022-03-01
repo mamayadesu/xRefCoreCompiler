@@ -24,12 +24,6 @@ class Thread
     private static array $childThreads = [];
 
     /**
-     * @var string
-     * @ignore
-     */
-    private static string $phpCommand = "";
-
-    /**
      * @var int
      * @ignore
      */
@@ -62,7 +56,9 @@ class Thread
     {
         if (self::$parentThreadPid == -1)
         {
-            throw new SystemMethodCallException("Unable to initialize thread class. Use static method Run(array \$args) to create thread.");
+            $e = new SystemMethodCallException("Unable to initialize thread class. Use static method Run(array \$args) to create thread.");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
     }
 
@@ -90,86 +86,9 @@ class Thread
      * @return string
      * @ignore
      */
-    private static function GetWindowsPhpCommand() : string
-    {
-        $cmd = "wmic process where \"processId=" . getmypid() . "\" get commandLine";
-        exec($cmd, $output);
-        $fullcommand = $output[1];
-        $command = "";
-        if (substr($fullcommand, 0, 1) == '"')
-        {
-            $command1 = str_split($fullcommand);
-            $a = false;
-            foreach ($command1 as $char)
-            {
-                $command .= $char;
-                if ($char == '"')
-                {
-                    if (!$a)
-                    {
-                        $a = true;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-        }
-        else
-        {
-            $command = explode(' ', $fullcommand)[0];
-        }
-        return $command;
-    }
-
-    /**
-     * @return string
-     * @ignore
-     */
-    private static function GetUnixPhpCommand() : string
-    {
-        $cmd = "ps -p " . getmypid();
-        exec($cmd, $output);
-        $pinfo3 = $output[1];
-        $pinfo2 = explode(' ', $pinfo3);
-        $pinfo1 = [];
-        foreach ($pinfo2 as $item)
-        {
-            if ($item != "")
-            {
-                $pinfo1[] = $item;
-            }
-        }
-        for ($i = 0; $i < 3; $i++)
-        {
-            array_shift($pinfo1);
-        }
-        $pinfo = implode(' ', $pinfo1);
-        return $pinfo;
-    }
-
-    /**
-     * @return string
-     * @ignore
-     */
     private static function GetPhpCommand() : string
     {
-        if (self::$phpCommand != "")
-        {
-            return self::$phpCommand;
-        }
-        $cmd = "";
-        if (Thread::IsWindows())
-        {
-            $cmd = self::GetWindowsPhpCommand();
-        }
-        else
-        {
-            $cmd = self::GetUnixPhpCommand();
-        }
-        self::$phpCommand = $cmd;
-        return $cmd;
+        return PHP_BINARY;
     }
 
     /**
@@ -182,7 +101,9 @@ class Thread
         // For child thread
         if (self::$parentThreadPid != -1)
         {
-            throw new SystemMethodCallException("This method is unavailable for user call");
+            $e = new SystemMethodCallException("This method is unavailable for user call");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         self::$parentThreadPid = $parentThread;
     }
@@ -299,7 +220,9 @@ class Thread
             {
                 if (!self::check($result))
                 {
-                    throw new InvalidResultReceivedException("Method result can be only void, string, integer, array, boolean, float, double or long");
+                    $e = new InvalidResultReceivedException("Method result can be only void, string, integer, array, boolean, float, double or long");
+                    $e->__xrefcoreexception = true;
+                    throw $e;
                 }
             }
             $query = array
@@ -342,7 +265,9 @@ class Thread
             }
             else
             {
-                throw new BadDataAccessException("Failed to access data from threaded class");
+                $e = new BadDataAccessException("Failed to access data from threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         if (!socket_sendto($this->__socket, $json, strlen($json), 0, "127.0.0.1", $this->__parentsockport))
@@ -353,7 +278,9 @@ class Thread
             }
             else
             {
-                throw new BadDataAccessException("Failed to access data from threaded class", E_USER_WARNING);
+                $e = new BadDataAccessException("Failed to access data from threaded class", E_USER_WARNING);
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
     }
@@ -379,6 +306,27 @@ class Thread
     }
 
     /**
+     * @param $sock
+     * @param int $port
+     * @param ParentThreadedObject $pto
+     * @throws SystemMethodCallException
+     * @ignore
+     */
+    final public function __setdata($sock, int $port, ParentThreadedObject $pto) : void
+    {
+        // For child thread
+        if ($this->__socket != null)
+        {
+            $e = new SystemMethodCallException("This method is unavailable for user call");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        $this->__socket = $sock;
+        $this->__parentsockport = $port;
+        $this->pto = $pto;
+    }
+
+    /**
      * Creates and starts a new thread of class
      *
      * @param array<int, string> $args Arguments which child-thread will get in `Threaded(array $args)` method
@@ -391,63 +339,8 @@ class Thread
      */
     final public static function Run(array $args, object $handler) : ?Threaded
     {
-        // For parent thread
-        $result = null;
-        try
-        {
-            $result = self::CommonRun($args, false, $handler);
-        }
-        catch (AbstractClassThreadException $e)
-        {
-            throw $e;
-        }
-        catch (ClassNotFoundException $e)
-        {
-            throw $e;
-        }
-        catch (InvalidArgumentsPassedException $e)
-        {
-            throw $e;
-        }
-        catch (NewThreadException $e)
-        {
-            throw $e;
-        }
-        return $result;
-    }
-
-    /**
-     * @param $sock
-     * @param int $port
-     * @param ParentThreadedObject $pto
-     * @throws SystemMethodCallException
-     * @ignore
-     */
-    final public function __setdata($sock, int $port, ParentThreadedObject $pto) : void
-    {
-        // For child thread
-        if ($this->__socket != null)
-        {
-            throw new SystemMethodCallException("This method is unavailable for user call");
-        }
-        $this->__socket = $sock;
-        $this->__parentsockport = $port;
-        $this->pto = $pto;
-    }
-
-    /**
-     * @param array $args
-     * @param bool $fast
-     * @param object $handler
-     * @return Threaded|null
-     * @throws AbstractClassThreadException
-     * @throws ClassNotFoundException
-     * @throws InvalidArgumentsPassedException
-     * @throws NewThreadException
-     * @ignore
-     */
-    final private static function CommonRun(array $args, bool $fast, object $handler) : ?Threaded
-    {
+        $microtime = microtime(true);
+        if (DEV_MODE) echo "[THREAD] Run called [" . round(microtime(true) - $microtime, 6) . "]\n";
         $className = get_called_class();
         $phpCmd = str_replace("\"", "", self::GetPhpCommand());
         if (substr($className, 0, 1) != "\\")
@@ -456,19 +349,20 @@ class Thread
         }
         if ($className == "\\Threading\\Thread")
         {
-            throw new AbstractClassThreadException("Cannot run thread '" . $className . "'");
-        }
-        if (!class_exists($className))
-        {
-            throw new ClassNotFoundException("Class '" . $className . "' not found");
+            $e = new AbstractClassThreadException("Your class have to inherit this class (Threading\Thread). Cannot initialize this class in separated thread.");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
 
         $newArgs = [];
+        if (DEV_MODE) echo "[THREAD] Reading args [" . round(microtime(true) - $microtime, 6) . "]\n";
         foreach ($args as $key => $value)
         {
             if (!self::check($value) || !self::check($key))
             {
-                throw new InvalidArgumentsPassedException("Arguments can be only void, string, integer, array, boolean, float, double or long");
+                $e = new InvalidArgumentsPassedException("Arguments can be only void, string, integer, array, boolean, float, double or long");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
             $newArgs[] = $value;
         }
@@ -485,10 +379,12 @@ class Thread
             $pathToPharContent .= "/";
             $pathToPharContent = "phar://" . $pathToPharContent;
         }
+        if (DEV_MODE) echo "[THREAD] Getting autoload [" . round(microtime(true) - $microtime, 6) . "]\n";
         $autoload = file_get_contents($pathToPharContent . "thread.php");
         $parentPid = getmypid();
         $jsonNewArgs = json_encode($newArgs);
 
+        if (DEV_MODE) echo "[THREAD] Parsing autoload [" . round(microtime(true) - $microtime, 6) . "]\n";
         if ($className != "\\Threading\\__SuperGlobalArrayThread")
         {
             $sga = SuperGlobalArray::GetInstance();
@@ -500,43 +396,42 @@ class Thread
         $autoload = str_replace("\$__JSONNEWARGS = []", "\$__JSONNEWARGS = " . $jsonNewArgs, $autoload);
         $autoload = str_replace("\$__CLASSNAME = \"\"", "\$__CLASSNAME = \"" . $className . "\"", $autoload);
         $autoload = str_replace("{RANDOMKEY}", md5(microtime(true) . "" . rand(-100, 100)), $autoload);
-
+        if (DEV_MODE) echo "[THREAD] Parsed [" . round(microtime(true) - $microtime, 6) . "]\n";
         $port = 0;
-        $initCode = "";
         $__dm = __DataManager1::GetInstance();
-        if (!$fast)
+        if ($__dm == null)
         {
-            if ($__dm == null)
+            $port = rand(10000, 60000);
+            if (DEV_MODE) echo "[THREAD] Creating socket for check port [" . round(microtime(true) - $microtime, 6) . "]\n";
+            if( !($sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
             {
-                $port = rand(10000, 60000);
-                if( !($sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
+                $errorcode = socket_last_error();
+                $errormsg = socket_strerror($errorcode);
+                $e = new NewThreadException("Failed to create socket");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            while (true)
+            {
+                if (!@socket_bind($sock, "127.0.0.1", $port))
                 {
                     $errorcode = socket_last_error();
                     $errormsg = socket_strerror($errorcode);
 
-                    throw new NewThreadException("Failed to create socket");
+                    $port = rand(10000, 60000);
                 }
-                while (true)
+                else
                 {
-                    if (!@socket_bind($sock, "127.0.0.1", $port))
-                    {
-                        $errorcode = socket_last_error();
-                        $errormsg = socket_strerror($errorcode);
-
-                        $port = rand(10000, 60000);
-                    }
-                    else
-                    {
-                        socket_close($sock);
-                        break;
-                    }
+                    socket_close($sock);
+                    break;
                 }
-            }
-            else
-            {
-                $port = $__dm->__GetPort();
             }
         }
+        else
+        {
+            $port = $__dm->__GetPort();
+        }
+
         if (strtolower(substr($autoload, 0, 5)) == "<" . "?" . "php")
         {
             $autoload = substr($autoload, 5, strlen($autoload) - 5);
@@ -545,11 +440,12 @@ class Thread
         {
             $autoload = substr($autoload, 2, strlen($autoload) - 2);
         }
-
+        if (DEV_MODE) echo "[THREAD] Continuing parsing [" . round(microtime(true) - $microtime, 6) . "]\n";
         $autoload = str_replace("\$port = 0x0000", "\$port = " . $port, $autoload);
         $autoload = str_replace("__DIR__", "\"" . $pathToPharContent . "\"", $autoload);
         $autoload = str_replace("\"" . $pathToPharContent . "\" . DIRECTORY_SEPARATOR", "\"" . $pathToPharContent . "\"", $autoload);
         $autoload = str_replace(["\n", "\r", "    "], ["", "", ""], $autoload);
+        if (DEV_MODE) echo "[THREAD] Parsed again [" . round(microtime(true) - $microtime, 6) . "]\n";
         $cmd = $phpCmd . " -r \"eval(base64_decode('" . base64_encode($autoload) . "'));\"";
         if (self::IsWindows())
         {
@@ -557,48 +453,57 @@ class Thread
             $redirect = " 1>&2";
             $clearcmd = $cmd;
             $cmd = $startbi . $cmd . $redirect;
-
+            if (DEV_MODE) echo "[THREAD] Starting thread [" . round(microtime(true) - $microtime, 6) . "]\n";
             $proc = proc_open($cmd, [], $pipes);
             proc_close($proc);
+            if (DEV_MODE) echo "[THREAD] Started [" . round(microtime(true) - $microtime, 6) . "]\n";
         }
         else
         {
+            if (DEV_MODE) echo "[THREAD] Starting thread [" . round(microtime(true) - $microtime, 6) . "]\n";
             $cmd .= " 1> /proc/" . $parentPid . "/fd/1 & 2> /proc/" . $parentPid . "/fd/2 &";
             exec($cmd);
+            if (DEV_MODE) echo "[THREAD] Started [" . round(microtime(true) - $microtime, 6) . "]\n";
         }
 
         $runtime = null;
-        if (!$fast)
+        if ($__dm == null)
         {
-            if ($__dm == null)
+            if (DEV_MODE) echo "[THREAD] Creating socket [" . round(microtime(true) - $microtime, 6) . "]\n";
+            if ( !($sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
             {
-                if ( !($sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
-                {
-                    $errorcode = socket_last_error();
-                    $errormsg = socket_strerror($errorcode);
-
-                    throw new NewThreadException("Failed to create socket");
-                }
-
-                if (!socket_bind($sock, "127.0.0.1", $port))
-                {
-                    $errorcode = socket_last_error();
-                    $errormsg = socket_strerror($errorcode);
-
-                    throw new NewThreadException("Failed to bind port " . $port);
-                }
-                $__dm = new __DataManager1($sock, $port);
+                $errorcode = socket_last_error();
+                $errormsg = socket_strerror($errorcode);
+                $e = new NewThreadException("Failed to create socket");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
-            else
+            if (DEV_MODE) echo "[THREAD] Binding port [" . round(microtime(true) - $microtime, 6) . "]\n";
+            if (!socket_bind($sock, "127.0.0.1", $port))
             {
-                $sock = $__dm->__GetSock();
+                $errorcode = socket_last_error();
+                $errormsg = socket_strerror($errorcode);
+
+                $e = new NewThreadException("Failed to bind port " . $port);
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
-            $thrinfo = $__dm->__Pid();
-            $remote_port = $thrinfo[0];
-            $childPid = $thrinfo[1];
-            $runtime = new Threaded($childPid, $newArgs, $className, $sock, $remote_port, $handler);
+            $__dm = new __DataManager1($sock, $port);
+            if (DEV_MODE) echo "[THREAD] OK [" . round(microtime(true) - $microtime, 6) . "]\n";
         }
+        else
+        {
+            $sock = $__dm->__GetSock();
+        }
+        if (DEV_MODE) echo "[THREAD] Getting thrinfo [" . round(microtime(true) - $microtime, 6) . "]\n";
+        $thrinfo = $__dm->__Pid();
+        $remote_port = $thrinfo[0];
+        $childPid = $thrinfo[1];
+        if (DEV_MODE) echo "[THREAD] Creating object [" . round(microtime(true) - $microtime, 6) . "]\n";
+        $runtime = new Threaded($childPid, $newArgs, $className, $sock, $remote_port, $handler);
+
         self::$childThreads[] = $runtime;
+        if (DEV_MODE) echo "[THREAD] Everything done! [" . round(microtime(true) - $microtime, 6) . "]\n";
         return $runtime;
     }
 }

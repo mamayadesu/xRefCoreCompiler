@@ -7,8 +7,13 @@ namespace HttpServer;
  * @package HttpServer
  */
 
-class Response
+final class Response
 {
+    /**
+     * @ignore
+     */
+    private string $response = "";
+
     /**
      * @ignore
      */
@@ -141,7 +146,7 @@ class Response
      *
      * @param string $message
      */
-    public function End(string $message)
+    public function End(string $message) : void
     {
         $connect = $this->connect;
         $data = "";
@@ -154,5 +159,16 @@ class Response
         fwrite($connect, $data);
         fclose($connect);
         $this->closed = true;
+        $this->response = $data;
+    }
+
+    /**
+     * Returns full response with all headers
+     *
+     * @return string
+     */
+    public function GetFullResponse() : string
+    {
+        return $this->response;
     }
 }

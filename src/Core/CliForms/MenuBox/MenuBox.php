@@ -105,7 +105,9 @@ class MenuBox extends ListBox
     {
         if (!MenuBoxTypes::HasItem($menuBoxType))
         {
-            throw new InvalidMenuBoxTypeException("Invalid menu box type given");
+            $e = new InvalidMenuBoxTypeException("Invalid menu box type given");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         parent::__construct($title);
         $this->mythis = $mythis;
@@ -127,7 +129,9 @@ class MenuBox extends ListBox
     {
         if (!$item instanceof MenuBoxItem)
         {
-            throw new InvalidArgumentsPassed("Item must be instance of MenuBoxItem, " . get_class($item) . " given.");
+            $e = new InvalidArgumentsPassed("Item must be instance of MenuBoxItem, " . get_class($item) . " given.");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $this->items[] = $item;
         return $this;
@@ -500,7 +504,9 @@ class MenuBox extends ListBox
     {
         if (count($this->items) == 0)
         {
-            throw new NoItemsAddedException("No items added to items collection. Nothing to render.");
+            $e = new NoItemsAddedException("No items added to items collection. Nothing to render.");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $output = $selectedItemStr = "";
         $cleared = false;
@@ -641,7 +647,9 @@ class MenuBox extends ListBox
     {
         if (count($this->items) == 0)
         {
-            throw new NoItemsAddedException("No items added to items collection. Nothing to render.");
+            $e = new NoItemsAddedException("No items added to items collection. Nothing to render.");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         if ($this->IsClosed())
         {

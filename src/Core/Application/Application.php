@@ -83,7 +83,7 @@ class Application
     }
 
     /**
-     * Returns a framework version
+     * Returns a xRefCore version
      *
      * @return string Framework version
      */
@@ -107,10 +107,54 @@ class Application
         {
             cli_set_process_title($title);
         }
-        catch (\Exception $e)
+        catch (\Throwable $e)
         {
 
         }
+    }
+
+    /**
+     * Returns a current username
+     *
+     * @return string
+     */
+    public static function GetUsername() : string
+    {
+        if (IS_WINDOWS)
+        {
+            return $_SERVER["USERNAME"];
+        }
+        return $_SERVER["LOGNAME"];
+    }
+
+    /**
+     * Returns a home directory of current user (in Windows is C:\Users\your_username, in *unix systems is /home/your_username or /root)
+     *
+     * @return string
+     */
+    public static function GetHomeDirectory() : string
+    {
+        if (IS_WINDOWS)
+        {
+            return $_SERVER["USERPROFILE"];
+        }
+        return $_SERVER["HOME"];
+    }
+
+    /**
+     * Returns TRUE if your application started with Administrator's permissions.
+     *
+     * @return bool
+     */
+    public static function AmIRunningAsSuperuser() : bool
+    {
+        if (IS_WINDOWS)
+        {
+            $output = [];
+            exec("net session 1>NUL 2>NUL || (echo 0)", $output);
+            return (count($output) == 0);
+        }
+        return posix_getuid() == 0;
     }
 
     /**
@@ -118,7 +162,7 @@ class Application
      *
      * @param array<int, string> $args List of arguments
      * @param string $propertyNameDelimiter Delimiter for key name (for example "-" or "--")
-     * @param bool $skipFirstElement If true, skips first element of $args
+     * @param bool $skipFirstElement If true, skips the first element of $args. Usually the first element is path to your application
      * @return array = [
      *  'arguments' => (array<string, string>) Values with keys
      *  'unnamed_values' => (array<int, string>) Values without keys

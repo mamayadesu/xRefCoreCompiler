@@ -167,7 +167,9 @@ class Threaded
     {
         if ($this->threadshutdown)
         {
-            throw new AccessToClosedThreadException("Cannot synchronize with thread, because thread is closed", E_USER_WARNING);
+            $e = new AccessToClosedThreadException("Cannot synchronize with thread, because thread is closed", E_USER_WARNING);
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $__dm = __DataManager1::GetInstance();
         while (true)
@@ -225,7 +227,9 @@ class Threaded
             {
                 if (!self::check($result))
                 {
-                    throw new InvalidResultReceivedException("Method result can be only void, string, integer, array, boolean, float, double or long", E_USER_WARNING);
+                    $e = new InvalidResultReceivedException("Method result can be only void, string, integer, array, boolean, float, double or long", E_USER_WARNING);
+                    $e->__xrefcoreexception = true;
+                    throw $e;
                 }
             }
 
@@ -260,7 +264,9 @@ class Threaded
             }
             else
             {
-                throw new BadDataAccessException("Failed to access data from threaded class");
+                $e = new BadDataAccessException("Failed to access data from threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         if (!socket_sendto($this->sock, $json, strlen($json), 0, "127.0.0.1", $this->port))
@@ -271,9 +277,10 @@ class Threaded
             }
             else
             {
-                throw new BadDataAccessException("Failed to access data from threaded class");
+                $e = new BadDataAccessException("Failed to access data from threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
-            return;
         }
     }
 

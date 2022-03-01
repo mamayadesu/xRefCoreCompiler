@@ -62,7 +62,9 @@ class ChildThreadedObject
         {
             if (!self::check($key) || !self::check($value))
             {
-                throw new InvalidArgumentsPassedException("Arguments can be only string, integer, array, boolean, float, double or long");
+                $e = new InvalidArgumentsPassedException("Arguments can be only string, integer, array, boolean, float, double or long");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         $__dm = __DataManager1::GetInstance();
@@ -81,22 +83,30 @@ class ChildThreadedObject
         {
             if (!$this->__0thread->IsRunning())
             {
-                throw new AccessToClosedThreadException("Unable to call a function from threaded class, because child thread was closed");
+                $e = new AccessToClosedThreadException("Unable to call a function from threaded class, because child thread is closed");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
             else
             {
-                throw new BadMethodCallException("Failed to call a method from threaded class");
+                $e = new BadMethodCallException("Failed to call a method from threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
-                throw new AccessToClosedThreadException("Unable to call a method from threaded class, because thread closed");
+                $e = new AccessToClosedThreadException("Unable to call a method from threaded class, because thread is closed");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
             else
             {
-                throw new BadMethodCallException("Failed to call a method from threaded class");
+                $e = new BadMethodCallException("Failed to call a method from threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         $r = $__dm->__Read($this->__0port);
@@ -107,7 +117,9 @@ class ChildThreadedObject
         $__dm->__Fetch();
         if (isset($r["act"]) && $r["act"] == "threadstop")
         {
-            throw new AccessToClosedThreadException("Unable to call a function in threaded class, because thread closed");
+            $e = new AccessToClosedThreadException("Unable to call a function in threaded class, because thread is closed");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $type = $r["t"];
         if ($type != "void")
@@ -141,22 +153,30 @@ class ChildThreadedObject
         {
             if (!$this->__0thread->IsRunning())
             {
-                throw new AccessToClosedThreadException("Unable to access data from threaded class, because thread closed");
+                $e = new AccessToClosedThreadException("Unable to access data from threaded class, because thread is closed");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
             else
             {
-                throw new BadDataAccessException("Failed to access data from threaded class");
+                $e = new BadDataAccessException("Failed to access data from threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
-                throw new AccessToClosedThreadException("Unable to access data from threaded class, because thread closed");
+                $e = new AccessToClosedThreadException("Unable to access data from threaded class, because thread is closed");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
             else
             {
-                throw new BadDataAccessException("Failed to access data from threaded class");
+                $e = new BadDataAccessException("Failed to access data from threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         $r = $__dm->__Read($this->__0port);
@@ -167,7 +187,9 @@ class ChildThreadedObject
         $__dm->__Fetch();
         if (isset($r["act"]) && $r["act"] == "threadstop")
         {
-            throw new AccessToClosedThreadException("Unable to get property from threaded class, because thread closed");
+            $e = new AccessToClosedThreadException("Unable to get property from threaded class, because thread is closed");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $type = $r["t"];
         if ($type != "void")
@@ -187,7 +209,9 @@ class ChildThreadedObject
     {
         if (!self::check($value))
         {
-            throw new InvalidArgumentsPassedException("Value can be only string, integer, array, boolean, float, double or long");
+            $e = new InvalidArgumentsPassedException("Value can be only string, integer, array, boolean, float, double or long");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $eventId = md5("" . time() . rand(0, 100) . rand(-100, 100) . rand(-1000, 1000) . rand(-1000, 1000));
         $__dm = __DataManager1::GetInstance();
@@ -205,22 +229,30 @@ class ChildThreadedObject
         {
             if (!$this->__0thread->IsRunning())
             {
-                throw new AccessToClosedThreadException("Unable to access data from threaded class, because thread closed");
+                $e = new AccessToClosedThreadException("Unable to access data from threaded class, because thread is closed");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
             else
             {
-                throw new BadDataAccessException("Failed to access data from threaded class");
+                $e = new AccessToClosedThreadException("Unable to access data from threaded class, because thread is closed");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
-                throw new AccessToClosedThreadException("Unable to access data from threaded class, because thread closed");
+                $e = new AccessToClosedThreadException("Unable to access data from threaded class, because thread is closed");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
             else
             {
-                throw new BadDataAccessException("Failed to access data from threaded class");
+                $e = new BadDataAccessException("Failed to access data from threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
             return;
         }
@@ -233,7 +265,9 @@ class ChildThreadedObject
         $__dm->__Fetch();
         if (isset($r["act"]) && $r["act"] == "threadstop")
         {
-            throw new AccessToClosedThreadException("Unable to set property in threaded class, because thread stopped");
+            $e = new AccessToClosedThreadException("Unable to set property in threaded class, because thread is closed");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
     }
 

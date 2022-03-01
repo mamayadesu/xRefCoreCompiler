@@ -1,10 +1,14 @@
 <?php
 
+define("IS_WINDOWS", (strtoupper(substr(PHP_OS, 0, 3)) == "WIN"));
+
 $_ALREADY_REGISTERED = [];
-$_QUEUE = [];
+$GLOBALS["__QUEUE"] = [];
+$GLOBALS["__QUEUE1"] = [];
+$GLOBALS["__QUEUE2"] = [];
 function including($path)
 {
-    global $_ALREADY_REGISTERED, $_QUEUE, $dev;
+    global $_ALREADY_REGISTERED, $microtime, $argv;
     $regex = "/Class \'(.*?)\' not found/";
     $regex1 = "/Interface \'(.*?)\' not found/";
     $regex2 = "/Trait \'(.*?)\' not found/";
@@ -34,7 +38,7 @@ function including($path)
                 {
                     continue;
                 }
-                if ($dev) echo "Registering " . $obj1 . "\n";
+                if (DEV_MODE) echo "Registering " . $obj1 . " [" . round((microtime(true) - $microtime), 6) . "]\n";
                 
                 try
                 {
@@ -57,25 +61,47 @@ function including($path)
                     }
                     else
                     {
-                        die($e->getMessage());
+                        $err = $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine();
+                        if (defined("APPLICATION"))
+                        {
+                            $file = $e->getFile();
+                            $fileSplitted = explode(DIRECTORY_SEPARATOR, $file);
+                            for ($i = 1; $i <= count(explode(DIRECTORY_SEPARATOR, dirname($argv[0]))); $i++)
+                            {
+                                array_shift($fileSplitted);
+                            }
+                            $err = $e->getMessage() . " in " . implode(DIRECTORY_SEPARATOR, $fileSplitted) . " on line " . $e->getLine();
+                            echo $err;
+                        }
+                        else
+                        {
+                            fwrite(STDERR, $err);
+                        }
+                        die(255);
                     }
-                    if (!isset($_QUEUE[$missingClass]))
+                    if (!isset($GLOBALS["__QUEUE"][$missingClass]))
                     {
-                        $_QUEUE[$missingClass] = [];
+                        $GLOBALS["__QUEUE"][$missingClass] = [];
+                        $GLOBALS["__QUEUE1"][$missingClass] = [];
+                        $GLOBALS["__QUEUE2"][$missingClass] = [];
                     }
-                    if ($dev) echo "Package " . $obj1 . " is missing '" . $missingClass . "'. Waiting when this class will be loaded...\n";
-                    $_QUEUE[$missingClass][$obj1] = $obj1;
+                    if (DEV_MODE) echo "Package " . $obj1 . " is missing '" . $missingClass . "'. Waiting when this class will be loaded... [" . round((microtime(true) - $microtime), 6) . "]\n";
+                    $GLOBALS["__QUEUE"][$missingClass][$obj1] = $obj1;
+                    $GLOBALS["__QUEUE1"][$missingClass][$obj1] = $e->getFile();
+                    $GLOBALS["__QUEUE2"][$missingClass][$obj1] = $e->getLine();
                 }
-                if (count($_QUEUE) > 0)
+                if (count($GLOBALS["__QUEUE"]) > 0)
                 {
-                    foreach ($_QUEUE as $notLoadedClass => $value)
+                    foreach ($GLOBALS["__QUEUE"] as $notLoadedClass => $value)
                     {
                         if (class_exists($notLoadedClass) || interface_exists($notLoadedClass))
                         {
-                            foreach ($_QUEUE[$notLoadedClass] as $queueFileName => $value1)
+                            foreach ($GLOBALS["__QUEUE"][$notLoadedClass] as $queueFileName => $value1)
                             {
-                                unset($_QUEUE[$notLoadedClass][$queueFileName]);
-                                if ($dev) echo "'" . $notLoadedClass . "' was loaded! Trying to register " . $queueFileName . "\n";
+                                unset($GLOBALS["__QUEUE"][$notLoadedClass][$queueFileName]);
+                                unset($GLOBALS["__QUEUE1"][$notLoadedClass][$queueFileName]);
+                                unset($GLOBALS["__QUEUE2"][$notLoadedClass][$queueFileName]);
+                                if (DEV_MODE) echo "'" . $notLoadedClass . "' was loaded! Trying to register " . $queueFileName . " [" . round((microtime(true) - $microtime), 6) . "]\n";
                                 try
                                 {
                                     require $queueFileName;
@@ -97,14 +123,34 @@ function including($path)
                                     }
                                     else
                                     {
-                                        die($e->getMessage());
+                                        $err = $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine();
+                                        if (defined("APPLICATION"))
+                                        {
+                                            $file = $e->getFile();
+                                            $fileSplitted = explode(DIRECTORY_SEPARATOR, $file);
+                                            for ($i = 1; $i <= count(explode(DIRECTORY_SEPARATOR, dirname($argv[0]))); $i++)
+                                            {
+                                                array_shift($fileSplitted);
+                                            }
+                                            $err = $e->getMessage() . " in " . implode(DIRECTORY_SEPARATOR, $fileSplitted) . " on line " . $e->getLine();
+                                            echo $err;
+                                        }
+                                        else
+                                        {
+                                            fwrite(STDERR, $err);
+                                        }
+                                        die(255);
                                     }
-                                    if (!isset($_QUEUE[$missingClass1]))
+                                    if (!isset($GLOBALS["__QUEUE"][$missingClass1]))
                                     {
-                                        $_QUEUE[$missingClass1] = [];
+                                        $GLOBALS["__QUEUE"][$missingClass1] = [];
+                                        $GLOBALS["__QUEUE1"][$missingClass1] = [];
+                                        $GLOBALS["__QUEUE2"][$missingClass1] = [];
                                     }
-                                    if ($dev) echo "And now package " . $obj1 . " is missing '" . $missingClass . "'. Okay... waiting when this class will be loaded...\n";
-                                    $_QUEUE[$missingClass1][$obj1] = $obj1;
+                                    if (DEV_MODE) echo "And now package " . $obj1 . " is missing '" . $missingClass1 . "'. Okay... waiting when this class will be loaded... [" . round((microtime(true) - $microtime), 6) . "]\n";
+                                    $GLOBALS["__QUEUE"][$missingClass1][$obj1] = $obj1;
+                                    $GLOBALS["__QUEUE1"][$missingClass1][$obj1] = $e->getFile();
+                                    $GLOBALS["__QUEUE2"][$missingClass1][$obj1] = $e->getLine();
                                 }
                             }
                         }
@@ -123,24 +169,11 @@ function including($path)
     }
 }
 
-if (count($_QUEUE) > 0)
-{
-    echo "Next packages could not be loaded:\n";
-    foreach ($_QUEUE as $notLoadedClass)
-    {
-        foreach ($_QUEUE[$notLoadedClass] as $notLoadedPackage)
-        {
-            echo $notLoadedPackage . " is missing " . $notLoadedClass;
-        }
-    }
-    die(255);
-}
-
-if ($dev) echo "Reading app.json\n";
+if (DEV_MODE) echo "Reading app.json [" . round((microtime(true) - $microtime), 6) . "]\n";
 
 $_APP = json_decode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . "app.json"), true);
 $__FILE__ = __FILE__;
-if ($dev) var_dump($_APP);
+if (DEV_MODE) var_dump($_APP);
 
 $namespaces = $_APP["namespaces"];
 
@@ -158,14 +191,12 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.9.1.0";
+    return "1.9.2.0";
 }
-
-$is_windows = (strtoupper(substr(PHP_OS, 0, 3)) == "WIN");
 
 function __CHECK_READKEY() : string
 {
-    global $dev;
+    global $microtime;
     $hash = "4c5b90bfc69c23b6e2487a490bcdf1af";
     $readkey_path = sys_get_temp_dir() . "\\";
     $readkey_file = $readkey_path . "readkey" . __GET_FRAMEWORK_VERSION() . ".exe";
@@ -183,11 +214,93 @@ function __CHECK_READKEY() : string
     {
         if (!$check_hash)
         {
-            if ($dev) echo "Deleting readkey.exe";
+            if (DEV_MODE) echo "Deleting readkey.exe [" . round((microtime(true) - $microtime), 6) . "]\n";
             \IO\FileDirectory::Delete($readkey_file);
         }
-        if ($dev) echo "Copying readkey.exe\n";
+        if (DEV_MODE) echo "Copying readkey.exe [" . round((microtime(true) - $microtime), 6) . "]\n";
         \IO\FileDirectory::Copy(dirname(__FILE__) . "/Core/IO/readkey.exe", $readkey_file);
     }
     return $readkey_file;
 }
+
+function __EXCEPTION_HANDLER(Throwable $e) : void
+{
+    global $argv;
+    $file = $e->getFile();
+    $line = $e->getLine();
+    $trace = $e->getTrace();
+    array_pop($trace);
+    //array_pop($trace);
+    $traceLength = count($trace);
+    if (MAIN_THREAD)
+    {
+        $trace[$traceLength - 1]["file"] = "{main}";
+    }
+    else
+    {
+        $trace[$traceLength - 1]["file"] = "{thread}";
+    }
+    $trace[$traceLength - 1]["line"] = 0;
+    if (isset($e->__xrefcoreexception) && $e->__xrefcoreexception)
+    {
+        $file = $trace[0]["file"];
+        $line = $trace[0]["line"];
+        array_shift($trace);
+        $traceLength = count($trace);
+    }
+    if (defined("APPLICATION"))
+    {
+        $fileSplitted = explode(DIRECTORY_SEPARATOR, $file);
+        for ($i = 1; $i <= count(explode(DIRECTORY_SEPARATOR, dirname($argv[0]))); $i++)
+        {
+            array_shift($fileSplitted);
+        }
+        $file = implode(DIRECTORY_SEPARATOR, $fileSplitted);
+    }
+    $err = "\nUncaught " . get_class($e) . " '" . $e->getMessage() . "' in " . $file . " on line " . $line . "\nStack trace:\n";
+    foreach ($trace as $idx => $row)
+    {
+        if ($idx != $traceLength - 1)
+        {
+            $row["line"] = " on line " . $row["line"];
+        }
+        else
+        {
+            $row["line"] = "";
+        }
+        $arguments = [];
+        foreach ($row["args"] as $arg)
+        {
+            switch (gettype($arg))
+            {
+                case "string":
+                    $arguments[] = "\"" . $arg . "\"";
+                    break;
+
+                case "integer":
+                case "float":
+                case "double":
+                    $arguments[] = $arg . "";
+                    break;
+
+                case "array":
+                    $arguments[] = "Array";
+                    break;
+
+                case "object":
+                    $arguments[] = get_class($arg);
+                    break;
+            }
+        }
+        $err .= "    ...in " . $row["file"] . " [" . $row["class"] . $row["type"] . $row["function"] . "(" . implode(", ", $arguments) . ")]" . $row["line"] . "\n";
+    }
+    $err .= "\n";
+    if (defined("APPLICATION"))
+    {
+        fwrite(STDERR, $err);
+    }
+    else echo $err;
+    exit(255);
+}
+
+set_exception_handler("__EXCEPTION_HANDLER");

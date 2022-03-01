@@ -23,7 +23,9 @@ abstract class Enum
     {
         if (!self::$preventException)
         {
-            throw new CreateEnumInstanceException("Cannot create instance of Enum/" . get_class($this));
+            $e = new CreateEnumInstanceException("Cannot create instance of Enum/" . get_class($this));
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
     }
 

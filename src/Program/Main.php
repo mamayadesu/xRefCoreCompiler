@@ -19,22 +19,28 @@ class Main
 
     public function __construct(array $args)
     {
-        $pargs = Application::ParseArguments($args, "--");
-        if (in_array("configure", $pargs["uninitialized_keys"]))
+        $pargs = Application::ParseArguments($args, "-");
+        if (in_array("-configure", $pargs["uninitialized_keys"]) || in_array("c", $pargs["uninitialized_keys"]))
         {
             Utils::Configure();
             exit;
         }
 
-        if (in_array("prepare-project", $pargs["uninitialized_keys"]))
+        if (in_array("-prepare-project", $pargs["uninitialized_keys"]) || in_array("p", $pargs["uninitialized_keys"]))
         {
             Utils::PrepareProject();
             exit;
         }
 
-        if (in_array("version", $pargs["uninitialized_keys"]))
+        if (in_array("-version", $pargs["uninitialized_keys"]) || in_array("v", $pargs["uninitialized_keys"]))
         {
             Utils::Version();
+            exit;
+        }
+
+        if (in_array("-help", $pargs["uninitialized_keys"]) || in_array("h", $pargs["uninitialized_keys"]))
+        {
+            Utils::Help();
             exit;
         }
 
@@ -50,11 +56,11 @@ class Main
         $this->InitAppPropertyToName();
         $projectDir = getcwd() . $ds;
         $projectDirSetManually = false;
-        if (isset($pargs["arguments"]["projectdir"]))
+        if (isset($pargs["arguments"]["-projectdir"]))
         {
-            if (is_dir($pargs["arguments"]["projectdir"]))
+            if (is_dir($pargs["arguments"]["-projectdir"]))
             {
-                $projectDir = $pargs["arguments"]["projectdir"];
+                $projectDir = $pargs["arguments"]["-projectdir"];
                 if (str_split($projectDir)[strlen($projectDir) - 1] != $ds)
                 {
                     $projectDir .= $ds;
@@ -66,16 +72,16 @@ class Main
                 Console::WriteLine("Folder " . $pargs["arguments"]["projectdir"] . " not found", ForegroundColors::YELLOW);
             }
         }
-        if (isset($pargs["arguments"]["debug"]))
+        if (isset($pargs["arguments"]["-debug"]))
         {
             $this->debugMode = ($pargs["arguments"]["debug"] == "1");
         }
         $skip = false;
-        if (isset($pargs["arguments"]["skip"]))
+        if (isset($pargs["arguments"]["-skip"]))
         {
             $skip = ($pargs["arguments"]["skip"] == "1" ? true : false);
         }
-        if (in_array("build", $pargs["uninitialized_keys"]))
+        if (in_array("-build", $pargs["uninitialized_keys"]) || in_array("b", $pargs["uninitialized_keys"]))
         {
             $skip = true;
         }
@@ -192,7 +198,23 @@ class Main
                 fwrite($f, $appJsonString);
             }
         }
-        $appJsonString = json_encode($appJson, JSON_PRETTY_PRINT);
+        else
+        {
+            if (isset($appJson["framework_version"]) && version_compare(Application::GetFrameworkVersion(), $appJson["framework_version"], '<'))
+            {
+                Console::WriteLine("WARNING! This application was created on higher version of xRefCoreCompiler (" . $appJson["framework_version"] . "). Your version is " . Application::GetFrameworkVersion() . ". After or while compilation it may has some errors. Do you really want to compile it anyway? (y - yes | n - no): ", ForegroundColors::YELLOW);
+                $r = Console::ReadLine();
+                if (strtolower($r) != "y")
+                {
+                    Console::WriteLine("Compilation aborted.");
+                    exit(255);
+                }
+            }
+            $appJson["framework_version"] = Application::GetFrameworkVersion();
+            $appJsonString = json_encode($appJson, JSON_PRETTY_PRINT);
+            $f = fopen($projectDir . "app.json", "w");
+            fwrite($f, $appJsonString);
+        }
         $tempDir = sys_get_temp_dir() . $ds . md5($appJsonString . rand(1, 100000) . time()) . $ds;
         while (is_dir($tempDir))
         {
@@ -262,6 +284,15 @@ class Main
                 return false;
             }
         }
+        exec(PHP_BINARY . " \"" . $dir . "checker.php\"", $output, $code);
+        if ($code == 255)
+        {
+            Console::WriteLine("Failed to build. Check errors below.", ForegroundColors::RED);
+            Console::WriteLine("\n" . implode("\n", $output));
+            @rmdir($dir);
+            return false;
+        }
+        FileDirectory::Delete($dir . "checker.php");
         try
         {
             $phar = new \Phar($filename);
@@ -424,13 +455,13 @@ class Main
                 }
                 $a = "";
                 Console::WriteLine($title . ":");
-                Console::WriteLine("Input value on each line. In the end write #stop");
+                Console::WriteLine("Input value on each line. Leave the last line empty to stop");
                 while ($a != "#stop" || $a == "")
                 {
                     $a = Console::ReadLine();
                     if ($a == "")
                     {
-                        continue;
+                        break;
                     }
                     if ($a == "Program")
                     {
@@ -441,10 +472,6 @@ class Main
                     {
                         Console::WriteLine("Input ONLY roots of namespaces.", ForegroundColors::RED);
                         continue;
-                    }
-                    if ($a == "#stop")
-                    {
-                        break;
                     }
                     $appJson[$propRealName][] = $a;
                 }
@@ -464,6 +491,7 @@ class Main
                 }
             }
         }
+        $appJson["framework_version"] = Application::GetFrameworkVersion();
         return $appJson;
     }
 }

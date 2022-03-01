@@ -34,7 +34,9 @@ class SuperGlobalArray
     {
         if (self::$instance != null)
         {
-            throw new SystemMethodCallException();
+            $e = new SystemMethodCallException("This class cannot be initialized");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
 
         self::$instance = $this;
@@ -47,7 +49,9 @@ class SuperGlobalArray
     {
         if ($this->sga != null)
         {
-            throw new SystemMethodCallException();
+            $e = new SystemMethodCallException("This class cannot be initialized");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $this->sga = $sga;
     }
@@ -105,6 +109,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
 
@@ -113,6 +118,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
 
@@ -120,8 +126,9 @@ class SuperGlobalArray
         {
             return $result["r"];
         }
-
-        throw new UnknownErrorException("An unknown error occurred");
+        $e = new UnknownErrorException("An unknown error occurred");
+        $e->__xrefcoreexception = true;
+        throw $e;
     }
 
     /**
@@ -151,6 +158,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
 
@@ -159,6 +167,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
 
@@ -166,8 +175,9 @@ class SuperGlobalArray
         {
             return;
         }
-
-        throw new UnknownErrorException("An unknown error occurred");
+        $e = new UnknownErrorException("An unknown error occurred");
+        $e->__xrefcoreexception = true;
+        throw $e;
     }
 
     /**
@@ -197,6 +207,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
 
@@ -205,6 +216,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
 
@@ -212,8 +224,9 @@ class SuperGlobalArray
         {
             return;
         }
-
-        throw new UnknownErrorException("An unknown error occurred");
+        $e = new UnknownErrorException("An unknown error occurred");
+        $e->__xrefcoreexception = true;
+        throw $e;
     }
 
     /**
@@ -243,6 +256,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
 
@@ -251,6 +265,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
 
@@ -258,8 +273,9 @@ class SuperGlobalArray
         {
             return $result["r"];
         }
-
-        throw new UnknownErrorException("An unknown error occurred");
+        $e = new UnknownErrorException("An unknown error occurred");
+        $e->__xrefcoreexception = true;
+        throw $e;
     }
 
     /**
@@ -288,6 +304,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
 
@@ -296,6 +313,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
 
@@ -303,8 +321,9 @@ class SuperGlobalArray
         {
             return;
         }
-
-        throw new UnknownErrorException("An unknown error occurred");
+        $e = new UnknownErrorException("An unknown error occurred");
+        $e->__xrefcoreexception = true;
+        throw $e;
     }
 
     /**
@@ -336,6 +355,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
         if ($result["t"] == "kne")
@@ -343,6 +363,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
         if ($result["t"] == "ivt")
@@ -353,6 +374,7 @@ class SuperGlobalArray
             $ivt->Operator = $result["o"];
             $ivt->Operators = $result["ops"];
             $ivt->Value = $result["v"];
+            $ivt->__xrefcoreexception = true;
             throw $ivt;
         }
         if ($result["t"] == "incop")
@@ -361,6 +383,7 @@ class SuperGlobalArray
             $incop->Value = $result["v"];
             $incop->Operator = $result["o"];
             $incop->Operators = $result["ops"];
+            $incop->__xrefcoreexception = true;
             throw $incop;
         }
     }
@@ -388,6 +411,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
 
@@ -396,6 +420,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
 
@@ -403,8 +428,9 @@ class SuperGlobalArray
         {
             return $result["r"];
         }
-
-        throw new UnknownErrorException("An unknown error occurred");
+        $e = new UnknownErrorException("An unknown error occurred");
+        $e->__xrefcoreexception = true;
+        throw $e;
     }
 
     /**
@@ -428,6 +454,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
 
@@ -436,6 +463,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
 
@@ -443,8 +471,9 @@ class SuperGlobalArray
         {
             return;
         }
-
-        throw new UnknownErrorException("An unknown error occurred");
+        $e = new UnknownErrorException("An unknown error occurred");
+        $e->__xrefcoreexception = true;
+        throw $e;
     }
 
     /**
@@ -468,6 +497,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
 
@@ -476,6 +506,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
 
@@ -483,8 +514,9 @@ class SuperGlobalArray
         {
             return;
         }
-
-        throw new UnknownErrorException("An unknown error occurred");
+        $e = new UnknownErrorException("An unknown error occurred");
+        $e->__xrefcoreexception = true;
+        throw $e;
     }
 
     /**
@@ -508,6 +540,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
 
@@ -516,6 +549,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
 
@@ -523,8 +557,9 @@ class SuperGlobalArray
         {
             return $result["r"];
         }
-
-        throw new UnknownErrorException("An unknown error occurred");
+        $e = new UnknownErrorException("An unknown error occurred");
+        $e->__xrefcoreexception = true;
+        throw $e;
     }
 
     /**
@@ -548,6 +583,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
 
@@ -556,6 +592,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
 
@@ -563,8 +600,9 @@ class SuperGlobalArray
         {
             return;
         }
-
-        throw new UnknownErrorException("An unknown error occurred");
+        $e = new UnknownErrorException("An unknown error occurred");
+        $e->__xrefcoreexception = true;
+        throw $e;
     }
 
     /**
@@ -588,6 +626,7 @@ class SuperGlobalArray
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
+            $iina->__xrefcoreexception = true;
             throw $iina;
         }
         if ($result["t"] == "kne")
@@ -595,6 +634,7 @@ class SuperGlobalArray
             $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
+            $kne->__xrefcoreexception = true;
             throw $kne;
         }
         if ($result["t"] == "ivt")
@@ -605,6 +645,7 @@ class SuperGlobalArray
             $ivt->Operator = $result["o"];
             $ivt->Operators = $result["ops"];
             $ivt->Value = $result["v"];
+            $ivt->__xrefcoreexception = true;
             throw $ivt;
         }
         if ($result["t"] == "incop")
@@ -613,6 +654,7 @@ class SuperGlobalArray
             $incop->Value = $result["v"];
             $incop->Operator = $result["o"];
             $incop->Operators = $result["ops"];
+            $incop->__xrefcoreexception = true;
             throw $incop;
         }
     }

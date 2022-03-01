@@ -6,12 +6,11 @@ namespace HttpServer;
  * Contains request data
  */
 
-class Request
+final class Request
 {
-    /**
-     * @var array Contains data like $_SERVER
-     */
-    public array $Server;
+    public string $RequestMethod, $RequestUri, $QueryString, $PathInfo, $ServerProtocol, $RemoteAddress;
+    public int $RequestTime, $ServerPort, $RemotePort, $MasterTime;
+    public float $RequestTimeFloat;
 
     /**
      * @var bool TRUE if any error was occured
@@ -39,25 +38,23 @@ class Request
             return;
         }
         $h0 = explode(' ', $headers[0]);
-        $s["request_method"] = $h0[0];
+        $this->RequestMethod = $h0[0];
 
-        $s["request_uri"] = $h0[1];
+        $this->RequestUri = $h0[1];
         if (strpos("?", $h0[1]) !== false)
         {
             $h01 = explode('?', $h0[1]);
-            $s["request_uri"] = $h01[0];
+            $this->RequestUri = $h01[0];
             array_shift($h01);
-            $s["query_string"] = implode('?', $h01);
+            $this->QueryString = implode('?', $h01);
         }
-        $s["path_info"] = $s["request_uri"];
-        $s["request_time"] = time();
-        $s["request_time_float"] = microtime(true);
-        $s["server_protocol"] = $h0[2];
-        $s["server_port"] = 0;
-        $s["remote_port"] = $remote_port;
-        $s["remote_addr"] = $remote_addr;
-        $s["master_time"] = time();
-        $this->Server = $s;
+        $this->PathInfo = $this->RequestUri;
+        $this->RequestTime = $this->MasterTime = time();
+        $this->RequestTimeFloat = microtime(true);
+        $this->ServerProtocol = $h0[2];
+        $this->ServerPort = 0;
+        $this->RemotePort = $remote_port;
+        $this->RemoteAddress = $remote_addr;
 
         $this->rc = $rawcontent;
     }

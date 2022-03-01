@@ -2,7 +2,9 @@
 
 namespace HttpServer;
 
+use HttpServer\Exceptions\ContinueStatusNotSupportedYetException;
 use HttpServer\Exceptions\ServerStartException;
+use HttpServer\Exceptions\UnknownEventException;
 
 /**
  * HTTP-server
@@ -10,7 +12,7 @@ use HttpServer\Exceptions\ServerStartException;
  * WARNING!!! This package IS EXPERIMENTAL! Use this AT OWN RISK!
  */
 
-class Server
+final class Server
 {
     /**
      * @ignore
@@ -50,24 +52,31 @@ class Server
     {
         $this->address = $addr;
         $this->port = $port;
-        $this->on("start", function (Server $server) { });
-        $this->on("shutdown", function (Server $server) { });
-        $this->on("request", function (Request $req, Response $resp) { });
+        $this->On("start", function (Server $server) { });
+        $this->On("shutdown", function (Server $server) { });
+        $this->On("request", function (Request $request, Response $response) { });
     }
 
     /**
      * Add new event
      *
      * Supported events:
-     * * start - calls when server was started
-     * * shutdown - calls when server was shutdown
-     * * request - calls when request was received
+     * * start - calls when server was started. Callback has argument `\HttpServer\Server`
+     * * shutdown - calls when server was shutdown. Callback has argument `\HttpServer\Server`
+     * * request - calls when request was received. Callback has arguments `\HttpServer\Request` and `\HttpServer\Response`
      *
      * @param string $eventName
      * @param callable $callback
      */
     public function On(string $eventName, callable $callback) : void
     {
+        $events = ["start", "shutdown", "request"];
+        if (!in_array($eventName, $events))
+        {
+            $e = new UnknownEventException("Unknown event '" . $eventName . "'. Supported events: " . implode(", ", $events));
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->registeredEvents[$eventName] = $callback;
     }
 
@@ -78,23 +87,29 @@ class Server
      */
     public function Start() : void
     {
+        if (DEV_MODE) echo "[HttpServer] Starting\n";
         $this->socket = @stream_socket_server("tcp://" . $this->address . ":" . $this->port, $errno, $errstr);
 
-        if ($errstr)
+        if ($errstr != "")
         {
-            throw new ServerStartException($errstr);
+            $e = new ServerStartException($errstr);
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
 
         $this->registeredEvents["start"]($this);
-        $headerName = $headerValue = $firstHeader = $buffer = $buffer1 = "";
+        $headerName = $headerValue = $firstHeader = $buffer = $buffer1 = $requestDump = $responseDump = "";
         $headers = [];
         $parsedHeaders = array();
         $header1 = [];
         $headersI = -1;
         $firstHeader1 = [];
         $bufferBroken = false;
+        if (DEV_MODE) echo "[HttpServer] Waiting for request\n";
         while ($this->socket != null && $connect = stream_socket_accept($this->socket, -1))
         {
+            $requestDump = "";
+            $responseDump = "";
             $bufferBroken = false;
             $headers = [];
             $parsedHeaders = array();
@@ -107,6 +122,7 @@ class Server
             {
                 if ($buffer == false)
                 {
+                    if (DEV_MODE) echo "[HttpServer] Buffer is broken\n";
                     $bufferBroken = true;
                     break;
                 }
@@ -118,6 +134,7 @@ class Server
                     $firstHeader1 = explode(' ', $firstHeader);
                     if ($firstHeader1[count($firstHeader1) - 1] != "HTTP/1.0" && $firstHeader1[count($firstHeader1) - 1] != "HTTP/1.1")
                     {
+                        if (DEV_MODE) echo "[HttpServer] Not HTTP request or wrong HTTP version\n";
                         fclose($connect);
                         $bufferBroken = true;
                         break;
@@ -131,6 +148,7 @@ class Server
             }
             if (count($headers) == 0)
             {
+                if (DEV_MODE) echo "[HttpServer] No headers.\n";
                 fclose($connect);
                 continue;
             }
@@ -145,10 +163,12 @@ class Server
                 array_shift($header1);
                 $headerValue = implode(' ', $header1);
                 $parsedHeaders[$headerName] = $headerValue;
+                $requestDump .= $headerName . ": " . $headerValue . "\n";
             }
             $body = "";
             if (isset($parsedHeaders["Content-Length"]) && intval($parsedHeaders["Content-Length"]) > 0)
             {
+                if (DEV_MODE) echo "[HttpServer] Reading content. Length " . intval($parsedHeaders["Content-Length"]) . "\n";
                 stream_set_timeout($connect, 10);
                 $contentLength = intval($parsedHeaders["Content-Length"]);
                 $body = fread($connect, intval($parsedHeaders["Content-Length"]));
@@ -156,36 +176,42 @@ class Server
             $meta = stream_get_meta_data($connect);
             if ($meta["timed_out"])
             {
+                if (DEV_MODE) echo "[HttpServer] Read timeout\n";
                 fclose($connect);
                 continue;
             }
             $body = urldecode($body);
+            $requestDump .= $body;
             $request = new Request($headers, $body, $name);
-            $request->Server["server_port"] = $this->port;
+            $request->ServerPort = $this->port;
 
             $response = new Response($connect);
             if ($request->RequestError)
             {
-                $response->end("");
+                if (DEV_MODE) echo "[HttpServer] Request Error\n";
+                $response->End("");
                 continue;
             }
             if (isset($parsedHeaders["Expect"]) && strtolower($parsedHeaders["Expect"]) == "100-continue" && strlen($body) < $parsedHeaders["Content-Length"])
             {
-                $response->status(100);
-                $response->end("");
+                if (DEV_MODE) echo "[HttpServer] Client expected 100, but 100 Continue not supported yet. Please wait for updates.\n";
+                $response->Status(405);
+                $response->End("<h1>405 Method Not Allowed</h1>");
                 continue;
             }
-            $response->header("Content-Type", "text/html");
-            $response->header("Connection", "close");
+            $response->Header("Content-Type", "text/html");
+            $response->Header("Connection", "close");
 
             $this->registeredEvents["request"]($request, $response);
             if (!$response->IsClosed())
             {
-                $response->status(500);
-                $response->end("");
+                if (DEV_MODE) echo "[HttpServer] Request could be closed, but something went wrong\n";
+                $response->Status(500);
+                $response->End("<h1>500 Internal Server Error</h1>");
             }
             if ($this->shutdownWasCalled)
             {
+                if (DEV_MODE) echo "[HttpServer] Shutting down\n";
                 fclose($this->socket);
                 $this->socket = null;
                 $this->registeredEvents["shutdown"]($this);

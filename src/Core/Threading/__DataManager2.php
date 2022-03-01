@@ -2,6 +2,8 @@
 
 namespace Threading;
 
+use Threading\Exceptions\SystemMethodCallException;
+
 /**
  * Class __DataManager2
  * @package Threading
@@ -26,7 +28,9 @@ final class __DataManager2
     {
         if (self::$instance != null)
         {
-            throw new \Exception("Do not use this class");
+            $e = new SystemMethodCallException("System class is not allowed for initializing");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $this->sock = $sock;
         $this->parentPort = $parentPort;
@@ -138,7 +142,7 @@ final class __DataManager2
         $length = strlen($json);
         $len = str_repeat("0", 16 - strlen($length . "")) . $length;
         @socket_sendto($this->sock, $len, 16, 0, "127.0.0.1", $this->parentPort);
-        @socket_sendto($this->sock, $json, $length, 0, $this->parentPort);
+        @socket_sendto($this->sock, $json, $length, 0, "127.0.0.1", $this->parentPort);
         @socket_close($this->sock);
     }
 }

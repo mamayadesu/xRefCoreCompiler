@@ -3,42 +3,40 @@
 error_reporting(E_ALL);
 
 define("MAIN_THREAD", true);
+define("DEV_MODE", false);
 
 if (!extension_loaded("sockets"))
 {
     die("Sockets extension is required!\n");
 }
 
-$dev = false;
+$microtime = microtime(true);
 
 $phar_file = \Phar::running(false);
 
 if ($phar_file == "")
 {
-    $file = basename(__FILE__);
-    if ($file != "autoload_dev.php")
-    {
-        die("The name of autoload file must be 'autoload.php'");
-    }
+    fwrite(STDERR, "You must compile application before run it.\n");
+    die(255);
 }
 
-if ($dev) echo "Initializing...\n";
+if (DEV_MODE) echo "Initializing... [" . round((microtime(true) - $microtime), 6) . "]\n";
 
 require_once "common.php";
 
-if ($dev) echo "Checking PHP-version\n";
+if (DEV_MODE) echo "Checking PHP-version [" . round((microtime(true) - $microtime), 6) . "]\n";
 if (version_compare(phpversion(), $_APP["php_version"], '<'))
 {
     die($_APP["app_name"] . " " . $_APP["app_version"] . " requires at least PHP " . $_APP["php_version"] . ". Your version of PHP is " . phpversion() . "\n");
 }
 
-if ($dev) echo "Loading core...\n";
+if (DEV_MODE) echo "Loading core... [" . round((microtime(true) - $microtime), 6) . "]\n";
 including(__DIR__ . DIRECTORY_SEPARATOR . "Core");
 
-if ($dev) echo "Setting title\n";
+if (DEV_MODE) echo "Setting title [" . round((microtime(true) - $microtime), 6) . "]\n";
 \Application\Application::SetTitle($_APP["app_name"]);
 
-if ($dev) echo "Loading classes...\n";
+if (DEV_MODE) echo "Loading classes... [" . round((microtime(true) - $microtime), 6) . "]\n";
 foreach ($namespaces as $ns)
 {
     if ($ns == "Program")
@@ -51,31 +49,60 @@ foreach ($namespaces as $ns)
 
 including(__DIR__ . DIRECTORY_SEPARATOR . "Program");
 
+$nopackagescount = 0;
+if (count($GLOBALS["__QUEUE"]) > 0)
+{
+    $err = "Next packages could not be loaded:\n";
+    foreach ($GLOBALS["__QUEUE"] as $notLoadedClass => $value)
+    {
+        foreach ($GLOBALS["__QUEUE"][$notLoadedClass] as $notLoadedPackage)
+        {
+            $nopackagescount++;
+            $err .= $notLoadedPackage . " is missing " . $notLoadedClass . " (tried to use in " . $GLOBALS["__QUEUE1"][$notLoadedClass][$notLoadedPackage] . " on line " . $GLOBALS["__QUEUE2"][$notLoadedClass][$notLoadedPackage] . ")\n";
+        }
+    }
+    if ($nopackagescount > 0)
+    {
+        if (!defined("APPLICATION"))
+        {
+            fwrite(STDERR, $err);
+        }
+        else echo $err;
+        die(255);
+    }
+}
+
+if (!class_exists("\\Program\\Main"))
+{
+    fwrite(STDERR, "\nFatal Error: Class 'Program\\Main' not found.\n\n");
+    exit(255);
+}
+
 $args = [];
 
-if ($dev) echo "Reading on-start args...\n";
+if (DEV_MODE) echo "Reading on-start args... [" . round((microtime(true) - $microtime), 6) . "]\n";
 if (isset($argv))
 {
     $args = $argv;
 }
 
-if ($dev) var_dump($args);
+if (DEV_MODE) var_dump($args);
 
-if ($dev) echo "Initializing super global array thread...\n";
+if (DEV_MODE) echo "Initializing super global array thread... [" . round((microtime(true) - $microtime), 6) . "]\n";
 $superglobalarraythreaded = \Threading\__SuperGlobalArrayThread::Run([], new \stdClass());
 
-if ($dev) echo "Initializing super global array...\n";
+if (DEV_MODE) echo "Initializing super global array... [" . round((microtime(true) - $microtime), 6) . "]\n";
 $superglobalarray = new \Threading\SuperGlobalArray();
 $superglobalarray->__setSga($superglobalarraythreaded);
 
-if ($is_windows)
+if (IS_WINDOWS)
 {
     __CHECK_READKEY();
 }
 
 function __onshutdown()
 {
-    global $superglobalarray, $superglobalarraythreaded, $is_windows;
+    global $superglobalarray, $superglobalarraythreaded;
     try
     {
         @\IO\FileDirectory::Delete($superglobalarray->__sysGet(["readkey", "path"]));
@@ -97,5 +124,5 @@ function __onshutdown()
 
 register_shutdown_function("__onshutdown");
 
-if ($dev) echo "Starting application...\n";
+if (DEV_MODE) echo "Starting application... [" . round((microtime(true) - $microtime), 6) . "]\n";
 new \Program\Main($args);

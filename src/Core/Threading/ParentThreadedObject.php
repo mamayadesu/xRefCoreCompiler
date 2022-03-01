@@ -60,7 +60,9 @@ class ParentThreadedObject
         {
             if (!self::check($key) || !self::check($value))
             {
-                throw new InvalidArgumentsPassed("Arguments can be only string, integer, array, boolean, float, double or long");
+                $e = new InvalidArgumentsPassed("Arguments can be only string, integer, array, boolean, float, double or long");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         $eventId = md5("" . time() . rand(0, 100) . rand(-100, 100) . rand(-1000, 1000) . rand(-1000, 1000));
@@ -81,7 +83,9 @@ class ParentThreadedObject
             }
             else
             {
-                throw new BadMethodCallException("Failed to call a function from parent threaded class");
+                $e = new BadMethodCallException("Failed to call a function from parent threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0me->GetParentThreadPort()))
@@ -92,7 +96,9 @@ class ParentThreadedObject
             }
             else
             {
-                throw new BadMethodCallException("Failed to call a function from parent threaded class");
+                $e = new BadMethodCallException("Failed to call a function from parent threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         $__dm = __DataManager2::GetInstance();
@@ -135,7 +141,9 @@ class ParentThreadedObject
             }
             else
             {
-                throw new BadDataAccessException("Failed to access data from parent threaded class");
+                $e = new BadDataAccessException("Failed to access data from parent threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0me->GetParentThreadPort()))
@@ -146,7 +154,9 @@ class ParentThreadedObject
             }
             else
             {
-                throw new BadDataAccessException("Failed to access data from parent threaded class");
+                $e = new BadDataAccessException("Failed to access data from parent threaded class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         $__dm = __DataManager2::GetInstance();
@@ -175,7 +185,9 @@ class ParentThreadedObject
     {
         if (!self::check($value))
         {
-            throw new InvalidArgumentsPassed("Values can be only string, integer, array, boolean, float, double or long");
+            $e = new InvalidArgumentsPassed("Values can be only string, integer, array, boolean, float, double or long");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $eventId = md5("" . time() . rand(0, 100) . rand(-100, 100) . rand(-1000, 1000) . rand(-1000, 1000));
         $query = array
@@ -195,7 +207,9 @@ class ParentThreadedObject
             }
             else
             {
-                throw new BadMethodCallException("Failed to call method from threaded parent class");
+                $e = new BadMethodCallException("Failed to call method from threaded parent class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0me->GetParentThreadPort()))
@@ -206,7 +220,9 @@ class ParentThreadedObject
             }
             else
             {
-                throw new BadMethodCallException("Failed to call method from threaded parent class");
+                $e = new BadMethodCallException("Failed to call method from threaded parent class");
+                $e->__xrefcoreexception = true;
+                throw $e;
             }
         }
         $__dm = __DataManager2::GetInstance();

@@ -108,7 +108,9 @@ class ListBox
     {
         if (!RowHeaderType::HasItem($headerType))
         {
-            throw new InvalidHeaderTypeException("Invalid header type '" . $headerType . "'");
+            $e = new InvalidHeaderTypeException("Invalid header type '" . $headerType . "'");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
 
         $this->rowsHeaderType = $headerType;
@@ -152,7 +154,9 @@ class ListBox
     {
         if (!$item instanceof ListBoxItem)
         {
-            throw new InvalidArgumentsPassed("Item must be instance of ListBoxItem, " . get_class($item) . " given.");
+            $e = new InvalidArgumentsPassed("Item must be instance of ListBoxItem, " . get_class($item) . " given.");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $this->items[] = $item;
         return $this;
@@ -219,7 +223,9 @@ class ListBox
     {
         if (count($this->items) == 0)
         {
-            throw new NoItemsAddedException("No items added to items collection. Nothing to render.");
+            $e = new NoItemsAddedException("No items added to items collection. Nothing to render.");
+            $e->__xrefcoreexception = true;
+            throw $e;
         }
         $output = "";
         $this->_renderTitle($output);

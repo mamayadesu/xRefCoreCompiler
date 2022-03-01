@@ -12,9 +12,7 @@ class Utils
 {
     public static function Configure() : void
     {
-        $is_windows = (strtoupper(substr(PHP_OS, 0, 3)) == "WIN");
-
-        if ($is_windows)
+        if (IS_WINDOWS)
         {
             if (is_dir($_SERVER["HOMEPATH"] . "\\.xRefCoreCompiler\\Core"))
             {
@@ -34,9 +32,8 @@ class Utils
 
     public static function PrepareProject() : void
     {
-        $is_windows = (strtoupper(substr(PHP_OS, 0, 3)) == "WIN");
         $proj_name = basename(getcwd());
-        if ($is_windows)
+        if (IS_WINDOWS)
         {
             $target = $_SERVER["HOMEPATH"] . "\\.xRefCoreCompiler\\Core";
             $link = getcwd() . "\Core";
@@ -50,7 +47,7 @@ class Utils
         if (!$result)
         {
             $w = "";
-            if ($is_windows)
+            if (IS_WINDOWS)
             {
                 $w = "Please, set enable symlinks for non-admin users. ";
             }
@@ -74,5 +71,15 @@ class Utils
     public static function Version() : void
     {
         Console::WriteLine("http://xrefcore.ru\nhttps://github.com/mamayadesu/xRefCoreCompiler\n\nxRefCoreCompiler v" . Application::GetFrameworkVersion());
+    }
+
+    public static function Help() : void
+    {
+        $usage = ColoredString::Get("xrefcore-compiler", ForegroundColors::WHITE) . "\n    ";
+        $usage .= ColoredString::Get("-v", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--version", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Check xRefCoreCompiler version", ForegroundColors::PURPLE) . "\n    ";
+        $usage .= ColoredString::Get("-c", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--configure", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Configure xRefCoreCompiler (use it when it's just installed or updated)", ForegroundColors::PURPLE) . "\n    ";
+        $usage .= ColoredString::Get("-p", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--prepare-project", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Generates the main class and symlink in your PhpStorm project. Use it when project just created.", ForegroundColors::PURPLE) . "\n    ";
+        $usage .= ColoredString::Get("-b", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--build", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Builds application", ForegroundColors::PURPLE);
+        Console::WriteLine($usage);
     }
 }
