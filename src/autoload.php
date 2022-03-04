@@ -88,13 +88,6 @@ if (isset($argv))
 
 if (DEV_MODE) var_dump($args);
 
-if (DEV_MODE) echo "Initializing super global array thread... [" . round((microtime(true) - $microtime), 6) . "]\n";
-$superglobalarraythreaded = \Threading\__SuperGlobalArrayThread::Run([], new \stdClass());
-
-if (DEV_MODE) echo "Initializing super global array... [" . round((microtime(true) - $microtime), 6) . "]\n";
-$superglobalarray = new \Threading\SuperGlobalArray();
-$superglobalarray->__setSga($superglobalarraythreaded);
-
 if (IS_WINDOWS)
 {
     __CHECK_READKEY();
@@ -102,16 +95,16 @@ if (IS_WINDOWS)
 
 function __onshutdown()
 {
-    global $superglobalarray, $superglobalarraythreaded;
-    try
+    define("SHUTTINGDOWN", true);
+    $superglobalarray = \Threading\SuperGlobalArray::GetInstance();
+    if ($superglobalarray != null)
     {
-        @\IO\FileDirectory::Delete($superglobalarray->__sysGet(["readkey", "path"]));
+        $superglobalarraythreaded = $superglobalarray->____getthread();
+        if ($superglobalarraythreaded != null)
+        {
+            $superglobalarraythreaded->Kill();
+        }
     }
-    catch (\Exception $e)
-    {
-
-    }
-    $superglobalarraythreaded->Kill();
 
     foreach (\Threading\Thread::GetAllChildThreads() as $threaded)
     {if(!$threaded instanceof \Threading\Threaded) continue;

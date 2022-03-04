@@ -52,6 +52,10 @@ class Console
             $proc = proc_open($cmd, [], $pipes);
             proc_close($proc);
             $r = @socket_recvfrom($socket, $buf, 16, 0, $remote_ip, $remote_port);
+            if (!$buf)
+            {
+                return "";
+            }
             $translate = array(
                 "D1" => "1",
                 "D2" => "2",

@@ -47,7 +47,7 @@ class SuperGlobalArray
      */
     public function __setSga(Threaded $sga) : void
     {
-        if ($this->sga != null)
+        if ($this->sga != null || $sga->GetClassName() != "\\Threading\\__SuperGlobalArrayThread")
         {
             $e = new SystemMethodCallException("This class cannot be initialized");
             $e->__xrefcoreexception = true;
@@ -63,6 +63,15 @@ class SuperGlobalArray
      */
     public static function GetInstance() : ?SuperGlobalArray
     {
+        if (self::$instance == null && !defined("SHUTTINGDOWN"))
+        {
+            if (DEV_MODE) echo "Initializing super global array thread...\n";
+            $superglobalarraythreaded = __SuperGlobalArrayThread::Run([], new \stdClass());
+
+            if (DEV_MODE) echo "Initializing super global array...\n";
+            $superglobalarray = new SuperGlobalArray();
+            $superglobalarray->__setSga($superglobalarraythreaded);
+        }
         return self::$instance;
     }
 
@@ -80,6 +89,14 @@ class SuperGlobalArray
     public function GetPort() : int
     {
         return $this->sga->GetChildPort();
+    }
+
+    /**
+     * @ignore
+     */
+    public function ____getthread() : ?Threaded
+    {
+        return $this->sga;
     }
 
     /**

@@ -191,7 +191,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.9.2.1";
+    return "1.9.2.2";
 }
 
 function __CHECK_READKEY() : string
@@ -248,6 +248,7 @@ function __EXCEPTION_HANDLER(Throwable $e) : void
         array_shift($trace);
         $traceLength = count($trace);
     }
+    if (DEV_MODE) var_dump($trace);
     if (defined("APPLICATION"))
     {
         $fileSplitted = explode(DIRECTORY_SEPARATOR, $file);

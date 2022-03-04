@@ -93,7 +93,7 @@ while (true)
 new \Threading\__DataManager1($gasock, $garecport);
 new \Threading\__DataManager2($sock, $port);
 
-$superglobalarraythreaded = new \Threading\Threaded($gapid, [], "\\Threading\\__SuperGlobalArrayThreaded", $sock, $gaport, new \stdClass());
+$superglobalarraythreaded = new \Threading\Threaded($gapid, [], "\\Threading\\__SuperGlobalArrayThread", $sock, $gaport, new \stdClass());
 $superglobalarray = new \Threading\SuperGlobalArray();
 $superglobalarray->__setSga($superglobalarraythreaded);
 
