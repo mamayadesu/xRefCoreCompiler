@@ -22,18 +22,19 @@ PHP="php"
 
 if [ "$1" = "--php" ]
 then
-	PHP="/usr/bin/php$2"
+	PHP=$2
 fi
 
 ISPHPOK=1
-if [! command -v $PHP -v &> /dev/null]
+$PHP -r "exit(123);" 2> /dev/null
+if [ $? -ne 123 ]
 then
     ISPHPOK=0
 fi
 
 if [ "$ISPHPOK" = "0" ]
 then
-    echo "ERROR! 'php' command not found or PHP is not installed. You can try run this script with argument '--php 7.4'"
+    echo "ERROR! PHP not found or is not installed. You can try run this script with '--php <PATH TO BINARY>' argument. Example: './install.sh --php /usr/bin/php7.4'"
     exit
 fi
 
