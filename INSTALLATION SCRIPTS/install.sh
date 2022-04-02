@@ -92,7 +92,7 @@ fi
 
 echo "$PHP /usr/bin/xRefCoreCompiler/xRefCoreCompiler.phar \$@" > /usr/bin/xrefcore-compiler
 
-chmod 777 /usr/bin/xrefcore-compiler
+chmod 755 /usr/bin/xrefcore-compiler
 
 xrefcore-compiler --configure
 
