@@ -64,7 +64,7 @@ if (!socket_sendto($sock, $json, $length, 0, "127.0.0.1", $port))
 
 require_once __DIR__ . DIRECTORY_SEPARATOR . "common.php";
 
-including(__DIR__ . DIRECTORY_SEPARATOR . "Core");
+including(__DIR__ . DIRECTORY_SEPARATOR . "__xrefcore");
 
 spl_autoload_register(function(string $className)
 {
@@ -110,6 +110,7 @@ function __onshutdown()
 
 register_shutdown_function("__onshutdown");
 
+\IO\Console::__setparentpid($__PARENTPID);
 $__CLASSNAME::__SetParentThreadPid($__PARENTPID);
 $thread = new $__CLASSNAME();
 $thread->__setdata($sock, $port, new \Threading\ParentThreadedObject($sock, $port, $thread));

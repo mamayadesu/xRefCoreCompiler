@@ -18,7 +18,7 @@ class Utils
             {
                 FileDirectory::Delete($_SERVER["HOMEPATH"] . "\\.xRefCoreCompiler\\Core");
             }
-            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/Core", $_SERVER["HOMEPATH"] . "\\.xRefCoreCompiler\\Core");
+            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/__xrefcore", $_SERVER["HOMEPATH"] . "\\.xRefCoreCompiler\\Core");
         }
         else
         {
@@ -26,7 +26,7 @@ class Utils
             {
                 FileDirectory::Delete($_SERVER["HOME"] . "/.xRefCoreCompiler/Core");
             }
-            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/Core", $_SERVER["HOME"] . "/.xRefCoreCompiler/Core");
+            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/__xrefcore", $_SERVER["HOME"] . "/.xRefCoreCompiler/Core");
         }
     }
 

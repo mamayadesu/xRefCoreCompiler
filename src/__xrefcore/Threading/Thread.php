@@ -333,12 +333,17 @@ class Thread
      * @param object $handler Any object that the child thread can access
      * @return Threaded Object which provides information and access to child-thread
      * @throws AbstractClassThreadException
-     * @throws ClassNotFoundException
      * @throws InvalidArgumentsPassedException
-     * @throws NewThreadException
+     * @throws NewThreadException|SystemMethodCallException
      */
     final public static function Run(array $args, object $handler) : ?Threaded
     {
+        if (!MAIN_THREAD)
+        {
+            $e = new NewThreadException("You can't run new child thread from another child thread");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $microtime = microtime(true);
         if (DEV_MODE) echo "[THREAD] Run called [" . round(microtime(true) - $microtime, 6) . "]\n";
         $className = get_called_class();

@@ -14,7 +14,7 @@ if (version_compare(phpversion(), $_APP["php_version"], '<'))
     die(255);
 }
 
-including(__DIR__ . DIRECTORY_SEPARATOR . "Core");
+including(__DIR__ . DIRECTORY_SEPARATOR . "__xrefcore");
 
 foreach ($namespaces as $ns)
 {

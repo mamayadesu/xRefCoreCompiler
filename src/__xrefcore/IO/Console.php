@@ -16,7 +16,18 @@ class Console
     /**
      * @ignore
      */
-    private static string $readkey = "";
+    private static int $parentpid = 0;
+
+    /**
+     * @ignore
+     */
+    public static function __setparentpid(int $pid) : void
+    {
+        if (self::$parentpid != 0)
+            return;
+
+        self::$parentpid = $pid;
+    }
 
     /**
      * Reads line from default input stream. Attention! In child-threads this method works only in Windows but doesn't work in *Unix systems
@@ -25,7 +36,23 @@ class Console
      */
     public static function ReadLine() : string
     {
-        $result = fgets(STDIN);
+        if (!MAIN_THREAD && !IS_WINDOWS)
+        {
+            $stream = fopen("/proc/" . self::$parentpid . "/fd/0", "r");
+            $result = fgets($stream);
+            $result = str_replace("\n", "", $result);
+            $result = str_replace("\r", "", $result);
+            return $result;
+        }
+        if (IS_WINDOWS)
+        {
+            // Due to Cyrillic support issues in Windows, the native readline method is used
+            $result = readline();
+        }
+        else
+        {
+            $result = fgets(STDIN);
+        }
         $result = str_replace("\n", "", $result);
         $result = str_replace("\r", "", $result);
         return $result;
@@ -91,7 +118,11 @@ class Console
             $result = strtolower($buf);
             return $result;
         }
-        $stdin = fopen("php://stdin", "r");
+        if (MAIN_THREAD)
+            $stdin = fopen("php://stdin", "r");
+        else
+            $stdin = fopen("/proc/" . self::$parentpid . "/fd/0", "r");
+
         stream_set_blocking($stdin, false);
         system("stty cbreak -echo");
         $t = 1000000;

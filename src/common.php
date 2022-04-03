@@ -9,9 +9,12 @@ $GLOBALS["__QUEUE2"] = [];
 function including($path)
 {
     global $_ALREADY_REGISTERED, $microtime, $argv;
-    $regex = "/Class \'(.*?)\' not found/";
-    $regex1 = "/Interface \'(.*?)\' not found/";
-    $regex2 = "/Trait \'(.*?)\' not found/";
+    $regex11 = "/Class \'(.*?)\' not found/";
+    $regex12 = "/Class \\\"(.*?)\\\" not found/";
+    $regex21 = "/Interface \'(.*?)\' not found/";
+    $regex22 = "/Interface \\\"(.*?)\\\" not found/";
+    $regex31 = "/Trait \'(.*?)\' not found/";
+    $regex32 = "/Trait \\\"(.*?)\\\" not found/";
     $data = scandir($path);
     $splitFileName = [];
     $ext = "";
@@ -47,17 +50,29 @@ function including($path)
                 catch (\Throwable $e)
                 {
                     $msg = $e->getMessage();
-                    if (preg_match($regex, $msg))
+                    if (preg_match($regex11, $msg))
                     {
-                        $missingClass = "\\" . preg_replace($regex, "$1", $msg);
+                        $missingClass = "\\" . preg_replace($regex11, "$1", $msg);
                     }
-                    else if (preg_match($regex1, $msg))
+                    else if (preg_match($regex12, $msg))
                     {
-                        $missingClass = "\\" . preg_replace($regex1, "$1", $msg);
+                        $missingClass = "\\" . preg_replace($regex12, "$1", $msg);
                     }
-                    else if (preg_match($regex2, $msg))
+                    else if (preg_match($regex21, $msg))
                     {
-                        $missingClass = "\\" . preg_replace($regex2, "$1", $msg);
+                        $missingClass = "\\" . preg_replace($regex21, "$1", $msg);
+                    }
+                    else if (preg_match($regex22, $msg))
+                    {
+                        $missingClass = "\\" . preg_replace($regex22, "$1", $msg);
+                    }
+                    else if (preg_match($regex31, $msg))
+                    {
+                        $missingClass = "\\" . preg_replace($regex31, "$1", $msg);
+                    }
+                    else if (preg_match($regex32, $msg))
+                    {
+                        $missingClass = "\\" . preg_replace($regex32, "$1", $msg);
                     }
                     else
                     {
@@ -109,17 +124,29 @@ function including($path)
                                 catch (\Throwable $e)
                                 {
                                     $msg = $e->getMessage();
-                                    if (preg_match($regex, $msg))
+                                    if (preg_match($regex11, $msg))
                                     {
-                                        $missingClass1 = "\\" . preg_replace($regex, "$1", $msg);
+                                        $missingClass1 = "\\" . preg_replace($regex11, "$1", $msg);
                                     }
-                                    else if (preg_match($regex1, $msg))
+                                    else if (preg_match($regex12, $msg))
                                     {
-                                        $missingClass1 = "\\" . preg_replace($regex1, "$1", $msg);
+                                        $missingClass1 = "\\" . preg_replace($regex12, "$1", $msg);
                                     }
-                                    else if (preg_match($regex2, $msg))
+                                    else if (preg_match($regex21, $msg))
                                     {
-                                        $missingClass1 = "\\" . preg_replace($regex2, "$1", $msg);
+                                        $missingClass1 = "\\" . preg_replace($regex21, "$1", $msg);
+                                    }
+                                    else if (preg_match($regex22, $msg))
+                                    {
+                                        $missingClass1 = "\\" . preg_replace($regex22, "$1", $msg);
+                                    }
+                                    else if (preg_match($regex31, $msg))
+                                    {
+                                        $missingClass1 = "\\" . preg_replace($regex31, "$1", $msg);
+                                    }
+                                    else if (preg_match($regex32, $msg))
+                                    {
+                                        $missingClass1 = "\\" . preg_replace($regex32, "$1", $msg);
                                     }
                                     else
                                     {
@@ -191,7 +218,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.9.2.2";
+    return "1.9.2.3";
 }
 
 function __CHECK_READKEY() : string
@@ -218,7 +245,7 @@ function __CHECK_READKEY() : string
             \IO\FileDirectory::Delete($readkey_file);
         }
         if (DEV_MODE) echo "Copying readkey.exe [" . round((microtime(true) - $microtime), 6) . "]\n";
-        \IO\FileDirectory::Copy(dirname(__FILE__) . "/Core/IO/readkey.exe", $readkey_file);
+        \IO\FileDirectory::Copy(dirname(__FILE__) . "/__xrefcore/IO/readkey.exe", $readkey_file);
     }
     return $readkey_file;
 }

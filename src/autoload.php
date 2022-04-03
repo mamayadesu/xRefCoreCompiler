@@ -1,5 +1,10 @@
 <?php
 
+if (!defined("STDIN"))
+{
+    die("You can run this program only from CLI.");
+}
+
 error_reporting(E_ALL);
 
 define("MAIN_THREAD", true);
@@ -24,6 +29,11 @@ if (DEV_MODE) echo "Initializing... [" . round((microtime(true) - $microtime), 6
 
 require_once "common.php";
 
+if (IS_WINDOWS && !function_exists("readline"))
+{
+    die("Readline not found");
+}
+
 if (DEV_MODE) echo "Checking PHP-version [" . round((microtime(true) - $microtime), 6) . "]\n";
 if (version_compare(phpversion(), $_APP["php_version"], '<'))
 {
@@ -31,7 +41,7 @@ if (version_compare(phpversion(), $_APP["php_version"], '<'))
 }
 
 if (DEV_MODE) echo "Loading core... [" . round((microtime(true) - $microtime), 6) . "]\n";
-including(__DIR__ . DIRECTORY_SEPARATOR . "Core");
+including(__DIR__ . DIRECTORY_SEPARATOR . "__xrefcore");
 
 if (DEV_MODE) echo "Setting title [" . round((microtime(true) - $microtime), 6) . "]\n";
 \Application\Application::SetTitle($_APP["app_name"]);

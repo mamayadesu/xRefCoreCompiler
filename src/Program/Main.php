@@ -223,7 +223,7 @@ class Main
         $otherProjectFolders = [];
         foreach (scandir($projectDir) as $dirname)
         {
-            if ($dirname == "." || $dirname == ".." || !is_dir($projectDir . $dirname) || $dirname == "Core")
+            if ($dirname == "." || $dirname == ".." || !is_dir($projectDir . $dirname) || $dirname == "__xrefcore")
             {
                 continue;
             }

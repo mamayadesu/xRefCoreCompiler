@@ -103,6 +103,12 @@ class Application
         {
             return;
         }
+        if (!IS_WINDOWS)
+        {
+            $f = fopen("/proc/" . getmypid() . "/comm", "w");
+            fwrite($f, $title);
+            fclose($f);
+        }
         try
         {
             cli_set_process_title($title);
