@@ -57,11 +57,6 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private int $selectedItemNumber = 1;
-
-    /**
-     * @ignore
-     */
     private string $descriptionBackgroundColor = BackgroundColors::AUTO;
 
     /**
@@ -94,10 +89,15 @@ class MenuBox extends ListBox
     private ?MenuBoxItem $zeroItem = null;
 
     /**
+     * @var int Number of selected item. 0 is zero item (if it is set). Automatically sets to 1 if item with the same number doesn't exist
+     */
+    public int $SelectedItemNumber = 1;
+
+    /**
      * MenuBox constructor.
      *
      * @param string $title Title of menu
-     * @param object $mythis This arguments is using to access to your class from callback functions
+     * @param object $mythis These arguments are using to access to your class from callback functions
      * @param MenuBoxTypes $menuBoxType
      * @throws InvalidMenuBoxTypeException
      */
@@ -352,7 +352,10 @@ class MenuBox extends ListBox
         $k = 1;
         $itemName = "";
         $header = "";
-
+        if ($this->SelectedItemNumber > count($this->items) || ($this->SelectedItemNumber == 0 && $this->zeroItem == null) || $this->SelectedItemNumber < 0)
+        {
+            $this->SelectedItemNumber = 1;
+        }
         foreach ($this->items as $item)
         {if (!$item instanceof MenuBoxItem) continue;
             $itemName = $item->Name;
@@ -396,7 +399,7 @@ class MenuBox extends ListBox
             $itemFg = ($item->ItemForegroundColor == ForegroundColors::AUTO ? $this->defaultItemForegroundColor : $item->ItemForegroundColor);
             $itemBg = ($item->ItemBackgroundColor == BackgroundColors::AUTO ? $this->defaultItemBackgroundColor : $item->ItemBackgroundColor);
 
-            if ($this->menuBoxType == MenuBoxTypes::KeyPressType && $this->selectedItemNumber == $k)
+            if ($this->menuBoxType == MenuBoxTypes::KeyPressType && $this->SelectedItemNumber == $k)
             {
                 $headerFg = $this->selectedItemHeaderForegroundColor;
                 $headerBg = $this->selectedItemHeaderBackgroundColor;
@@ -462,7 +465,7 @@ class MenuBox extends ListBox
         $itemFg = ($item->ItemForegroundColor == ForegroundColors::AUTO ? $this->defaultItemForegroundColor : $item->ItemForegroundColor);
         $itemBg = ($item->ItemBackgroundColor == BackgroundColors::AUTO ? $this->defaultItemBackgroundColor : $item->ItemBackgroundColor);
 
-        if ($this->menuBoxType == MenuBoxTypes::KeyPressType && $this->selectedItemNumber == 0)
+        if ($this->menuBoxType == MenuBoxTypes::KeyPressType && $this->SelectedItemNumber == 0)
         {
             $headerFg = $this->selectedItemHeaderForegroundColor;
             $headerBg = $this->selectedItemHeaderBackgroundColor;
@@ -553,34 +556,34 @@ class MenuBox extends ListBox
                 $itemsCount = count($this->items);
                 if ($pressedKey == "uparrow")
                 {
-                    if ($this->selectedItemNumber == 0)
+                    if ($this->SelectedItemNumber == 0)
                     {
-                        $this->selectedItemNumber = $itemsCount;
+                        $this->SelectedItemNumber = $itemsCount;
                     }
-                    else if($this->selectedItemNumber > 1)
+                    else if($this->SelectedItemNumber > 1)
                     {
-                        $this->selectedItemNumber--;
+                        $this->SelectedItemNumber--;
                     }
                     $callbackCalled = false;
                     continue;
                 }
                 if ($pressedKey == "downarrow")
                 {
-                    if ($this->selectedItemNumber == $itemsCount)
+                    if ($this->SelectedItemNumber == $itemsCount)
                     {
                         if ($this->zeroItem != null)
                         {
-                            $this->selectedItemNumber = 0;
+                            $this->SelectedItemNumber = 0;
                         }
                     }
-                    else if($this->selectedItemNumber < $itemsCount && $this->selectedItemNumber != 0)
+                    else if($this->SelectedItemNumber < $itemsCount && $this->SelectedItemNumber != 0)
                     {
-                        $this->selectedItemNumber++;
+                        $this->SelectedItemNumber++;
                     }
                     $callbackCalled = false;
                     continue;
                 }
-                $selectedItemId = $this->selectedItemNumber;
+                $selectedItemId = $this->SelectedItemNumber;
                 $selectedItemIdStr = $selectedItemId . "";
             }
             if ($this->menuBoxType == MenuBoxTypes::InputItemNumberType)
@@ -653,7 +656,7 @@ class MenuBox extends ListBox
         }
         if ($this->IsClosed())
         {
-            $this->selectedItemNumber = 1;
+            $this->SelectedItemNumber = 1;
             $this->cleared = false;
             $this->callbackCalled = false;
             $this->closeMenu = false;
@@ -695,34 +698,34 @@ class MenuBox extends ListBox
             $itemsCount = count($this->items);
             if ($pressedKey == "uparrow")
             {
-                if ($this->selectedItemNumber == 0)
+                if ($this->SelectedItemNumber == 0)
                 {
-                    $this->selectedItemNumber = $itemsCount;
+                    $this->SelectedItemNumber = $itemsCount;
                 }
-                else if($this->selectedItemNumber > 1)
+                else if($this->SelectedItemNumber > 1)
                 {
-                    $this->selectedItemNumber--;
+                    $this->SelectedItemNumber--;
                 }
                 $this->callbackCalled = false;
                 return $this->GetEmptyFunction()->call($this, $this);
             }
             if ($pressedKey == "downarrow")
             {
-                if ($this->selectedItemNumber == $itemsCount)
+                if ($this->SelectedItemNumber == $itemsCount)
                 {
                     if ($this->zeroItem != null)
                     {
-                        $this->selectedItemNumber = 0;
+                        $this->SelectedItemNumber = 0;
                     }
                 }
-                else if($this->selectedItemNumber < $itemsCount && $this->selectedItemNumber != 0)
+                else if($this->SelectedItemNumber < $itemsCount && $this->SelectedItemNumber != 0)
                 {
-                    $this->selectedItemNumber++;
+                    $this->SelectedItemNumber++;
                 }
                 $this->callbackCalled = false;
                 return $this->GetEmptyFunction()->call($this, $this);
             }
-            $selectedItemId = $this->selectedItemNumber;
+            $selectedItemId = $this->SelectedItemNumber;
             $selectedItemIdStr = $selectedItemId . "";
         }
         if ($this->menuBoxType == MenuBoxTypes::InputItemNumberType)

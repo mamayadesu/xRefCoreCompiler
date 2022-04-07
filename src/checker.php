@@ -23,6 +23,11 @@ foreach ($namespaces as $ns)
         echo "Don't insert 'Program' into namespaces. It is deprecated\n";
         exit(255);
     }
+    if (!file_exists(__DIR__ . DIRECTORY_SEPARATOR . $ns) || is_file(__DIR__ . DIRECTORY_SEPARATOR . $ns))
+    {
+        echo "Namespace '" . $ns . "' not found.";
+        exit(255);
+    }
     including(__DIR__ . DIRECTORY_SEPARATOR . $ns);
 }
 
@@ -48,7 +53,7 @@ if (count($GLOBALS["__QUEUE"]) > 0)
             }
             $f1 = implode(DIRECTORY_SEPARATOR, $f1s);
             $f2 = implode(DIRECTORY_SEPARATOR, $f2s);
-            $err .= $f1 . " is missing " . $notLoadedClass . " (tried to use in " . $f2 . " on line " . $GLOBALS["__QUEUE2"][$notLoadedClass][$notLoadedPackage] . ")\n";
+            $err .= $f1 . " is missing " . $notLoadedClass . " (tried to use in " . $f2 . ") on line " . $GLOBALS["__QUEUE2"][$notLoadedClass][$notLoadedPackage] . "\n";
         }
     }
     if ($nopackagescount > 0)
