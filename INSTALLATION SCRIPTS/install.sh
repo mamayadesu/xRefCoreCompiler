@@ -56,6 +56,7 @@ $PHP $HOME/.xRefCoreCompiler/tests.php
 
 if [ $? -eq 255 ]
 then
+    rm $HOME/.xRefCoreCompiler/tests.php
     exit
 fi
 

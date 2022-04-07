@@ -46,6 +46,7 @@ Invoke-WebRequest https://raw.githubusercontent.com/mamayadesu/xRefCoreCompiler/
 php $HOME\.xRefCoreCompiler\tests.php
 
 if ($LASTEXITCODE -eq 255) {
+    Remove-Item $HOME\.xRefCoreCompiler\tests.php
     exit
 }
 
@@ -53,8 +54,6 @@ if ($LASTEXITCODE -ne 0) {
     echo "An error occurred while checking your PHP-configuration"
     exit
 }
-
-Remove-Item $HOME\.xRefCoreCompiler\tests.php
 
 echo "[3/5] Installing..."
 
