@@ -218,7 +218,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.9.2.4";
+    return "1.9.2.5";
 }
 
 function __CHECK_READKEY() : string
@@ -286,9 +286,11 @@ function __EXCEPTION_HANDLER(Throwable $e) : void
         $file = implode(DIRECTORY_SEPARATOR, $fileSplitted);
     }
     $err = "\nUncaught " . get_class($e) . " '" . $e->getMessage() . "' in " . $file . " on line " . $line . "\nStack trace:\n";
+    $path_to_app = \Application\Application::GetExecutableFileName();
+    $path_to_app = "phar://" . str_replace("\\", "/", $path_to_app) . "/__xrefcore/";
     foreach ($trace as $idx => $row)
     {
-        if ($idx != $traceLength - 1)
+        if ($idx != $traceLength - 1 && isset($row["line"]))
         {
             $row["line"] = " on line " . $row["line"];
         }
@@ -323,7 +325,16 @@ function __EXCEPTION_HANDLER(Throwable $e) : void
                 }
             }
         }
-        $err .= "    ...in " . $row["file"] . " [" . $row["class"] . $row["type"] . $row["function"] . "(" . implode(", ", $arguments) . ")]" . $row["line"] . "\n";
+
+        if (isset($row["file"]))
+        {
+            $row["file"] = str_replace("\\", "/", $row["file"]);
+            if (strpos($row["file"], $path_to_app) !== false)
+            {
+                continue;
+            }
+        }
+        $err .= "    ...in " . (isset($row["file"]) ? $row["file"] : "{ANONYMOUS}") . " [" . $row["class"] . $row["type"] . $row["function"] . "(" . implode(", ", $arguments) . ")]" . $row["line"] . "\n";
     }
     $err .= "\n";
     if (defined("APPLICATION"))
@@ -334,4 +345,13 @@ function __EXCEPTION_HANDLER(Throwable $e) : void
     exit(255);
 }
 
-set_exception_handler("__EXCEPTION_HANDLER");
+function __EXCEPTION_HANDLER1(Throwable $e)
+{
+    $err = "\nUncaught " . get_class($e) . " '" . $e->getMessage() . "' in " . $e->getFile() . " on line " . $e->getLine();
+    fwrite(STDERR, $err);
+}
+
+if (MAIN_THREAD)
+{
+    set_exception_handler("__EXCEPTION_HANDLER");
+}

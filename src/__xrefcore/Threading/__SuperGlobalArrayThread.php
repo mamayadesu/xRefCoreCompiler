@@ -8,7 +8,7 @@ namespace Threading;
  * @ignore
  */
 
-class __SuperGlobalArrayThread extends Thread
+final class __SuperGlobalArrayThread extends Thread
 {
     private array $arr = array();
     private array $sys = array();

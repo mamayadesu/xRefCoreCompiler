@@ -11,7 +11,7 @@ use \Threading\Exceptions\BadDataAccessException;
  * @package Threading
  */
 
-class Threaded
+final class Threaded
 {
     /**
      * @var int

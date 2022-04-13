@@ -12,13 +12,16 @@ use \CliForms\RowHeaderType;
 use \IO\Console;
 
 /**
- * Creates customized lists
+ * Creation of customized lists
  * @package CliForms\ListBox
  */
 
 class ListBox
 {
-    protected string $title;
+    /**
+     * @var string Title of box
+     */
+    public string $Title = "";
     protected string $titleForegroundColor = ForegroundColors::PURPLE,
         $defaultItemForegroundColor = ForegroundColors::WHITE,
         $defaultItemHeaderForegroundColor = ForegroundColors::GRAY,

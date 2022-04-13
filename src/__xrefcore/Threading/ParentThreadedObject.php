@@ -11,7 +11,7 @@ use Threading\Exceptions\BadMethodCallException;
  * @package Threading
  */
 
-class ParentThreadedObject
+final class ParentThreadedObject
 {
 
     /**

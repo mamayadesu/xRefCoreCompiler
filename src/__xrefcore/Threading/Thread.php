@@ -16,7 +16,7 @@ use \Threading\Exceptions\NewThreadException;
  * @package Threading
  */
 
-class Thread
+abstract class Thread
 {
     /**
      * @ignore
@@ -67,17 +67,14 @@ class Thread
      *
      * @param array<int, string> $args Arguments passed by the parent thread
      */
-    public function Threaded(array $args) : void
-    {
-
-    }
+    abstract public function Threaded(array $args) : void;
 
     /**
      * Returns all child threads
      *
      * @return array<Threaded>
      */
-    public static function GetAllChildThreads() : array
+    final public static function GetAllChildThreads() : array
     {
         return self::$childThreads;
     }

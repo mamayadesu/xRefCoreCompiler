@@ -2,7 +2,7 @@
 
 namespace Application;
 
-class Application
+final class Application
 {
 
     /**

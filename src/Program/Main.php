@@ -156,7 +156,7 @@ class Main
                 $appJson = json_decode(file_get_contents($projectDir . "app.json"), true);
                 if ($appJson == null)
                 {
-                    Console::WriteLine("Incorrect 'app.json'", ForegroundColors::RED);
+                    Console::WriteLine("Invalid 'app.json'", ForegroundColors::RED);
                     $appJson = $this->AppJson();
                 }
                 else
@@ -171,7 +171,7 @@ class Main
                     }
                     if (count($notContainsProperties) > 0)
                     {
-                        Console::WriteLine("Error! 'app.json' doesn't contains next fields: " . implode(', ', $notContainsProperties), ForegroundColors::RED);
+                        Console::WriteLine("Error! 'app.json' doesn't contain next fields: " . implode(', ', $notContainsProperties), ForegroundColors::RED);
                         Console::WriteLine("Fill application data manually.\n");
                         $appJson = $this->AppJson();
                     }
@@ -202,12 +202,12 @@ class Main
         {
             if (isset($appJson["framework_version"]) && version_compare(Application::GetFrameworkVersion(), $appJson["framework_version"], '<'))
             {
-                Console::WriteLine("WARNING! This application was created on higher version of xRefCoreCompiler (" . $appJson["framework_version"] . "). Your version is " . Application::GetFrameworkVersion() . ". After or while compilation it may has some errors. Do you really want to compile it anyway? (y - yes | n - no): ", ForegroundColors::YELLOW);
+                Console::WriteLine("WARNING! This application was created on higher version of xRefCoreCompiler (" . $appJson["framework_version"] . "). Your version is " . Application::GetFrameworkVersion() . ". Errors may occur after or during building. Do you want to compile it anyway? (y - yes | n - no): ", ForegroundColors::YELLOW);
                 $r = Console::ReadLine();
                 if (strtolower($r) != "y")
                 {
                     Console::WriteLine("Compilation aborted.");
-                    exit(255);
+                    exit(0);
                 }
             }
             $appJson["framework_version"] = Application::GetFrameworkVersion();
@@ -257,7 +257,7 @@ class Main
         fclose($f);
         Console::WriteLine("Compiling...", ForegroundColors::BLUE);
         $isSuccess = $this->MakeApp($tempDir, $appFileOutput);
-        Console::WriteLine("Cleaing up...", ForegroundColors::BLUE);
+        Console::WriteLine("Cleaning up...", ForegroundColors::BLUE);
         FileDirectory::Delete($tempDir);
 
         $text = "";
@@ -377,7 +377,7 @@ class Main
         }
         catch (Exception $e)
         {
-            Console::WriteLine("An error occured while building application (C1): " . $e->getMessage(), ForegroundColors::RED);
+            Console::WriteLine("An error occurred while building application (C1): " . $e->getMessage(), ForegroundColors::RED);
             return false;
         }
         return true;
@@ -411,7 +411,7 @@ class Main
         $ds = DIRECTORY_SEPARATOR;
         while ($projectDir == "")
         {
-            Console::WriteLine("Your project must contains '" . $ds . "Program" . $ds . "Main.php'. It will be used as main class of application");
+            Console::WriteLine("Your project must contain '" . $ds . "Program" . $ds . "Main.php'. It will be used as main class of application");
             Console::Write("Input path to project directory: ");
             $projectDir = Console::ReadLine();
             if ($projectDir == "")

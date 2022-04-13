@@ -15,7 +15,7 @@ use Threading\Exceptions\SystemMethodCallException;
  * @package Threading
  */
 
-class SuperGlobalArray
+final class SuperGlobalArray
 {
     /**
      * @ignore
