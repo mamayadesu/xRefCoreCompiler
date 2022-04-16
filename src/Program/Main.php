@@ -15,7 +15,6 @@ use \Exception;
 class Main
 {
     private array $appPropertyToName;
-    private bool $debugMode = false;
 
     public function __construct(array $args)
     {
@@ -69,18 +68,10 @@ class Main
             }
             else
             {
-                Console::WriteLine("Folder " . $pargs["arguments"]["projectdir"] . " not found", ForegroundColors::YELLOW);
+                Console::WriteLine("Directory " . $pargs["arguments"]["projectdir"] . " not found", ForegroundColors::YELLOW);
             }
         }
-        if (isset($pargs["arguments"]["-debug"]))
-        {
-            $this->debugMode = ($pargs["arguments"]["debug"] == "1");
-        }
         $skip = false;
-        if (isset($pargs["arguments"]["-skip"]))
-        {
-            $skip = ($pargs["arguments"]["skip"] == "1" ? true : false);
-        }
         if (in_array("-build", $pargs["uninitialized_keys"]) || in_array("b", $pargs["uninitialized_keys"]))
         {
             $skip = true;
@@ -187,7 +178,6 @@ class Main
         {
             Console::WriteLine("");
             $appJson = $this->AppJson();
-            sleep(1);
             Console::Write("Do you want to save application config to project directory? (y - yes; n - no): ");
             $a = strtolower(Console::ReadLine());
             sleep(1);
@@ -355,10 +345,6 @@ class Main
                 {
                     continue;
                 }
-                if (($pathInPhar == "autoload.php" && $this->debugMode) || ($pathInPhar == "autoload_dev.php" && !$this->debugMode))
-                {
-                    continue;
-                }
                 $folderToMake = $tempDir;
                 for ($i = 0; $i < count($sPathInPhar) - 1; $i++)
                 {
@@ -456,7 +442,7 @@ class Main
                 $a = "";
                 Console::WriteLine($title . ":");
                 Console::WriteLine("Input value on each line. Leave the last line empty to stop");
-                while ($a != "#stop" || $a == "")
+                while (true)
                 {
                     $a = Console::ReadLine();
                     if ($a == "")

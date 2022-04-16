@@ -4,6 +4,8 @@ namespace CliForms\MenuBox;
 
 use CliForms\Exceptions\InvalidArgumentsPassed;
 use CliForms\Exceptions\InvalidMenuBoxTypeException;
+use CliForms\Exceptions\MenuAlreadyOpenedException;
+use CliForms\Exceptions\MenuIsNotOpenedException;
 use CliForms\Exceptions\NoItemsAddedException;
 use CliForms\ListBox\ListBox;
 use CliForms\RowHeaderType;
@@ -81,7 +83,7 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private bool $clearOnRender = false, $closeMenu = false, $render2wrongItemSelected = false, $cleared = false, $callbackCalled = false;
+    private bool $clearOnRender = false, $closeMenu = true, $render2wrongItemSelected = false, $cleared = false, $callbackCalled = false;
 
     /**
      * @ignore
@@ -89,9 +91,29 @@ class MenuBox extends ListBox
     private ?MenuBoxItem $zeroItem = null;
 
     /**
-     * @var int Number of selected item. 0 is zero item (if it is set). Automatically sets to 1 if item with the same number doesn't exist
+     * @ignore
      */
-    public int $SelectedItemNumber = 1;
+    private int $SelectedItemNumber = 1;
+
+    /**
+     * @var Closure|null Selected item changed event handler. Function have to accept MenuBox parameter (current MenuBox)
+     */
+    public ?Closure $SelectedItemChangedEvent = null;
+
+    /**
+     * @var Closure|null Selected item clicked event handler. Function have to accept MenuBox parameter (current MenuBox)
+     */
+    public ?Closure $ClickedEvent = null;
+
+    /**
+     * @var Closure|null Menu is opening event handler. Function have to accept MenuBox parameter (current MenuBox)
+     */
+    public ?Closure $OpenEvent = null;
+
+    /**
+     * @var Closure|null Menu is closing event handler. Function have to accept MenuBox parameter (current MenuBox)
+     */
+    public ?Closure $CloseEvent = null;
 
     /**
      * MenuBox constructor.
@@ -150,11 +172,49 @@ class MenuBox extends ListBox
     }
 
     /**
+     * Sets selected item number. If item with specified number doesn't exist, does nothing.
+     *
+     * @param int $itemNumber
+     * @return void
+     */
+    public function SetSelectedItemNumber(int $itemNumber) : void
+    {
+        if ($itemNumber > count($this->items) || ($itemNumber == 0 && $this->zeroItem == null))
+        {
+            return;
+        }
+        $this->SelectedItemNumber = $itemNumber;
+        if ($this->SelectedItemChangedEvent != null)
+        {
+            $this->SelectedItemChangedEvent->call($this->mythis, $this);
+        }
+    }
+
+    /**
+     * @return int Selected item number
+     */
+    public function GetSelectedItemNumber() : int
+    {
+        return $this->SelectedItemNumber;
+    }
+
+    /**
      * Closes menu
+     * @throws MenuIsNotOpenedException
      */
     public function Close() : void
     {
+        if ($this->closeMenu)
+        {
+            $e = new MenuIsNotOpenedException("Attempt to close not opened menu.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->closeMenu = true;
+        if ($this->CloseEvent != null)
+        {
+            $this->CloseEvent->call($this->mythis, $this);
+        }
     }
 
     /**
@@ -165,6 +225,19 @@ class MenuBox extends ListBox
     public function IsClosed() : bool
     {
         return $this->closeMenu;
+    }
+
+    /**
+     * @return MenuBoxItem[] Numbered items. Element with 0 index is zero item (or null)
+     */
+    public function GetNumberedItems() : array
+    {
+        /** @var array<int, ?MenuBoxItem> $result */$result = array($this->zeroItem);
+        foreach ($this->items as $item)
+        {if(!$item instanceof MenuBoxItem)continue;
+            $result[] = $item;
+        }
+        return $result;
     }
 
     /**
@@ -216,6 +289,22 @@ class MenuBox extends ListBox
     public function ResultOutputLine(string $text, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : void
     {
         $this->ResultOutput($text . "\n", $foregroundColor, $backgroundColor);
+    }
+
+    /**
+     * @return void Clears result output
+     */
+    public function ClearResultOutput() : void
+    {
+        $this->resultOutput = "";
+    }
+
+    /**
+     * @return string Result output
+     */
+    public function GetResultOutput() : string
+    {
+        return $this->resultOutput;
     }
 
     /**
@@ -352,10 +441,6 @@ class MenuBox extends ListBox
         $k = 1;
         $itemName = "";
         $header = "";
-        if ($this->SelectedItemNumber > count($this->items) || ($this->SelectedItemNumber == 0 && $this->zeroItem == null) || $this->SelectedItemNumber < 0)
-        {
-            $this->SelectedItemNumber = 1;
-        }
         foreach ($this->items as $item)
         {if (!$item instanceof MenuBoxItem) continue;
             $itemName = $item->Name;
@@ -502,6 +587,7 @@ class MenuBox extends ListBox
     /**
      * Builds and renders your menu and runs read-line to select menu item
      * @throws NoItemsAddedException
+     * @throws MenuAlreadyOpenedException
      */
     public function Render() : void
     {
@@ -511,11 +597,25 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
+        if (!$this->closeMenu)
+        {
+            $e = new MenuAlreadyOpenedException("Cannot render menu because it's already opened");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        $this->closeMenu = false; // Open menu again automatically
+        if ($this->OpenEvent != null)
+        {
+            $this->OpenEvent->call($this->mythis, $this);
+            if ($this->closeMenu)
+            {
+                return;
+            }
+        }
         $output = $selectedItemStr = "";
         $cleared = false;
         $selectedItemId = 0;
         /** @var MenuBoxItem $selectedItem */$selectedItem = null;
-        $this->closeMenu = false; // Open menu again automatically
         $wrongItemSelected = false;
         $callbackCalled = false;
         while (!$this->closeMenu)
@@ -558,11 +658,11 @@ class MenuBox extends ListBox
                 {
                     if ($this->SelectedItemNumber == 0)
                     {
-                        $this->SelectedItemNumber = $itemsCount;
+                        $this->SetSelectedItemNumber($itemsCount);
                     }
                     else if($this->SelectedItemNumber > 1)
                     {
-                        $this->SelectedItemNumber--;
+                        $this->SetSelectedItemNumber($this->SelectedItemNumber - 1);
                     }
                     $callbackCalled = false;
                     continue;
@@ -573,12 +673,16 @@ class MenuBox extends ListBox
                     {
                         if ($this->zeroItem != null)
                         {
-                            $this->SelectedItemNumber = 0;
+                            $this->SetSelectedItemNumber(0);
                         }
                     }
                     else if($this->SelectedItemNumber < $itemsCount && $this->SelectedItemNumber != 0)
                     {
-                        $this->SelectedItemNumber++;
+                        $this->SetSelectedItemNumber($this->SelectedItemNumber + 1);
+                    }
+                    if ($this->SelectedItemChangedEvent != null)
+                    {
+                        $this->SelectedItemChangedEvent->call($this->mythis, $this);
                     }
                     $callbackCalled = false;
                     continue;
@@ -631,6 +735,10 @@ class MenuBox extends ListBox
                 Console::ClearWindow();
                 $cleared = true;
             }
+            if ($this->ClickedEvent != null)
+            {
+                $this->ClickedEvent->call($this->mythis, $this);
+            }
             $callbackCalled = true;
             $selectedItem->CallOnSelect($this);
         }
@@ -660,6 +768,14 @@ class MenuBox extends ListBox
             $this->cleared = false;
             $this->callbackCalled = false;
             $this->closeMenu = false;
+            if ($this->OpenEvent != null)
+            {
+                $this->OpenEvent = $this->OpenEvent->call($this->mythis, $this);
+                if ($this->closeMenu)
+                {
+                    return $this->GetEmptyFunction()->call($this, $this);
+                }
+            }
         }
         $output = $selectedItemStr = "";
         $selectedItemId = 0;
@@ -700,11 +816,15 @@ class MenuBox extends ListBox
             {
                 if ($this->SelectedItemNumber == 0)
                 {
-                    $this->SelectedItemNumber = $itemsCount;
+                    $this->SetSelectedItemNumber($itemsCount);
                 }
                 else if($this->SelectedItemNumber > 1)
                 {
-                    $this->SelectedItemNumber--;
+                    $this->SetSelectedItemNumber($this->SelectedItemNumber - 1);
+                }
+                if ($this->SelectedItemChangedEvent != null)
+                {
+                    $this->SelectedItemChangedEvent->call($this->mythis, $this);
                 }
                 $this->callbackCalled = false;
                 return $this->GetEmptyFunction()->call($this, $this);
@@ -715,12 +835,16 @@ class MenuBox extends ListBox
                 {
                     if ($this->zeroItem != null)
                     {
-                        $this->SelectedItemNumber = 0;
+                        $this->SetSelectedItemNumber(0);
                     }
                 }
                 else if($this->SelectedItemNumber < $itemsCount && $this->SelectedItemNumber != 0)
                 {
-                    $this->SelectedItemNumber++;
+                    $this->SetSelectedItemNumber($this->SelectedItemNumber + 1);
+                }
+                if ($this->SelectedItemChangedEvent != null)
+                {
+                    $this->SelectedItemChangedEvent->call($this->mythis, $this);
                 }
                 $this->callbackCalled = false;
                 return $this->GetEmptyFunction()->call($this, $this);
@@ -772,6 +896,10 @@ class MenuBox extends ListBox
         {
             Console::ClearWindow();
             $this->cleared = true;
+        }
+        if ($this->ClickedEvent != null)
+        {
+            $this->ClickedEvent->call($this->mythis, $this);
         }
         $this->callbackCalled = true;
         return $selectedItem->GetCallbackForRender2()->call($selectedItem, $this);

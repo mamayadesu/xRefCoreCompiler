@@ -65,7 +65,7 @@ final class Application
         $v1 = \Phar::running(false);
         $v2 = __GET__FILE__();
         $r = (!empty($v1) ? $v1 : $v2);
-        return $r;
+        return str_replace("/", DIRECTORY_SEPARATOR, $r);
     }
 
     /**

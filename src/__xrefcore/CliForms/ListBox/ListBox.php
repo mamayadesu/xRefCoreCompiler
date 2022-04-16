@@ -46,7 +46,7 @@ class ListBox
      */
     public function __construct(string $title)
     {
-        $this->title = $title;
+        $this->Title = $title;
     }
 
     /**
@@ -167,7 +167,7 @@ class ListBox
 
     protected function _renderTitle(string &$output) : void
     {
-        $coloredTitle = ColoredString::Get($this->title, $this->titleForegroundColor, $this->titleBackgroundColor);
+        $coloredTitle = ColoredString::Get($this->Title, $this->titleForegroundColor, $this->titleBackgroundColor);
         $output .= $coloredTitle . "\n";
     }
 

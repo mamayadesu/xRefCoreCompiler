@@ -12,35 +12,44 @@ class Utils
 {
     public static function Configure() : void
     {
+        $home = Application::GetHomeDirectory();
         if (IS_WINDOWS)
         {
-            if (is_dir($_SERVER["HOMEPATH"] . "\\.xRefCoreCompiler\\Core"))
+            if (is_dir($home . "\\.xRefCoreCompiler\\Core"))
             {
-                FileDirectory::Delete($_SERVER["HOMEPATH"] . "\\.xRefCoreCompiler\\Core");
+                FileDirectory::Delete($home . "\\.xRefCoreCompiler\\Core");
             }
-            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/__xrefcore", $_SERVER["HOMEPATH"] . "\\.xRefCoreCompiler\\Core");
+            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/__xrefcore", $home . "\\.xRefCoreCompiler\\Core");
         }
         else
         {
-            if (is_dir($_SERVER["HOME"] . "/.xRefCoreCompiler/Core"))
+            if (!Application::AmIRunningAsSuperuser())
             {
-                FileDirectory::Delete($_SERVER["HOME"] . "/.xRefCoreCompiler/Core");
+                Console::WriteLine("Please run this command as root or through sudo.", ForegroundColors::YELLOW);
+                return;
             }
-            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/__xrefcore", $_SERVER["HOME"] . "/.xRefCoreCompiler/Core");
+            $share = "/usr/share/xRefCoreCompiler/Core";
+            if (is_dir($share))
+            {
+                FileDirectory::Delete($share);
+            }
+            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/__xrefcore", $share);
+            chmod($share, 0666);
         }
     }
 
     public static function PrepareProject() : void
     {
         $proj_name = basename(getcwd());
+        $home = Application::GetHomeDirectory();
         if (IS_WINDOWS)
         {
-            $target = $_SERVER["HOMEPATH"] . "\\.xRefCoreCompiler\\Core";
+            $target = $home . "\\.xRefCoreCompiler\\Core";
             $link = getcwd() . "\Core";
         }
         else
         {
-            $target = $_SERVER["HOME"] . "/.xRefCoreCompiler/Core";
+            $target = "/usr/share/xRefCoreCompiler/Core";
             $link = getcwd() . "/Core";
         }
         $result = @symlink($target, $link);
@@ -52,7 +61,7 @@ class Utils
                 $w = "Please, enable symlinks for non-admin users. ";
             }
             Console::WriteLine("Failed to create symlink. " . $w . " Delete 'Core' folder in your project if it's exists.", ForegroundColors::RED);
-            exit;
+            return;
         }
 
         @mkdir(getcwd() . DIRECTORY_SEPARATOR . $proj_name);

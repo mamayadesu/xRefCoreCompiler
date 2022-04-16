@@ -30,6 +30,7 @@ Catch
 
 if ($isphpok -eq $false) {
     echo "ERROR! 'php' command not found or PHP is not installed. Please, register your PHP in Path enviroment."
+    Remove-Item xRefCoreCompiler.phar
     exit
 }
 
@@ -47,14 +48,17 @@ php $HOME\.xRefCoreCompiler\tests.php
 
 if ($LASTEXITCODE -eq 255) {
     Remove-Item $HOME\.xRefCoreCompiler\tests.php
+    Remove-Item xRefCoreCompiler.phar
     exit
 }
 
 if ($LASTEXITCODE -ne 0) {
     echo "An error occurred while checking your PHP-configuration"
+    Remove-Item $HOME\.xRefCoreCompiler\tests.php
+    Remove-Item xRefCoreCompiler.phar
     exit
 }
-
+Remove-Item $HOME\.xRefCoreCompiler\tests.php
 echo "[3/5] Installing..."
 
 if ((Test-Path -Path $HOME\.xRefCoreCompiler\xRefCoreCompiler.phar -PathType Leaf) -eq $true) {

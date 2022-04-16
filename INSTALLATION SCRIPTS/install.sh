@@ -35,6 +35,7 @@ fi
 if [ "$ISPHPOK" = "0" ]
 then
     echo "ERROR! PHP not found or is not installed. You can try run this script with '--php <PATH TO BINARY>' argument. Example: './install.sh --php /usr/bin/php7.4'"
+    rm xRefCoreCompiler.phar
     exit
 fi
 
@@ -57,12 +58,15 @@ $PHP $HOME/.xRefCoreCompiler/tests.php
 if [ $? -eq 255 ]
 then
     rm $HOME/.xRefCoreCompiler/tests.php
+    rm xRefCoreCompiler.phar
     exit
 fi
 
 if [ $? -ne 0 ]
 then
     echo "An error occurred while checking your PHP-configuration"
+    rm $HOME/.xRefCoreCompiler/tests.php
+    rm xRefCoreCompiler.phar
     exit
 fi
 
