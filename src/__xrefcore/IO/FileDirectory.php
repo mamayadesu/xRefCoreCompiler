@@ -82,4 +82,39 @@ class FileDirectory
         }
         return $_result;
     }
+
+    /**
+     * Sets permission mode for target directory and all its content (Linux systems only)
+     *
+     * @param int $mode
+     * @param string $target
+     * @return void
+     */
+    public static function RecursiveChmod(int $mode, string $target) : void
+    {
+        if (IS_WINDOWS)
+            return;
+
+        if (is_file($target))
+        {
+            @exec("chmod " . $mode . " " . $target, $output, $result);
+            return;
+        }
+
+        $t = str_split($target);
+        $l = $t[count($t) - 1];
+
+        $star = false;
+        if ($l != "/" && $l != "*")
+        {
+            $target .= "/";
+            $star = true;
+        }
+        @exec("chmod " . $mode . " " . $target, $output, $result);
+        @exec("chmod -R " . $mode . " " . $target, $output, $result);
+
+        if ($star)
+            $target .= "*";
+        @exec("chmod -R " . $mode . " " . $target, $output, $result);
+    }
 }

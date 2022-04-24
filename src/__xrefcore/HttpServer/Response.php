@@ -2,6 +2,9 @@
 
 namespace HttpServer;
 
+use HttpServer\Exceptions\ClosedRequestException;
+use HttpServer\Exceptions\HeadersSentException;
+
 /**
  * Package contains method for response build
  * @package HttpServer
@@ -32,7 +35,18 @@ final class Response
     /**
      * @ignore
      */
+
+    private bool $headersPrinted = false;
+
+    /**
+     * @ignore
+     */
     private int $status = 200;
+
+    /**
+     * @ignore
+     */
+    private array $cookies = array();
 
     /**
      * @ignore
@@ -43,6 +57,7 @@ final class Response
         101 => "Switching Protocols",
         102 => "Processing",
         103 => "Checkpoint",
+
         200 => "OK",
         201 => "Created",
         202 => "Accepted",
@@ -51,6 +66,7 @@ final class Response
         205 => "Reset Content",
         206 => "Partial Content",
         207 => "Multi-Status",
+
         300 => "Multiple Choices",
         301 => "Moved Permanently",
         302 => "Found",
@@ -60,6 +76,7 @@ final class Response
         306 => "Switch Proxy",
         307 => "Temporary Redirect",
         308 => "Permanent Redirect",
+
         400 => "Bad Request",
         401 => "Unauthorized",
         402 => "Payment Required",
@@ -86,6 +103,7 @@ final class Response
         426 => "Upgrade Required",
         449 => "Retry With",
         450 => "Blocked by Windows Parental Controls",
+
         500 => "Internal Server Error",
         501 => "Not Implemented",
         502 => "Bad Gateway",
@@ -95,7 +113,15 @@ final class Response
         506 => "Variant Also Negotiates",
         507 => "Insufficient Storage",
         509 => "Bandwidth Limit Exceeded",
-        510 => "Not Extended"
+        510 => "Not Extended",
+        511 => "Network Authentication Required",
+        520 => "Unknown Error",
+        521 => "Web Server Is Down",
+        522 => "Connection Timed Out",
+        523 => "Origin Is Unreachable",
+        524 => "A Timeout Occurred",
+        525 => "SSL Handshake Failed",
+        526 => "Invalid SSL Certificate"
     );
 
     /**
@@ -114,6 +140,12 @@ final class Response
      */
     public function Header(string $header, string $value) : void
     {
+        if ($this->headersPrinted)
+        {
+            $e = new HeadersSentException("Headers already sent to client");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->headers[$header] = $value;
     }
 
@@ -124,6 +156,12 @@ final class Response
      */
     public function Status(int $status) : void
     {
+        if ($this->headersPrinted)
+        {
+            $e = new HeadersSentException("Headers already sent to client");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         if (!isset($this->http_codes[$status]))
         {
             return;
@@ -142,24 +180,137 @@ final class Response
     }
 
     /**
-     * Sets response for client and closes connection
-     *
-     * @param string $message
+     * @param string $name Cookie name
+     * @param string $value Cookie value
+     * @param int $expires In unixtime
+     * @param string $domain
+     * @param string $path
+     * @param bool $secure
+     * @return void
+     * @throws HeadersSentException
      */
-    public function End(string $message) : void
+    public function SetCookie(string $name, string $value, int $expires = 0, string $domain = "", string $path = "", bool $secure = false)
     {
-        $connect = $this->connect;
+        if ($this->headersPrinted)
+        {
+            $e = new HeadersSentException("Headers already sent to client");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        $name = str_replace(["\n", "\r"], ["", ""], $name);
+        $value = str_replace(["\n", "\r"], [""], $value);
+        $domain = str_replace(["\n", "\r"], ["", ""], $domain);
+        $path = str_replace(["\n", "\r"], ["", ""], $path);
+
+        $name = rawurlencode($name);
+        $value = rawurlencode($value);
+        $domain = rawurlencode($domain);
+        $path = rawurlencode($path);
+
+        $dt = "";
+        if ($expires > 0)
+        {
+            $dt = gmdate("D, d M Y H:i:s", $expires) . " GMT";
+        }
+        $cookieString = $name . "=" . $value;
+
+        if ($dt != "")
+        {
+            $cookieString .= "; Expires=" . $dt;
+        }
+
+        if ($domain != "")
+        {
+            $cookieString .= "; Domain=" . $domain;
+        }
+
+        if ($path != "")
+        {
+            $cookieString .= "; Path=" . $path;
+        }
+
+        if ($secure)
+        {
+            $cookieString .= "; Secure";
+        }
+        $this->cookies[$name] = $cookieString;
+    }
+
+    /**
+     * Sends all set headers to client
+     *
+     * @return void
+     * @throws HeadersSentException
+     */
+    public function PrintHeaders() : void
+    {
+        if ($this->headersPrinted)
+        {
+            $e = new HeadersSentException("Headers already sent to client");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $data = "";
         $data .= "HTTP/1.1 " . $this->status . " " . $this->http_codes[$this->status] . "\r\n";
         foreach ($this->headers as $header => $value)
         {
             $data .= $header . ": " . $value . "\r\n";
         }
-        $data .= "\r\n" . $message;
-        fwrite($connect, $data);
-        fclose($connect);
-        $this->closed = true;
+        foreach ($this->cookies as $name => $cookieString)
+        {
+            $data .= "Set-Cookie: " . $cookieString . "\r\n";
+        }
+        $data .= "\r\n";
         $this->response = $data;
+        @fwrite($this->connect, $data);
+        $this->headersPrinted = true;
+    }
+
+    /**
+     * Adds plain text to response body
+     *
+     * @param string $plainText
+     * @return void
+     * @throws ClosedRequestException
+     * @throws HeadersSentException
+     */
+    public function PrintBody(string $plainText) : void
+    {
+        if ($this->closed)
+        {
+            $e = new ClosedRequestException("The request is already closed. Cannot print body.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        if (!$this->headersPrinted)
+        {
+            $this->PrintHeaders();
+        }
+        $this->response = $plainText;
+        @fwrite($this->connect, $plainText);
+    }
+
+    /**
+     * Adds response for client and closes connection
+     *
+     * @param string $message
+     */
+    public function End(string $message = "") : void
+    {
+        if ($this->closed)
+        {
+            $e = new ClosedRequestException("The request is already closed. Cannot finish request.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        if (!$this->headersPrinted)
+        {
+            $this->PrintHeaders();
+        }
+        fwrite($this->connect, $message);
+        @fclose($this->connect);
+        $this->closed = true;
+        $this->response .= $message;
     }
 
     /**

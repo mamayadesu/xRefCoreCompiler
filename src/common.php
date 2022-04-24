@@ -218,7 +218,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.9.3.0";
+    return "1.10.0.0";
 }
 
 function __CHECK_READKEY() : string

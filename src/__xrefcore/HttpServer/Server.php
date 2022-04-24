@@ -42,6 +42,11 @@ final class Server
     /**
      * @ignore
      */
+    private array $responses = array();
+
+    /**
+     * @ignore
+     */
 
     /**
      * Server constructor.
@@ -152,6 +157,7 @@ final class Server
                 fclose($connect);
                 continue;
             }
+            $cookies = array();
             foreach ($headers as $header)
             {
                 $header1 = explode(": ", $header);
@@ -162,7 +168,15 @@ final class Server
                 $headerName = $header1[0];
                 array_shift($header1);
                 $headerValue = implode(' ', $header1);
-                $parsedHeaders[$headerName] = $headerValue;
+                if (strtolower($headerName) == "cookie")
+                {
+                    $cookieArr = explode('=', $headerValue);
+                    $cookies[rawurldecode($cookieArr[0])] = rawurldecode($cookieArr[1]);
+                }
+                else
+                {
+                    $parsedHeaders[$headerName] = $headerValue;
+                }
                 $requestDump .= $headerName . ": " . $headerValue . "\n";
             }
             $body = "";
@@ -184,8 +198,28 @@ final class Server
             $requestDump .= $body;
             $request = new Request($headers, $body, $name);
             $request->ServerPort = $this->port;
+            $request->Headers = $parsedHeaders;
+            $request->RequestUrl = "http://" . $parsedHeaders["Host"] . $request->RequestUri;
+            $request->Cookie = $cookies;
+
+            $parsedUrl = parse_url($request->RequestUrl);
+            if (isset($parsedUrl["query"]))
+            {
+                $request->QueryString = $parsedUrl["query"];
+            }
+            if (isset($parsedUrl["path"]))
+            {
+                $request->PathInfo = $parsedUrl["path"];
+            }
+            parse_str($request->QueryString, $request->Get);
+
+            if (!@json_decode($body))
+            {
+                parse_str($body, $request->Post);
+            }
 
             $response = new Response($connect);
+            $this->responses[] = $response;
             if ($request->RequestError)
             {
                 if (DEV_MODE) echo "[HttpServer] Request Error\n";
@@ -203,15 +237,27 @@ final class Server
             $response->Header("Connection", "close");
 
             $this->registeredEvents["request"]($request, $response);
-            if (!$response->IsClosed())
-            {
-                if (DEV_MODE) echo "[HttpServer] Request could be closed, but something went wrong\n";
-                $response->Status(500);
-                $response->End("<h1>500 Internal Server Error</h1>");
+//            if (!$response->IsClosed())
+//            {
+//                if (DEV_MODE) echo "[HttpServer] Request could be closed, but something went wrong\n";
+//                $response->Status(500);
+//                $response->End("<h1>500 Internal Server Error</h1>");
+//            }
+            foreach ($this->responses as $key => $response)
+            {if($response instanceof Response)continue;
+                if ($response->IsClosed())
+                {
+                    unset($this->responses[$key]);
+                }
             }
+            $this->responses = array_values($this->responses);
             if ($this->shutdownWasCalled)
             {
                 if (DEV_MODE) echo "[HttpServer] Shutting down\n";
+                foreach ($this->responses as $response)
+                {if($response instanceof Response)continue;
+                    $response->End();
+                }
                 fclose($this->socket);
                 $this->socket = null;
                 $this->registeredEvents["shutdown"]($this);
