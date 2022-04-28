@@ -46,8 +46,7 @@ class Console
         }
         if (IS_WINDOWS)
         {
-            // Due to Cyrillic support issues in Windows, the native readline method is used
-            $result = readline();
+            $result = readline(); // Due to Cyrillic support issues in Windows, the native readline method is used
         }
         else
         {

@@ -105,9 +105,7 @@ final class Application
         }
         if (!IS_WINDOWS)
         {
-            $f = fopen("/proc/" . getmypid() . "/comm", "w");
-            fwrite($f, $title);
-            fclose($f);
+            echo "\x1b]0;" . $title . "\x07"; // display title to window name in linux
         }
         try
         {

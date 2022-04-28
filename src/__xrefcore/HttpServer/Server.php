@@ -109,13 +109,11 @@ final class Server
         $header1 = [];
         $headersI = -1;
         $firstHeader1 = [];
-        $bufferBroken = false;
         if (DEV_MODE) echo "[HttpServer] Waiting for request\n";
         while ($this->socket != null && $connect = stream_socket_accept($this->socket, -1))
         {
             $requestDump = "";
             $responseDump = "";
-            $bufferBroken = false;
             $headers = [];
             $parsedHeaders = array();
             $header1 = [];
@@ -123,17 +121,17 @@ final class Server
             $headerValue = "";
             $headersI = -1;
             $name = stream_socket_get_name($connect, true);
-            while ($buffer = rtrim(fgets($connect)))
+            while ($buffer = rtrim(fgets($connect))) // reading headers
             {
                 if ($buffer == false)
                 {
                     if (DEV_MODE) echo "[HttpServer] Buffer is broken\n";
-                    $bufferBroken = true;
-                    break;
+                    fclose($connect);
+                    break 2;
                 }
                 $headersI++;
                 $headers[$headersI] = $buffer;
-                if ($headersI == 0)
+                if ($headersI == 0) // if it's the first header (must be "*TYPE* HTTP/1.x")
                 {
                     $firstHeader = $headers[0];
                     $firstHeader1 = explode(' ', $firstHeader);
@@ -141,15 +139,9 @@ final class Server
                     {
                         if (DEV_MODE) echo "[HttpServer] Not HTTP request or wrong HTTP version\n";
                         fclose($connect);
-                        $bufferBroken = true;
-                        break;
+                        break 2;
                     }
                 }
-            }
-            if ($bufferBroken)
-            {
-                fclose($connect);
-                continue;
             }
             if (count($headers) == 0)
             {
@@ -194,6 +186,10 @@ final class Server
                 fclose($connect);
                 continue;
             }
+            if (!isset($parsedHeaders["Host"]))
+            {
+                $parsedHeaders["Host"] = "0.0.0.0";
+            }
             $body = urldecode($body);
             $requestDump .= $body;
             $request = new Request($headers, $body, $name);
@@ -237,12 +233,6 @@ final class Server
             $response->Header("Connection", "close");
 
             $this->registeredEvents["request"]($request, $response);
-//            if (!$response->IsClosed())
-//            {
-//                if (DEV_MODE) echo "[HttpServer] Request could be closed, but something went wrong\n";
-//                $response->Status(500);
-//                $response->End("<h1>500 Internal Server Error</h1>");
-//            }
             foreach ($this->responses as $key => $response)
             {if($response instanceof Response)continue;
                 if ($response->IsClosed())
