@@ -127,7 +127,7 @@ final class Server
                 {
                     if (DEV_MODE) echo "[HttpServer] Buffer is broken\n";
                     fclose($connect);
-                    break 2;
+                    continue 2;
                 }
                 $headersI++;
                 $headers[$headersI] = $buffer;
@@ -139,7 +139,7 @@ final class Server
                     {
                         if (DEV_MODE) echo "[HttpServer] Not HTTP request or wrong HTTP version\n";
                         fclose($connect);
-                        break 2;
+                        continue 2;
                     }
                 }
             }
