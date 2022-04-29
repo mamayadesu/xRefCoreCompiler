@@ -232,13 +232,13 @@ abstract class Thread
 
             if (get_class($this) == "Threading\\__SuperGlobalArrayThread")
             {
-                socket_sendto($this->__socket, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $q["port"]);
-                socket_sendto($this->__socket, $json, strlen($json), 0, "127.0.0.1", $q["port"]);
+                socket_sendto($this->__socket, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $q["port"]);
+                socket_sendto($this->__socket, $json, strlen($json), 0, "127.0.0.2", $q["port"]);
             }
             else
             {
-                socket_sendto($this->__socket, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $q["port"]);
-                socket_sendto($this->__socket, $json, strlen($json), 0, "127.0.0.1", $q["port"]);
+                socket_sendto($this->__socket, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $q["port"]);
+                socket_sendto($this->__socket, $json, strlen($json), 0, "127.0.0.2", $q["port"]);
             }
         }
     }
@@ -254,7 +254,7 @@ abstract class Thread
             "act" => "sy"
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__socket, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->__parentsockport))
+        if (!socket_sendto($this->__socket, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__parentsockport))
         {
             if (!$this->IsParentStillRunning())
             {
@@ -267,7 +267,7 @@ abstract class Thread
                 throw $e;
             }
         }
-        if (!socket_sendto($this->__socket, $json, strlen($json), 0, "127.0.0.1", $this->__parentsockport))
+        if (!socket_sendto($this->__socket, $json, strlen($json), 0, "127.0.0.2", $this->__parentsockport))
         {
             if (!$this->IsParentStillRunning())
             {
@@ -415,7 +415,7 @@ abstract class Thread
             }
             while (true)
             {
-                if (!@socket_bind($sock, "127.0.0.1", $port))
+                if (!@socket_bind($sock, "127.0.0.2", $port))
                 {
                     $errorcode = socket_last_error();
                     $errormsg = socket_strerror($errorcode);
@@ -481,7 +481,7 @@ abstract class Thread
                 throw $e;
             }
             if (DEV_MODE) echo "[THREAD] Binding port [" . round(microtime(true) - $microtime, 6) . "]\n";
-            if (!socket_bind($sock, "127.0.0.1", $port))
+            if (!socket_bind($sock, "127.0.0.2", $port))
             {
                 $errorcode = socket_last_error();
                 $errormsg = socket_strerror($errorcode);

@@ -79,7 +79,7 @@ final class ChildThreadedObject
             "port" => $__dm->__GetPort()
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->__0port))
+        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
@@ -94,7 +94,7 @@ final class ChildThreadedObject
                 throw $e;
             }
         }
-        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0port))
+        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.2", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
@@ -149,7 +149,7 @@ final class ChildThreadedObject
             "port" => $__dm->__GetPort()
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->__0port))
+        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
@@ -164,7 +164,7 @@ final class ChildThreadedObject
                 throw $e;
             }
         }
-        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0port))
+        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.2", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
@@ -225,7 +225,7 @@ final class ChildThreadedObject
             "port" => $__dm->__GetPort()
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->__0port))
+        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
@@ -240,7 +240,7 @@ final class ChildThreadedObject
                 throw $e;
             }
         }
-        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.1", $this->__0port))
+        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.2", $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {

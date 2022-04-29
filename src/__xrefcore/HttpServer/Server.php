@@ -234,7 +234,7 @@ final class Server
 
             $this->registeredEvents["request"]($request, $response);
             foreach ($this->responses as $key => $response)
-            {if($response instanceof Response)continue;
+            {if(!$response instanceof Response)continue;
                 if ($response->IsClosed())
                 {
                     unset($this->responses[$key]);

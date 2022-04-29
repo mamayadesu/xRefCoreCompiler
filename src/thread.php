@@ -25,7 +25,7 @@ if (!($sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
     exit;
 }
 $mypid = getmypid() . "";
-/*if (!socket_connect($sock, "127.0.0.1", $port))
+/*if (!socket_connect($sock, "127.0.0.2", $port))
 {
     $errorcode = socket_last_error();
     $errormsg = socket_strerror($errorcode);
@@ -40,7 +40,7 @@ $json = json_encode($data);
 $length = strlen($json);
 $lenstr = str_repeat("0", 16 - strlen($length . "")) . $length;
 
-if (!socket_sendto($sock, $lenstr, 16, 0, "127.0.0.1", $port))
+if (!socket_sendto($sock, $lenstr, 16, 0, "127.0.0.2", $port))
 {
     $errorcode = socket_last_error();
     $errormsg = socket_strerror($errorcode);
@@ -51,7 +51,7 @@ if (!socket_sendto($sock, $lenstr, 16, 0, "127.0.0.1", $port))
     }
 }
 
-if (!socket_sendto($sock, $json, $length, 0, "127.0.0.1", $port))
+if (!socket_sendto($sock, $json, $length, 0, "127.0.0.2", $port))
 {
     $errorcode = socket_last_error();
     $errormsg = socket_strerror($errorcode);
@@ -84,7 +84,7 @@ spl_autoload_register(function(string $className)
 $gasock = socket_create(AF_INET, SOCK_DGRAM, 0);
 while (true)
 {
-    if (@socket_bind($gasock, "127.0.0.1", $garecport))
+    if (@socket_bind($gasock, "127.0.0.2", $garecport))
     {
         break;
     }

@@ -240,8 +240,8 @@ final class Threaded
                 "r" => $result
             );
             $json = json_encode($query);
-            socket_sendto($this->sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->port);
-            socket_sendto($this->sock, $json, strlen($json), 0, "127.0.0.1", $this->port);
+            socket_sendto($this->sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->port);
+            socket_sendto($this->sock, $json, strlen($json), 0, "127.0.0.2", $this->port);
         }
     }
 
@@ -256,7 +256,7 @@ final class Threaded
             "act" => "sy"
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.1", $this->port))
+        if (!socket_sendto($this->sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->port))
         {
             if (!$this->IsRunning())
             {
@@ -269,7 +269,7 @@ final class Threaded
                 throw $e;
             }
         }
-        if (!socket_sendto($this->sock, $json, strlen($json), 0, "127.0.0.1", $this->port))
+        if (!socket_sendto($this->sock, $json, strlen($json), 0, "127.0.0.2", $this->port))
         {
             if (!$this->IsRunning())
             {

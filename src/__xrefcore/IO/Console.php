@@ -73,7 +73,7 @@ class Console
             {
                 $port = rand(100, 49151);
             }
-            while (!@socket_bind($socket, "127.0.0.1", $port));
+            while (!@socket_bind($socket, "127.0.0.2", $port));
             $cmd = "start /B /I " . $exe . " " . $port . " 1>&2";
             $proc = proc_open($cmd, [], $pipes);
             proc_close($proc);
