@@ -307,7 +307,7 @@ final class Response
         {
             $this->PrintHeaders();
         }
-        fwrite($this->connect, $message);
+        @fwrite($this->connect, $message);
         @fclose($this->connect);
         $this->closed = true;
         $this->response .= $message;

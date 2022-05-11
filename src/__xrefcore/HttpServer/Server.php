@@ -243,14 +243,7 @@ final class Server
             $this->responses = array_values($this->responses);
             if ($this->shutdownWasCalled)
             {
-                if (DEV_MODE) echo "[HttpServer] Shutting down\n";
-                foreach ($this->responses as $response)
-                {if($response instanceof Response)continue;
-                    $response->End();
-                }
-                fclose($this->socket);
-                $this->socket = null;
-                $this->registeredEvents["shutdown"]($this);
+                return;
             }
         }
     }
@@ -261,5 +254,12 @@ final class Server
     public function Shutdown() : void
     {
         $this->shutdownWasCalled = true;
+        foreach ($this->responses as $response)
+        {if($response instanceof Response)continue;
+            $response->End();
+        }
+        @fclose($this->socket);
+        $this->socket = null;
+        $this->registeredEvents["shutdown"]($this);
     }
 }
