@@ -59,14 +59,12 @@ final class __DataManager2
         $info = array();
         if (!isset($this->unreadData[$this->currentI]))
         {
-            @socket_recvfrom($this->sock, $queryLength1, 16, 0, $remote_ip, $remote_port);
-            $queryLength = intval($queryLength1);
-            @socket_recvfrom($this->sock, $query, $queryLength, 0, $remote_ip, $remote_port);
+            Thread::ReadLongQuery($this->sock, $query, $remote_ip, $remote_port);
             $data = json_decode($query, true);
             $this->Add(array("data" => $data));
             if ($data == null)
             {
-                die();
+                exit;
             }
             return $data;
         }
@@ -141,8 +139,7 @@ final class __DataManager2
         $json = json_encode($query);
         $length = strlen($json);
         $len = str_repeat("0", 16 - strlen($length . "")) . $length;
-        @socket_sendto($this->sock, $len, 16, 0, "127.0.0.2", $this->parentPort);
-        @socket_sendto($this->sock, $json, $length, 0, "127.0.0.2", $this->parentPort);
+        @Thread::SendLongQuery($this->sock, $json, Thread::ADDRESS, $this->parentPort);
         @socket_close($this->sock);
     }
 }

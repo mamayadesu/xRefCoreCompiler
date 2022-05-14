@@ -69,9 +69,7 @@ final class __DataManager1
         {
             do
             {
-                socket_recvfrom($this->sock, $queryLength1, 16, 0, $remote_ip, $remote_port);
-                $queryLength = intval($queryLength1);
-                socket_recvfrom($this->sock, $query, $queryLength, 0, $remote_ip, $remote_port);
+                Thread::ReadLongQuery($this->sock, $query, $remote_ip, $remote_port);
                 $p = $remote_port;
                 $data = json_decode($query, true);
                 $this->Add(array("port" => $p, "data" => $data));
@@ -122,9 +120,7 @@ final class __DataManager1
         while (true)
         {
             $this->currentI++;
-            socket_recvfrom($this->sock, $queryLength1, 16, 0, $remote_ip, $remote_port);
-            $queryLength = intval($queryLength1);
-            socket_recvfrom($this->sock, $query, $queryLength, 0, $remote_ip, $remote_port);
+            Thread::ReadLongQuery($this->sock, $query, $remote_ip, $remote_port);
             $p = $remote_port;
             $data = json_decode($query, true);
             $this->Add(array("port" => $p, "data" => $data));

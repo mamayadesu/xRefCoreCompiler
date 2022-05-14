@@ -20,6 +20,7 @@ final class __SuperGlobalArrayThread extends Thread
             try
             {
                 $this->WaitForParentAccess();
+
             }
             catch (Exceptions\InvalidResultReceivedException $e)
             {

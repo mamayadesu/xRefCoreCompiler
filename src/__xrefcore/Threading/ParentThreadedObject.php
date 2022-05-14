@@ -75,20 +75,7 @@ final class ParentThreadedObject
             "pid" => getmypid()
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__0me->GetParentThreadPort()))
-        {
-            if (!$this->__0me->IsParentStillRunning())
-            {
-                exit;
-            }
-            else
-            {
-                $e = new BadMethodCallException("Failed to call a function from parent threaded class");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-        }
-        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.2", $this->__0me->GetParentThreadPort()))
+        if (!Thread::SendLongQuery($this->__0sock, $json, Thread::ADDRESS, $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
             {
@@ -133,20 +120,7 @@ final class ParentThreadedObject
             "pid" => getmypid()
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__0me->GetParentThreadPort()))
-        {
-            if (!$this->__0me->IsParentStillRunning())
-            {
-                exit;
-            }
-            else
-            {
-                $e = new BadDataAccessException("Failed to access data from parent threaded class");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-        }
-        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.2", $this->__0me->GetParentThreadPort()))
+        if (!Thread::SendLongQuery($this->__0sock, $json, Thread::ADDRESS, $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
             {
@@ -199,20 +173,7 @@ final class ParentThreadedObject
             "pid" => getmypid()
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__0me->GetParentThreadPort()))
-        {
-            if (!$this->__0me->IsParentStillRunning())
-            {
-                exit;
-            }
-            else
-            {
-                $e = new BadMethodCallException("Failed to call method from threaded parent class");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-        }
-        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.2", $this->__0me->GetParentThreadPort()))
+        if (!Thread::SendLongQuery($this->__0sock, $json, Thread::ADDRESS, $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
             {

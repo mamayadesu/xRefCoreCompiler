@@ -8,7 +8,6 @@ use \Threading\Exceptions\SystemMethodCallException;
 use \Threading\Exceptions\InvalidResultReceivedException;
 use \Threading\Exceptions\BadDataAccessException;
 use \Threading\Exceptions\AbstractClassThreadException;
-use \Threading\Exceptions\ClassNotFoundException;
 use \Threading\Exceptions\NewThreadException;
 
 /**
@@ -46,6 +45,26 @@ abstract class Thread
      * @ignore
      */
     private ?ParentThreadedObject $pto;
+
+    /**
+     * @ignore
+     */
+    const BYTES_IN_PACKET = 65535;
+
+    /**
+     * @ignore
+     */
+    const QUERY_CONTINUES = "!";
+
+    /**
+     * @ignore
+     */
+    const QUERY_END = "$";
+
+    /**
+     * @ignore
+     */
+    const ADDRESS = "127.0.2.2";
 
     /**
      * Thread constructor.
@@ -200,7 +219,6 @@ abstract class Thread
 
                 case "sy":
                     return;
-                    break;
             }
             
             $type = strtolower(gettype($result));
@@ -232,13 +250,11 @@ abstract class Thread
 
             if (get_class($this) == "Threading\\__SuperGlobalArrayThread")
             {
-                socket_sendto($this->__socket, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $q["port"]);
-                socket_sendto($this->__socket, $json, strlen($json), 0, "127.0.0.2", $q["port"]);
+                Thread::SendLongQuery($this->__socket, $json, Thread::ADDRESS, $q["port"]);
             }
             else
             {
-                socket_sendto($this->__socket, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $q["port"]);
-                socket_sendto($this->__socket, $json, strlen($json), 0, "127.0.0.2", $q["port"]);
+                Thread::SendLongQuery($this->__socket, $json, Thread::ADDRESS, $q["port"]);
             }
         }
     }
@@ -254,20 +270,7 @@ abstract class Thread
             "act" => "sy"
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__socket, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__parentsockport))
-        {
-            if (!$this->IsParentStillRunning())
-            {
-                exit;
-            }
-            else
-            {
-                $e = new BadDataAccessException("Failed to access data from threaded class");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-        }
-        if (!socket_sendto($this->__socket, $json, strlen($json), 0, "127.0.0.2", $this->__parentsockport))
+        if (!Thread::SendLongQuery($this->__socket, $json, Thread::ADDRESS, $this->__parentsockport))
         {
             if (!$this->IsParentStillRunning())
             {
@@ -415,7 +418,7 @@ abstract class Thread
             }
             while (true)
             {
-                if (!@socket_bind($sock, "127.0.0.2", $port))
+                if (!@socket_bind($sock, Thread::ADDRESS, $port))
                 {
                     $errorcode = socket_last_error();
                     $errormsg = socket_strerror($errorcode);
@@ -481,7 +484,7 @@ abstract class Thread
                 throw $e;
             }
             if (DEV_MODE) echo "[THREAD] Binding port [" . round(microtime(true) - $microtime, 6) . "]\n";
-            if (!socket_bind($sock, "127.0.0.2", $port))
+            if (!socket_bind($sock, Thread::ADDRESS, $port))
             {
                 $errorcode = socket_last_error();
                 $errormsg = socket_strerror($errorcode);
@@ -507,5 +510,57 @@ abstract class Thread
         self::$childThreads[] = $runtime;
         if (DEV_MODE) echo "[THREAD] Everything done! [" . round(microtime(true) - $microtime, 6) . "]\n";
         return $runtime;
+    }
+
+    /**
+     * @ignore
+     */
+    public static function SeparateStringToPackets(string $data) : array
+    {
+        $b = self::BYTES_IN_PACKET;
+        $result = [];
+        $packet = "";
+        while (true)
+        {
+            if (strlen($data) <= $b)
+            {
+                $result[] = $data . self::QUERY_END;
+                break;
+            }
+            else
+            {
+                $packet = substr($data, 0, $b);
+                $data = substr($data, $b);
+                $result[] = $packet . self::QUERY_CONTINUES;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @ignore
+     */
+    public static function ReadLongQuery($sock, &$query, &$remote_ip, &$remote_port) : void
+    {
+        $query = "";
+        $descriptor = "";
+        do
+        {
+            @socket_recvfrom($sock, $buffer, self::BYTES_IN_PACKET + 1, 0, $remote_ip, $remote_port);
+            $query .= substr($buffer, 0, -1);
+            $descriptor = substr($buffer, -1);
+        }
+        while ($descriptor != Thread::QUERY_END);
+    }
+
+    public static function SendLongQuery($sock, string $data, string $address, int $port) : bool
+    {
+        $packets = self::SeparateStringToPackets($data);
+        foreach ($packets as $packet)
+        {
+            if (!socket_sendto($sock, $packet, strlen($packet), 0, $address, $port))
+                return false;
+        }
+        return true;
     }
 }

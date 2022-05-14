@@ -79,22 +79,7 @@ final class ChildThreadedObject
             "port" => $__dm->__GetPort()
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__0port))
-        {
-            if (!$this->__0thread->IsRunning())
-            {
-                $e = new AccessToClosedThreadException("Unable to call a function from threaded class, because child thread is closed");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-            else
-            {
-                $e = new BadMethodCallException("Failed to call a method from threaded class");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-        }
-        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.2", $this->__0port))
+        if (!Thread::SendLongQuery($this->__0sock, $json, Thread::ADDRESS, $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
@@ -149,22 +134,7 @@ final class ChildThreadedObject
             "port" => $__dm->__GetPort()
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__0port))
-        {
-            if (!$this->__0thread->IsRunning())
-            {
-                $e = new AccessToClosedThreadException("Unable to access data from threaded class, because thread is closed");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-            else
-            {
-                $e = new BadDataAccessException("Failed to access data from threaded class");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-        }
-        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.2", $this->__0port))
+        if (!Thread::SendLongQuery($this->__0sock, $json, Thread::ADDRESS, $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
@@ -225,22 +195,7 @@ final class ChildThreadedObject
             "port" => $__dm->__GetPort()
         );
         $json = json_encode($query);
-        if (!socket_sendto($this->__0sock, self::LengthToString(strlen($json)), 16, 0, "127.0.0.2", $this->__0port))
-        {
-            if (!$this->__0thread->IsRunning())
-            {
-                $e = new AccessToClosedThreadException("Unable to access data from threaded class, because thread is closed");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-            else
-            {
-                $e = new AccessToClosedThreadException("Unable to access data from threaded class, because thread is closed");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-        }
-        if (!socket_sendto($this->__0sock, $json, strlen($json), 0, "127.0.0.2", $this->__0port))
+        if (!Thread::SendLongQuery($this->__0sock, $json, Thread::ADDRESS, $this->__0port))
         {
             if (!$this->__0thread->IsRunning())
             {
