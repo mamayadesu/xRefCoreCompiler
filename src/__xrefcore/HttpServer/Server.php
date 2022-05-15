@@ -190,7 +190,7 @@ final class Server
             {
                 $parsedHeaders["Host"] = "0.0.0.0";
             }
-            $body = urldecode($body);
+            //$body = urldecode($body);
             $requestDump .= $body;
             $request = new Request($headers, $body, $name);
             $request->ServerPort = $this->port;

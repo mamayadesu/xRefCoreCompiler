@@ -553,6 +553,9 @@ abstract class Thread
         while ($descriptor != Thread::QUERY_END);
     }
 
+    /**
+     * @ignore
+     */
     public static function SendLongQuery($sock, string $data, string $address, int $port) : bool
     {
         $packets = self::SeparateStringToPackets($data);
