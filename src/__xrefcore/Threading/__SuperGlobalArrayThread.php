@@ -184,7 +184,7 @@ final class __SuperGlobalArrayThread extends Thread
                     {
                         $arrayPath .= "[" . (is_int($passed_key) ? $passed_key : "\"" . str_replace("\"", "\\\"", $passed_key) . "\"") . "]";
                     }
-                    $execute = "\$unset(this->" . $arr . $arrayPath . ");";
+                    $execute = "unset(\$this->" . $arr . $arrayPath . ");";
                     eval($execute);
                     break;
                 }
@@ -192,7 +192,7 @@ final class __SuperGlobalArrayThread extends Thread
             }
             else
             {
-                return array("t" => "kne", "k" => $k, "pk" => $passed_keys, "cot" => gettype($currentObj[$k]));
+                return array("t" => "kne", "k" => $k, "pk" => $passed_keys, "cot" => "");
             }
             $passed_keys[] = $k;
         }

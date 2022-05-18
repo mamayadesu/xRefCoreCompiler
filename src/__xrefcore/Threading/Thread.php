@@ -11,7 +11,7 @@ use \Threading\Exceptions\AbstractClassThreadException;
 use \Threading\Exceptions\NewThreadException;
 
 /**
- * Allows you to create new threads. At the same time, this class is used by the child thread to access the parent
+ * Allows you to initialize classes in another threads. At the same time, this class is using by the child thread to access the parent
  * @package Threading
  */
 
@@ -82,9 +82,9 @@ abstract class Thread
     }
 
     /**
-     * This method calls automatically in child-thread when it was created
+     * This method calls automatically in child-thread when it was created.
      *
-     * @param array<int, string> $args Arguments passed by the parent thread
+     * @param array<int, string> $args Arguments passed by the parent thread in the static "Run(array $args, object $parentObject)" method
      */
     abstract public function Threaded(array $args) : void;
 
@@ -166,15 +166,16 @@ abstract class Thread
         }
     }
 
+    /**
+     * @ignore
+     */
     final public static function IsWindows() : bool
     {
         return (strtolower(substr(php_uname(), 0, 7)) == "windows");
     }
 
     /**
-     * Provides access to public methods and properties of threaded parent object
-     *
-     * @return ParentThreadedObject|null Threaded parent object
+     * @return ParentThreadedObject|null
      */
     final function GetParentThreadedObject() : ?ParentThreadedObject
     {
@@ -327,7 +328,7 @@ abstract class Thread
     }
 
     /**
-     * Creates and starts a new thread of class
+     * Initializes a parallel class
      *
      * @param array<int, string> $args Arguments which child-thread will get in `Threaded(array $args)` method
      * @param object $handler Any object that the child thread can access

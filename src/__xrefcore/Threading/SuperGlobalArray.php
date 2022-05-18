@@ -10,7 +10,18 @@ use Threading\Exceptions\SuperGlobalArray\UnknownErrorException;
 use Threading\Exceptions\SystemMethodCallException;
 
 /**
- * Provides access to super global threaded array. You can get this array from any thread
+ * SuperGlobalArray is threaded array which is reachable from any thread, and it has no a parent thread. Super global array does not support objects and resources.
+ *
+ * Super global array does not require synchronization before to do any actions. However, if one thread is handling super global array data in a loop, another threads may work slowly in any actions with super global array.
+ *
+ * To avoid errors, it is recommended do not work with large amounts of data. It is also recommended not to read the entire super global array just to get one element of the array. Such actions when using the super global array with several threads in one time, if the array has a large amount of data, the behavior of the array can become unpredictable.
+ *
+ * The first argument of any SuperGlobalArray method (except GetInstance() which doesn't have any arguments) is array path. So, if you want to do some actions like that:
+ * $foo = $arr["subarray"]["subsubarray"]["bar"];
+ *
+ * you have to use this:
+ * $arr = SuperGlobalArray::GetInstance();
+ * $foo = $arr->Get(["subarray", "subsubarray", "bar"]);
  *
  * @package Threading
  */
@@ -181,7 +192,7 @@ final class SuperGlobalArray
 
         if ($result["t"] == "kne")
         {
-            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
+            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in Array" . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
             $kne->__xrefcoreexception = true;
@@ -230,7 +241,7 @@ final class SuperGlobalArray
 
         if ($result["t"] == "kne")
         {
-            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
+            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in Array" . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
             $kne->__xrefcoreexception = true;
@@ -279,7 +290,7 @@ final class SuperGlobalArray
 
         if ($result["t"] == "kne")
         {
-            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
+            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in Array" . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
             $kne->__xrefcoreexception = true;
@@ -300,7 +311,6 @@ final class SuperGlobalArray
      *
      * @param array $keys Path to value
      * @throws ItemIsNotArrayException
-     * @throws KeyNotFoundException
      * @throws UnknownErrorException
      */
     public function Unset(array $keys) : void
@@ -325,14 +335,14 @@ final class SuperGlobalArray
             throw $iina;
         }
 
-        if ($result["t"] == "kne")
+        /*if ($result["t"] == "kne")
         {
-            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
+            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in Array" . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
             $kne->__xrefcoreexception = true;
             throw $kne;
-        }
+        }*/
 
         if ($result["t"] == "s")
         {
@@ -348,7 +358,7 @@ final class SuperGlobalArray
      *
      * @param array $keys Path to value
      * @param string $operator Required operator. Available operators: ".=", "+=", "-=", "*=", "/=", "++", "--"
-     * @param mixed $value Value for operator. Isn't using in "++" and "--" operators
+     * @param mixed $value Value for operator. Isn't using with "++" and "--" operators
      * @throws InvalidOperatorException
      * @throws InvalidValueTypeException
      * @throws ItemIsNotArrayException
@@ -377,7 +387,7 @@ final class SuperGlobalArray
         }
         if ($result["t"] == "kne")
         {
-            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
+            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in Array" . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
             $kne->__xrefcoreexception = true;
@@ -434,7 +444,7 @@ final class SuperGlobalArray
 
         if ($result["t"] == "kne")
         {
-            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
+            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in Array" . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
             $kne->__xrefcoreexception = true;
@@ -467,7 +477,7 @@ final class SuperGlobalArray
         }
         if ($result["t"] == "iina")
         {
-            $iina = new ItemIsNotArrayException("Item '" . $result["k"] . "' (" . gettype($result["k"]) . ") in Array" . $arrayPath . " is " . $result["cot"]);
+            $iina = new ItemIsNotArrayException("Item '" . $result["k"] . "' (" . gettype($result["k"]) . ") in Array" . $arrayPath . " is Array" . $result["cot"]);
             $iina->Key = $result["k"];
             $iina->PassedKeys = $result["pk"];
             $iina->Type = $result["cot"];
@@ -520,7 +530,7 @@ final class SuperGlobalArray
 
         if ($result["t"] == "kne")
         {
-            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
+            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in Array" . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
             $kne->__xrefcoreexception = true;
@@ -563,7 +573,7 @@ final class SuperGlobalArray
 
         if ($result["t"] == "kne")
         {
-            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
+            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in Array" . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
             $kne->__xrefcoreexception = true;
@@ -604,14 +614,14 @@ final class SuperGlobalArray
             throw $iina;
         }
 
-        if ($result["t"] == "kne")
+        /*if ($result["t"] == "kne")
         {
-            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
+            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in Array" . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
             $kne->__xrefcoreexception = true;
             throw $kne;
-        }
+        }*/
 
         if ($result["t"] == "s")
         {
@@ -648,7 +658,7 @@ final class SuperGlobalArray
         }
         if ($result["t"] == "kne")
         {
-            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in " . $arrayPath);
+            $kne = new KeyNotFoundException("Key '" . $result["k"] . "' (" . gettype($result["k"]) . ") not found in Array" . $arrayPath);
             $kne->Key = $result["k"];
             $kne->PassedKeys = $result["pk"];
             $kne->__xrefcoreexception = true;
