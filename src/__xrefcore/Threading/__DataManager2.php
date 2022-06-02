@@ -60,7 +60,7 @@ final class __DataManager2
         if (!isset($this->unreadData[$this->currentI]))
         {
             Thread::ReadLongQuery($this->sock, $query, $remote_ip, $remote_port);
-            $data = json_decode($query, true);
+            $data = unserialize($query);
             $this->Add(array("data" => $data));
             if ($data == null)
             {
@@ -136,7 +136,7 @@ final class __DataManager2
             "act" => "threadstop",
             "pid" => getmypid()
         );
-        $json = json_encode($query);
+        $json = serialize($query);
         $length = strlen($json);
         $len = str_repeat("0", 16 - strlen($length . "")) . $length;
         @Thread::SendLongQuery($this->sock, $json, Thread::ADDRESS, $this->parentPort);

@@ -27,7 +27,7 @@ if (!($sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
 $mypid = getmypid() . "";
 
 $data = array("receivedpid" => $mypid);
-$json = json_encode($data);
+$json = serialize($data);
 $length = strlen($json);
 $lenstr = str_repeat("0", 16 - strlen($length . "")) . $length;
 

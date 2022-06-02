@@ -3,6 +3,7 @@
 namespace Threading;
 
 use \Threading\Exceptions\AccessToClosedThreadException;
+use Threading\Exceptions\InvalidArgumentsPassedException;
 use \Threading\Exceptions\InvalidResultReceivedException;
 use \Threading\Exceptions\BadDataAccessException;
 
@@ -223,15 +224,6 @@ final class Threaded
             {
                 $type = "int";
             }
-            else
-            {
-                if (!self::check($result))
-                {
-                    $e = new InvalidResultReceivedException("Method result can be only void, string, integer, array, boolean, float, double or long", E_USER_WARNING);
-                    $e->__xrefcoreexception = true;
-                    throw $e;
-                }
-            }
 
             $query = array
             (
@@ -239,7 +231,16 @@ final class Threaded
                 "t" => $type,
                 "r" => $result
             );
-            $json = json_encode($query);
+            try
+            {
+                $json = serialize($query);
+            }
+            catch (\Exception $e)
+            {
+                $e = new InvalidResultReceivedException($e->getMessage());
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
             Thread::SendLongQuery($this->sock, $json, Thread::ADDRESS, $this->port);
         }
     }
@@ -254,7 +255,7 @@ final class Threaded
         (
             "act" => "sy"
         );
-        $json = json_encode($query);
+        $json = serialize($query);
         if (!Thread::SendLongQuery($this->sock, $json, Thread::ADDRESS, $this->port))
         {
             if (!$this->IsRunning())

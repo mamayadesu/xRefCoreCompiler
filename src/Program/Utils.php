@@ -36,7 +36,7 @@ class Utils
             @mkdir("/usr/share/xRefCoreCompiler");
             @mkdir($share);
             FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/__xrefcore", $share);
-            FileDirectory::RecursiveChmod(666, $share);
+            FileDirectory::RecursiveChmod(755, $share . "/..");
         }
     }
 

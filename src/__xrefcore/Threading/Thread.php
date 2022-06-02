@@ -232,22 +232,22 @@ abstract class Thread
             {
                 $type = "int";
             }
-            else
-            {
-                if (!self::check($result))
-                {
-                    $e = new InvalidResultReceivedException("Method result can be only void, string, integer, array, boolean, float, double or long");
-                    $e->__xrefcoreexception = true;
-                    throw $e;
-                }
-            }
             $query = array
             (
                 "event" => $q["event"],
                 "t" => $type,
                 "r" => $result
             );
-            $json = json_encode($query);
+            try
+            {
+                $json = serialize($query);
+            }
+            catch (\Exception $e)
+            {
+                $e = new InvalidResultReceivedException($e->getMessage());
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
 
             if (get_class($this) == "Threading\\__SuperGlobalArrayThread")
             {
@@ -270,7 +270,7 @@ abstract class Thread
         (
             "act" => "sy"
         );
-        $json = json_encode($query);
+        $json = serialize($query);
         if (!Thread::SendLongQuery($this->__socket, $json, Thread::ADDRESS, $this->__parentsockport))
         {
             if (!$this->IsParentStillRunning())

@@ -5,6 +5,8 @@ namespace Threading;
 use CliForms\Exceptions\InvalidArgumentsPassed;
 use Threading\Exceptions\BadDataAccessException;
 use Threading\Exceptions\BadMethodCallException;
+use Threading\Exceptions\InvalidArgumentsPassedException;
+use Threading\Exceptions\InvalidResultReceivedException;
 
 /**
  * Provides access to all methods and properties of parent threaded object
@@ -60,15 +62,6 @@ final class ParentThreadedObject
      */
     public function __call(string $method, array $args)
     {
-        foreach ($args as $key => $value)
-        {
-            if (!self::check($key) || !self::check($value))
-            {
-                $e = new InvalidArgumentsPassed("Arguments can be only string, integer, array, boolean, float, double or long");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-        }
         $eventId = md5("" . time() . rand(0, 100) . rand(-100, 100) . rand(-1000, 1000) . rand(-1000, 1000));
         $query = array
         (
@@ -78,7 +71,16 @@ final class ParentThreadedObject
             "event" => $eventId,
             "pid" => getmypid()
         );
-        $json = json_encode($query);
+        try
+        {
+            $json = serialize($query);
+        }
+        catch (\Exception $e)
+        {
+            $e = new InvalidArgumentsPassedException($e->getMessage());
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         if (!Thread::SendLongQuery($this->__0sock, $json, Thread::ADDRESS, $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
@@ -123,7 +125,16 @@ final class ParentThreadedObject
             "event" => $eventId,
             "pid" => getmypid()
         );
-        $json = json_encode($query);
+        try
+        {
+            $json = serialize($query);
+        }
+        catch (\Exception $e)
+        {
+            $e = new InvalidArgumentsPassedException($e->getMessage());
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         if (!Thread::SendLongQuery($this->__0sock, $json, Thread::ADDRESS, $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())
@@ -161,12 +172,6 @@ final class ParentThreadedObject
      */
     public function __set(string $property, $value)
     {
-        if (!self::check($value))
-        {
-            $e = new InvalidArgumentsPassed("Values can be only string, integer, array, boolean, float, double or long");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
         $eventId = md5("" . time() . rand(0, 100) . rand(-100, 100) . rand(-1000, 1000) . rand(-1000, 1000));
         $query = array
         (
@@ -176,7 +181,16 @@ final class ParentThreadedObject
             "event" => $eventId,
             "pid" => getmypid()
         );
-        $json = json_encode($query);
+        try
+        {
+            $json = serialize($query);
+        }
+        catch (\Exception $e)
+        {
+            $e = new InvalidArgumentsPassedException($e->getMessage());
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         if (!Thread::SendLongQuery($this->__0sock, $json, Thread::ADDRESS, $this->__0me->GetParentThreadPort()))
         {
             if (!$this->__0me->IsParentStillRunning())

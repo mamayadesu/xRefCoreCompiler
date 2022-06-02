@@ -10,7 +10,7 @@ use Threading\Exceptions\SuperGlobalArray\UnknownErrorException;
 use Threading\Exceptions\SystemMethodCallException;
 
 /**
- * SuperGlobalArray is threaded array which is reachable from any thread, and it has no a parent thread. Super global array does not support objects and resources.
+ * SuperGlobalArray is threaded array which is reachable from any thread, and it has no a parent thread. Super global array does not support resources and Closure.
  *
  * Super global array does not require synchronization before to do any actions. However, if one thread is handling super global array data in a loop, another threads may work slowly in any actions with super global array.
  *

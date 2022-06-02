@@ -71,7 +71,7 @@ final class __DataManager1
             {
                 Thread::ReadLongQuery($this->sock, $query, $remote_ip, $remote_port);
                 $p = $remote_port;
-                $data = json_decode($query, true);
+                $data = unserialize($query);
                 $this->Add(array("port" => $p, "data" => $data));
             }
             while ($p != $port);
@@ -122,7 +122,7 @@ final class __DataManager1
             $this->currentI++;
             Thread::ReadLongQuery($this->sock, $query, $remote_ip, $remote_port);
             $p = $remote_port;
-            $data = json_decode($query, true);
+            $data = unserialize($query);
             $this->Add(array("port" => $p, "data" => $data));
 
             if (isset($data["receivedpid"]))
