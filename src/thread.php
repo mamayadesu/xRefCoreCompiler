@@ -1,7 +1,5 @@
 <?php
-
 error_reporting(E_ALL);
-
 define("MAIN_THREAD", false);
 define("DEV_MODE", false);
 
@@ -34,6 +32,8 @@ $lenstr = str_repeat("0", 16 - strlen($length . "")) . $length;
 require_once __DIR__ . DIRECTORY_SEPARATOR . "common.php";
 
 including(__DIR__ . DIRECTORY_SEPARATOR . "__xrefcore");
+
+@cli_set_process_title(\Application\Application::GetName() . " : " . $garecport);
 
 if (!\Threading\Thread::SendLongQuery($sock, $json, \Threading\Thread::ADDRESS, $port))
 {

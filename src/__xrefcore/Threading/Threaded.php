@@ -166,7 +166,7 @@ final class Threaded
      */
     public function WaitForChildAccess()
     {
-        if ($this->threadshutdown)
+        if ($this->threadshutdown || !$this->IsRunning())
         {
             $e = new AccessToClosedThreadException("Cannot synchronize with thread, because thread is closed", E_USER_WARNING);
             $e->__xrefcoreexception = true;
@@ -207,11 +207,9 @@ final class Threaded
                 case "threadstop":
                     $this->threadshutdown = true;
                     return;
-                    break;
 
                 case "sy":
                     return;
-                    break;
             }
 
             $type = strtolower(gettype($result));
@@ -258,11 +256,7 @@ final class Threaded
         $json = serialize($query);
         if (!Thread::SendLongQuery($this->sock, $json, Thread::ADDRESS, $this->port))
         {
-            if (!$this->IsRunning())
-            {
-
-            }
-            else
+            if ($this->IsRunning())
             {
                 $e = new BadDataAccessException("Failed to access data from threaded class");
                 $e->__xrefcoreexception = true;
