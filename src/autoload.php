@@ -1,5 +1,5 @@
 <?php
-
+declare(ticks=1);
 if (!defined("STDIN"))
 {
     die("You can run this program only from CLI.");
@@ -105,6 +105,9 @@ if (IS_WINDOWS)
 
 function __onshutdown()
 {
+    if (!IS_WINDOWS)
+        system("stty -cbreak echo");
+
     define("SHUTTINGDOWN", true);
     $superglobalarray = \Threading\SuperGlobalArray::GetInstance();
     if ($superglobalarray != null)
@@ -125,7 +128,27 @@ function __onshutdown()
     }
 }
 
+function __onsignal(int $signal, $siginfo = null) : void
+{
+    exit;
+}
+
 register_shutdown_function("__onshutdown");
+if (!IS_WINDOWS)
+{
+    pcntl_async_signals(true);
+    pcntl_signal(SIGTERM, "__onsignal");
+    pcntl_signal(SIGHUP, "__onsignal");
+    pcntl_signal(SIGINT, "__onsignal");
+}
+else
+{
+    sapi_windows_set_ctrl_handler(function(int $event) : void
+    {
+        if ($event == PHP_WINDOWS_EVENT_CTRL_C)
+            __onsignal($event);
+    }, true);
+}
 
 if (DEV_MODE) echo "Starting application... [" . round((microtime(true) - $microtime), 6) . "]\n";
 new \Program\Main($args);
