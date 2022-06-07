@@ -32,66 +32,29 @@ class Console
     /**
      * Reads line from default input stream. Attention! In child-threads this method works only in Windows but doesn't work in *Unix systems
      *
-     * @param bool $hideInput Hides characters which user is typing
      * @return string Data from stream input
      */
-    public static function ReadLine(bool $hideInput = false) : string
+    public static function ReadLine() : string
     {
         if (!MAIN_THREAD && !IS_WINDOWS)
         {
-            if ($hideInput)
-                system("stty cbreak -echo");
             $stream = fopen("/proc/" . self::$parentpid . "/fd/0", "r");
             $result = fgets($stream);
             $result = str_replace("\n", "", $result);
             $result = str_replace("\r", "", $result);
-            if ($hideInput)
-                system("stty -cbreak echo");
             return $result;
         }
         if (IS_WINDOWS)
         {
-            if ($hideInput)
-                $result = self::windows_read_hidden_line();
-            else
-                $result = readline(); // Due to Cyrillic support issues in Windows, the native readline method is used
+            $result = readline(); // Due to Cyrillic support issues in Windows, the native readline method is used
         }
         else
         {
-            if ($hideInput)
-                system("stty cbreak -echo");
             $result = fgets(STDIN);
-            if ($hideInput)
-                system("stty -cbreak echo");
         }
         $result = str_replace("\n", "", $result);
         $result = str_replace("\r", "", $result);
         return $result;
-    }
-
-    /**
-     * @ignore
-     */
-    private static function windows_read_hidden_line() : string
-    {
-        $exe = __CHECK_READKEY();
-
-        $socket = socket_create(AF_INET, SOCK_DGRAM, 0);
-        do
-        {
-            $port = rand(100, 49151);
-        }
-        while (!@socket_bind($socket, "127.0.0.1", $port));
-        $cmd = "start /B /I " . $exe . " " . $port . " 2 1>&2";
-        $proc = proc_open($cmd, [], $pipes);
-        proc_close($proc);
-        $r = @socket_recvfrom($socket, $buf, 8192, 0, $remote_ip, $remote_port);
-        echo "\n";
-        if (!$buf)
-        {
-            return "";
-        }
-        return $buf;
     }
 
     /**
@@ -111,13 +74,45 @@ class Console
                 $port = rand(100, 49151);
             }
             while (!@socket_bind($socket, "127.0.0.1", $port));
-            $cmd = "start /B /I " . $exe . " " . $port . " 1 1>&2";
+            $cmd = "start /B /I " . $exe . " " . $port . " 1>&2";
             $proc = proc_open($cmd, [], $pipes);
             proc_close($proc);
-            $r = @socket_recvfrom($socket, $buf, 32, 0, $remote_ip, $remote_port);
+            $r = @socket_recvfrom($socket, $buf, 16, 0, $remote_ip, $remote_port);
             if (!$buf)
             {
-                return "0";
+                return "";
+            }
+            $translate = array(
+                "D1" => "1",
+                "D2" => "2",
+                "D3" => "3",
+                "D4" => "4",
+                "D5" => "5",
+                "D6" => "6",
+                "D7" => "7",
+                "D8" => "8",
+                "D9" => "9",
+                "D0" => "0",
+                "OemMinus" => "-",
+                "OemPlus" => "=",
+                "Oem3" => "`",
+                "Oem4" => "[",
+                "Oem6" => "]",
+                "Oem1" => ";",
+                "Oem7" => "'",
+                "Oem5" => "\\",
+                "OemComma" => ",",
+                "OemPeriod" => ".",
+                "Oem2" => "\/",
+                "Divide" => "\/",
+                "Multiply" => "*",
+                "Subtract" => "-",
+                "Add" => "+",
+                "Decimal" => "."
+            );
+            if (isset($translate[$buf]))
+            {
+                $buf = $translate[$buf];
             }
             $result = strtolower($buf);
             return $result;

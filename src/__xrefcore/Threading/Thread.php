@@ -188,8 +188,6 @@ abstract class Thread
      */
     final public function WaitForParentAccess()
     {
-        if (!$this->IsParentStillRunning())
-            exit;
         $__dm = __DataManager2::GetInstance();
         while (true)
         {
