@@ -1,4 +1,5 @@
 <?php
+declare(ticks = 1);
 
 namespace IO;
 
@@ -51,16 +52,39 @@ class Console
         }
         if (IS_WINDOWS)
         {
-            if ($hideInput)
-                $result = self::windows_read_hidden_line();
-            else
-                $result = readline(); // Due to Cyrillic support issues in Windows, the native readline method is used
+            $result = self::windows_read_line($hideInput);
         }
         else
         {
             if ($hideInput)
                 system("stty cbreak -echo");
-            $result = fgets(STDIN);
+
+            $result = "";
+            if (MAIN_THREAD)
+                $stdin = fopen("php://stdin", "r");
+            else
+                $stdin = fopen("/proc/" . self::$parentpid . "/fd/0", "r");
+            stream_set_blocking($stdin, false);
+            if (!$hideInput)
+            {
+                while (!($result = fgets($stdin)))
+                {
+                    time_nanosleep(0, 10 * 1000000);
+                }
+            }
+            else
+            {
+                $read = "";
+                while (true)
+                {
+                    $read = fgets($stdin);
+                    if ($read == "\n" || $read == "\r")
+                        break;
+                    $result .= $read;
+                    time_nanosleep(0, 10 * 1000000);
+                }
+                echo "\n";
+            }
             if ($hideInput)
                 system("stty -cbreak echo");
         }
@@ -72,25 +96,31 @@ class Console
     /**
      * @ignore
      */
-    private static function windows_read_hidden_line() : string
+    private static function windows_read_line(bool $hideInput) : string
     {
         $exe = __CHECK_READKEY();
 
         $socket = socket_create(AF_INET, SOCK_DGRAM, 0);
         do
         {
-            $port = rand(100, 49151);
+            $port = rand(5000, 49151);
         }
         while (!@socket_bind($socket, "127.0.0.1", $port));
-        $cmd = "start /B /I " . $exe . " " . $port . " 2 1>&2";
+        $cmd = "start /B /I " . $exe . " " . $port . " " . ($hideInput ? "2" : "3") . " 1>&2";
         $proc = proc_open($cmd, [], $pipes);
         proc_close($proc);
-        $r = @socket_recvfrom($socket, $buf, 8192, 0, $remote_ip, $remote_port);
-        echo "\n";
+        socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 5000));
+        do
+        {
+            $r = @socket_recvfrom($socket, $buf, 32, 0, $remote_ip, $remote_port);
+        }
+        while ($r === false);
+        if ($hideInput) echo "\n";
         if (!$buf)
         {
             return "";
         }
+        //$buf = base64_decode($buf);
         return $buf;
     }
 
@@ -114,11 +144,17 @@ class Console
             $cmd = "start /B /I " . $exe . " " . $port . " 1 1>&2";
             $proc = proc_open($cmd, [], $pipes);
             proc_close($proc);
-            $r = @socket_recvfrom($socket, $buf, 32, 0, $remote_ip, $remote_port);
+            socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 5000));
+            do
+            {
+                $r = @socket_recvfrom($socket, $buf, 32, 0, $remote_ip, $remote_port);
+            }
+            while ($r === false);
             if (!$buf)
             {
                 return "0";
             }
+            //$buf = base64_decode($buf);
             $result = strtolower($buf);
             return $result;
         }

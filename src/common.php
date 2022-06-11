@@ -218,13 +218,13 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.10.2.0";
+    return "1.11.0.0";
 }
 
 function __CHECK_READKEY() : string
 {
     global $microtime;
-    $hash = "56db887337826b0c7ec943180d772934";
+    $hash = "ebff62b31d6473fe9df5b2866a398b83";
     $readkey_path = sys_get_temp_dir() . "\\";
     $readkey_file = $readkey_path . "readkey" . __GET_FRAMEWORK_VERSION() . ".exe";
     if (!MAIN_THREAD)
@@ -242,10 +242,10 @@ function __CHECK_READKEY() : string
         if ($check_file)
         {
             if (DEV_MODE) echo "Deleting readkey.exe [" . round((microtime(true) - $microtime), 6) . "]\n";
-            \IO\FileDirectory::Delete($readkey_file);
+            @\IO\FileDirectory::Delete($readkey_file);
         }
         if (DEV_MODE) echo "Copying readkey.exe [" . round((microtime(true) - $microtime), 6) . "]\n";
-        \IO\FileDirectory::Copy(dirname(__FILE__) . "/__xrefcore/IO/readkey.exe", $readkey_file);
+        @\IO\FileDirectory::Copy(dirname(__FILE__) . "/__xrefcore/IO/readkey.exe", $readkey_file);
     }
     return $readkey_file;
 }

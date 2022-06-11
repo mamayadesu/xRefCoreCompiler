@@ -1,4 +1,5 @@
 <?php
+declare(ticks = 1);
 
 namespace Threading\Exceptions\SuperGlobalArray;
 

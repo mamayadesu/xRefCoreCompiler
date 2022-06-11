@@ -2,31 +2,17 @@
 using System.Text;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
+using System.IO;
+using System.Threading;
 
 namespace PhpReadkey
 {
     class Program
     {
-        static void Main(string[] args)
+        static string Input(string[] args)
         {
-            int port, action;
-            try
-            {
-                port = Convert.ToInt32(args[0]);
-            }
-            catch (Exception e)
-            {
-                return;
-            }
-            try
-            {
-                action = Convert.ToInt32(args[1]);
-            }
-            catch (Exception e)
-            {
-                return;
-            }
-
+            Console.InputEncoding = Encoding.GetEncoding(866);
+            int port = Convert.ToInt32(args[0]), action = Convert.ToInt32(args[1]);
             string result = "";
             switch (action)
             {
@@ -61,11 +47,39 @@ namespace PhpReadkey
                     break;
 
                 case 2:
-                    result = GetHiddenConsoleInput();
+                    result = GetHiddenConsoleInput(true);
+                    break;
+
+                case 3:
+                    result = Console.ReadLine();
                     break;
             }
-            Console.OutputEncoding = Console.InputEncoding = Encoding.UTF8;
-            Byte[] sendBytes = Encoding.UTF8.GetBytes(result);
+            return result;
+        }
+
+        static void Main(string[] args)
+        {
+            int port, action;
+            try
+            {
+                port = Convert.ToInt32(args[0]);
+                action = Convert.ToInt32(args[1]);
+            }
+            catch (Exception e)
+            {
+                return;
+            }
+
+            string result = Input(args);
+            Byte[] sendBytes;
+            try
+            {
+                sendBytes = Encoding.UTF8.GetBytes(result);
+            }
+            catch (Exception e)
+            {
+                return;
+            }
             try
             {
                 (new UdpClient()).Send(sendBytes, sendBytes.Length, "127.0.0.1", port);
@@ -81,12 +95,12 @@ namespace PhpReadkey
             return Regex.Replace(str, @"\s+", "");
         }
 
-        private static string GetHiddenConsoleInput()
+        private static string GetHiddenConsoleInput(bool hideInput)
         {
             string input = "";
             while (true)
             {
-                ConsoleKeyInfo key = Console.ReadKey(true);
+                ConsoleKeyInfo key = Console.ReadKey(hideInput);
                 if (key.Key == ConsoleKey.Enter) break;
                 if (key.Key == ConsoleKey.Backspace && input.Length > 0) input = input.Substring(0, input.Length - 1);
                 else if (key.Key != ConsoleKey.Backspace) input += key.KeyChar;

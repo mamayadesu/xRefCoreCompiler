@@ -1,4 +1,5 @@
 <?php
+declare(ticks = 1);
 
 namespace HttpServer;
 
@@ -110,141 +111,154 @@ final class Server
         $headersI = -1;
         $firstHeader1 = [];
         if (DEV_MODE) echo "[HttpServer] Waiting for request\n";
-        while ($this->socket != null && $connect = stream_socket_accept($this->socket, -1))
+        while (true)
         {
-            $requestDump = "";
-            $responseDump = "";
-            $headers = [];
-            $parsedHeaders = array();
-            $header1 = [];
-            $headerName = "";
-            $headerValue = "";
-            $headersI = -1;
-            $name = stream_socket_get_name($connect, true);
-            while ($buffer = rtrim(fgets($connect))) // reading headers
+            while ($this->socket != null && $connect = @stream_socket_accept($this->socket, 0))
             {
-                if ($buffer == false)
+                $requestDump = "";
+                $responseDump = "";
+                $headers = [];
+                $parsedHeaders = array();
+                $header1 = [];
+                $headerName = "";
+                $headerValue = "";
+                $headersI = -1;
+                $name = stream_socket_get_name($connect, true);
+                if (explode(':', $name)[1] == null)
                 {
-                    if (DEV_MODE) echo "[HttpServer] Buffer is broken\n";
                     fclose($connect);
-                    continue 2;
+                    continue;
                 }
-                $headersI++;
-                $headers[$headersI] = $buffer;
-                if ($headersI == 0) // if it's the first header (must be "*TYPE* HTTP/1.x")
+                while ($buffer = rtrim(fgets($connect))) // reading headers
                 {
-                    $firstHeader = $headers[0];
-                    $firstHeader1 = explode(' ', $firstHeader);
-                    if ($firstHeader1[count($firstHeader1) - 1] != "HTTP/1.0" && $firstHeader1[count($firstHeader1) - 1] != "HTTP/1.1")
+                    if ($buffer == false)
                     {
-                        if (DEV_MODE) echo "[HttpServer] Not HTTP request or wrong HTTP version\n";
+                        if (DEV_MODE) echo "[HttpServer] Buffer is broken\n";
                         fclose($connect);
                         continue 2;
                     }
+                    $headersI++;
+                    $headers[$headersI] = $buffer;
+                    if ($headersI == 0) // if it's the first header (must be "*TYPE* HTTP/1.x")
+                    {
+                        $firstHeader = $headers[0];
+                        $firstHeader1 = explode(' ', $firstHeader);
+                        if ($firstHeader1[count($firstHeader1) - 1] != "HTTP/1.0" && $firstHeader1[count($firstHeader1) - 1] != "HTTP/1.1")
+                        {
+                            if (DEV_MODE) echo "[HttpServer] Not HTTP request or wrong HTTP version\n";
+                            fclose($connect);
+                            continue 2;
+                        }
+                    }
                 }
-            }
-            if (count($headers) == 0)
-            {
-                if (DEV_MODE) echo "[HttpServer] No headers.\n";
-                fclose($connect);
-                continue;
-            }
-            $cookies = array();
-            foreach ($headers as $header)
-            {
-                $header1 = explode(": ", $header);
-                if (count($header1) < 2)
+                if (count($headers) == 0)
                 {
+                    if (DEV_MODE) echo "[HttpServer] No headers.\n";
+                    fclose($connect);
                     continue;
                 }
-                $headerName = $header1[0];
-                array_shift($header1);
-                $headerValue = implode(' ', $header1);
-                if (strtolower($headerName) == "cookie")
+                $cookies = array();
+                foreach ($headers as $header)
                 {
-                    $cookieArr = explode('=', $headerValue);
-                    $cookies[rawurldecode($cookieArr[0])] = rawurldecode($cookieArr[1]);
+                    $header1 = explode(": ", $header);
+                    if (count($header1) < 2)
+                    {
+                        continue;
+                    }
+                    $headerName = $header1[0];
+                    array_shift($header1);
+                    $headerValue = implode(' ', $header1);
+                    if (strtolower($headerName) == "cookie")
+                    {
+                        $cookieArr = explode('=', $headerValue);
+                        $cookies[rawurldecode($cookieArr[0])] = rawurldecode($cookieArr[1]);
+                    }
+                    else
+                    {
+                        $parsedHeaders[$headerName] = $headerValue;
+                    }
+                    $requestDump .= $headerName . ": " . $headerValue . "\n";
                 }
-                else
+                $body = "";
+                if (isset($parsedHeaders["Content-Length"]) && intval($parsedHeaders["Content-Length"]) > 0)
                 {
-                    $parsedHeaders[$headerName] = $headerValue;
+                    if (DEV_MODE) echo "[HttpServer] Reading content. Length " . intval($parsedHeaders["Content-Length"]) . "\n";
+                    stream_set_timeout($connect, 10);
+                    $contentLength = intval($parsedHeaders["Content-Length"]);
+                    $body = fread($connect, intval($parsedHeaders["Content-Length"]));
                 }
-                $requestDump .= $headerName . ": " . $headerValue . "\n";
-            }
-            $body = "";
-            if (isset($parsedHeaders["Content-Length"]) && intval($parsedHeaders["Content-Length"]) > 0)
-            {
-                if (DEV_MODE) echo "[HttpServer] Reading content. Length " . intval($parsedHeaders["Content-Length"]) . "\n";
-                stream_set_timeout($connect, 10);
-                $contentLength = intval($parsedHeaders["Content-Length"]);
-                $body = fread($connect, intval($parsedHeaders["Content-Length"]));
-            }
-            $meta = stream_get_meta_data($connect);
-            if ($meta["timed_out"])
-            {
-                if (DEV_MODE) echo "[HttpServer] Read timeout\n";
-                fclose($connect);
-                continue;
-            }
-            if (!isset($parsedHeaders["Host"]))
-            {
-                $parsedHeaders["Host"] = "0.0.0.0";
-            }
-            //$body = urldecode($body);
-            $requestDump .= $body;
-            $request = new Request($headers, $body, $name);
-            $request->ServerPort = $this->port;
-            $request->Headers = $parsedHeaders;
-            $request->RequestUrl = "http://" . $parsedHeaders["Host"] . $request->RequestUri;
-            $request->Cookie = $cookies;
-
-            $parsedUrl = parse_url($request->RequestUrl);
-            if (isset($parsedUrl["query"]))
-            {
-                $request->QueryString = $parsedUrl["query"];
-            }
-            if (isset($parsedUrl["path"]))
-            {
-                $request->PathInfo = $parsedUrl["path"];
-            }
-            parse_str($request->QueryString, $request->Get);
-
-            if (!@json_decode($body))
-            {
-                parse_str($body, $request->Post);
-            }
-
-            $response = new Response($connect);
-            $this->responses[] = $response;
-            if ($request->RequestError)
-            {
-                if (DEV_MODE) echo "[HttpServer] Request Error\n";
-                $response->End("");
-                continue;
-            }
-            if (isset($parsedHeaders["Expect"]) && strtolower($parsedHeaders["Expect"]) == "100-continue" && strlen($body) < $parsedHeaders["Content-Length"])
-            {
-                if (DEV_MODE) echo "[HttpServer] Client expected 100, but 100 Continue not supported yet. Please wait for updates.\n";
-                $response->Status(405);
-                $response->End("<h1>405 Method Not Allowed</h1>");
-                continue;
-            }
-            $response->Header("Content-Type", "text/html");
-            $response->Header("Connection", "close");
-
-            $this->registeredEvents["request"]($request, $response);
-            foreach ($this->responses as $key => $response)
-            {if(!$response instanceof Response)continue;
-                if ($response->IsClosed())
+                $meta = stream_get_meta_data($connect);
+                if ($meta["timed_out"])
                 {
-                    unset($this->responses[$key]);
+                    if (DEV_MODE) echo "[HttpServer] Read timeout\n";
+                    fclose($connect);
+                    continue;
+                }
+                if (!isset($parsedHeaders["Host"]))
+                {
+                    $parsedHeaders["Host"] = "";
+                }
+                //$body = urldecode($body);
+                $requestDump .= $body;
+                $request = new Request($headers, $body, $name);
+                $request->ServerPort = $this->port;
+                $request->Headers = $parsedHeaders;
+                $request->RequestUrl = "http://" . $parsedHeaders["Host"] . $request->RequestUri;
+                $request->Cookie = $cookies;
+
+                $parsedUrl = parse_url($request->RequestUrl);
+                if (isset($parsedUrl["query"]))
+                {
+                    $request->QueryString = $parsedUrl["query"];
+                }
+                if (isset($parsedUrl["path"]))
+                {
+                    $request->PathInfo = $parsedUrl["path"];
+                }
+                parse_str($request->QueryString, $request->Get);
+
+                if (!@json_decode($body))
+                {
+                    parse_str($body, $request->Post);
+                }
+
+                $response = new Response($connect);
+                $this->responses[] = $response;
+                if ($request->RequestError)
+                {
+                    if (DEV_MODE) echo "[HttpServer] Request Error\n";
+                    $response->End("");
+                    continue;
+                }
+                if (isset($parsedHeaders["Expect"]) && strtolower($parsedHeaders["Expect"]) == "100-continue" && strlen($body) < $parsedHeaders["Content-Length"])
+                {
+                    if (DEV_MODE) echo "[HttpServer] Client expected 100, but 100 Continue not supported yet. Please wait for updates.\n";
+                    $response->Status(405);
+                    $response->End("<h1>405 Method Not Allowed</h1>");
+                    continue;
+                }
+                $response->Header("Content-Type", "text/html");
+                $response->Header("Connection", "close");
+
+                $this->registeredEvents["request"]($request, $response);
+                foreach ($this->responses as $key => $response)
+                {if(!$response instanceof Response)continue;
+                    if ($response->IsClosed())
+                    {
+                        unset($this->responses[$key]);
+                    }
+                }
+                $this->responses = array_values($this->responses);
+                if ($this->shutdownWasCalled)
+                {
+                    return;
                 }
             }
-            $this->responses = array_values($this->responses);
             if ($this->shutdownWasCalled)
             {
                 return;
             }
+            time_nanosleep(0, 5 * 1000000);
         }
     }
 

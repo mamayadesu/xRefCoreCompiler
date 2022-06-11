@@ -69,7 +69,7 @@ class Utils
         @mkdir(getcwd() . DIRECTORY_SEPARATOR . $proj_name);
         @mkdir(getcwd() . DIRECTORY_SEPARATOR . $proj_name . DIRECTORY_SEPARATOR . "Program");
         $main = getcwd() . DIRECTORY_SEPARATOR . $proj_name . DIRECTORY_SEPARATOR . "Program" . DIRECTORY_SEPARATOR . "Main.php";
-        $main_code = "PD9waHAKCm5hbWVzcGFjZSBQcm9ncmFtOwoKdXNlIElPXENvbnNvbGU7CnVzZSBBcHBsaWNhdGlvblxBcHBsaWNhdGlvbjsKCmNsYXNzIE1haW4KewogICAgcHVibGljIGZ1bmN0aW9uIF9fY29uc3RydWN0KGFycmF5ICRhcmdzKQogICAgewogICAgICAgIENvbnNvbGU6OldyaXRlTGluZSgiSGVsbG8gV29ybGQhIik7CiAgICB9Cn0=";
+        $main_code = "PD9waHAKZGVjbGFyZSh0aWNrcyA9IDEpOwoKbmFtZXNwYWNlIFByb2dyYW07Cgp1c2UgSU9cQ29uc29sZTsKdXNlIEFwcGxpY2F0aW9uXEFwcGxpY2F0aW9uOwoKY2xhc3MgTWFpbgp7CiAgICBwdWJsaWMgZnVuY3Rpb24gX19jb25zdHJ1Y3QoYXJyYXkgJGFyZ3MpCiAgICB7CiAgICAgICAgQ29uc29sZTo6V3JpdGVMaW5lKCJIZWxsbyBXb3JsZCEiKTsKICAgIH0KfQ==";
         if (!file_exists($main))
         {
             $f = fopen($main, "w");

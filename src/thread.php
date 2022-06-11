@@ -1,20 +1,23 @@
 <?php
+declare(ticks = 1);
 error_reporting(E_ALL);
 define("MAIN_THREAD", false);
 define("DEV_MODE", false);
 
+$bigArg = unserialize(base64_decode($argv[1]));
+
 /* parent thread port */
-$port = 0x0000;
+$port = $bigArg["port"];
 /* port of super global array */
-$gaport = 0x0000;
-$gapid = 0x0000;
+$gaport = $bigArg["gaport"] ?? 0;
+$gapid = $bigArg["gapid"] ?? 0;
 
 /* port for receiving data from sga */
 $garecport = rand(10000, 60000);
-$__CLASSNAME = "";
-$__JSONNEWARGS = [];
-$__PARENTPID = 0x0000;
-/* {RANDOMKEY} */
+$__CLASSNAME = $bigArg["__CLASSNAME"];
+$__ARGS = $bigArg["__ARGS"];
+$__PARENTPID = $bigArg["__PARENTPID"];
+$pathToPharContent = $bigArg["pathToPharContent"];
 
 if (!($sock = socket_create(AF_INET, SOCK_DGRAM, 0)))
 {
@@ -29,9 +32,9 @@ $json = serialize($data);
 $length = strlen($json);
 $lenstr = str_repeat("0", 16 - strlen($length . "")) . $length;
 
-require_once __DIR__ . DIRECTORY_SEPARATOR . "common.php";
+require_once $pathToPharContent . "common.php";
 
-including(__DIR__ . DIRECTORY_SEPARATOR . "__xrefcore");
+including($pathToPharContent . "__xrefcore");
 
 @cli_set_process_title(\Application\Application::GetName() . " : " . $garecport);
 
@@ -48,10 +51,11 @@ if (!\Threading\Thread::SendLongQuery($sock, $json, \Threading\Thread::ADDRESS, 
 
 spl_autoload_register(function(string $className)
 {
+    global $pathToPharContent;
     $_className = "";
     if (!class_exists($className))
     {
-        $_className = __DIR__ . DIRECTORY_SEPARATOR . $className . ".php";
+        $_className = $pathToPharContent . $className . ".php";
 
         if (strtoupper(substr(PHP_OS, 0, 3)) != "WIN")
         {
@@ -94,4 +98,6 @@ register_shutdown_function("__onshutdown");
 $__CLASSNAME::__SetParentThreadPid($__PARENTPID);
 $thread = new $__CLASSNAME();
 $thread->__setdata($sock, $port, new \Threading\ParentThreadedObject($sock, $port, $thread));
-$thread->Threaded($__JSONNEWARGS);
+
+new \Scheduler\SchedulerMaster();
+$thread->Threaded($__ARGS);

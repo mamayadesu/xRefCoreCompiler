@@ -1,4 +1,5 @@
 <?php
+declare(ticks = 1);
 
 namespace Threading;
 
@@ -251,14 +252,7 @@ abstract class Thread
                 throw $e;
             }
 
-            if (get_class($this) == "Threading\\__SuperGlobalArrayThread")
-            {
-                Thread::SendLongQuery($this->__socket, $json, Thread::ADDRESS, $q["port"]);
-            }
-            else
-            {
-                Thread::SendLongQuery($this->__socket, $json, Thread::ADDRESS, $q["port"]);
-            }
+            Thread::SendLongQuery($this->__socket, $json, Thread::ADDRESS, $q["port"]);
         }
     }
 
@@ -332,7 +326,7 @@ abstract class Thread
     /**
      * Initializes a parallel class
      *
-     * @param array<int, string> $args Arguments which child-thread will get in `Threaded(array $args)` method
+     * @param array<mixed> $args Arguments which child-thread will get in `Threaded(array $args)` method
      * @param object $handler Any object that the child thread can access
      * @return Threaded Object which provides information and access to child-thread
      * @throws AbstractClassThreadException
@@ -362,49 +356,28 @@ abstract class Thread
             throw $e;
         }
 
-        $newArgs = [];
-        if (DEV_MODE) echo "[THREAD] Reading args [" . round(microtime(true) - $microtime, 6) . "]\n";
-        foreach ($args as $key => $value)
-        {
-            if (!self::check($value) || !self::check($key))
-            {
-                $e = new InvalidArgumentsPassedException("Arguments can be only void, string, integer, array, boolean, float, double or long");
-                $e->__xrefcoreexception = true;
-                throw $e;
-            }
-            $newArgs[] = $value;
-        }
-
         $pathToPharContent = Application::GetExecutableFileName();
-        if (basename($pathToPharContent) == "autoload.php")
-        {
-            $pathToPharContent = dirname($pathToPharContent) . DIRECTORY_SEPARATOR;
-            $pathToPharContent = str_replace("\\", "\\\\", $pathToPharContent);
-        }
-        else
-        {
-            $pathToPharContent = str_replace("\\", "/", $pathToPharContent);
-            $pathToPharContent .= "/";
-            $pathToPharContent = "phar://" . $pathToPharContent;
-        }
-        if (DEV_MODE) echo "[THREAD] Getting autoload [" . round(microtime(true) - $microtime, 6) . "]\n";
-        $autoload = file_get_contents($pathToPharContent . "thread.php");
-        $parentPid = getmypid();
-        $jsonNewArgs = json_encode($newArgs);
+        $pathToPharContent = str_replace("\\", "/", $pathToPharContent);
+        $pathToPharContent .= "/";
+        $pathToPharContent = "phar://" . $pathToPharContent;
 
-        if (DEV_MODE) echo "[THREAD] Parsing autoload [" . round(microtime(true) - $microtime, 6) . "]\n";
+        $executable = $pathToPharContent . "thread.php";
+
+        $parentPid = getmypid();
+
+        $bigArg = array(
+            "__PARENTPID" => $parentPid,
+            "__ARGS" => $args,
+            "__CLASSNAME" => $className,
+            "randomkey" => md5(microtime(true) . "" . rand(-100, 100))
+        );
         if ($className != "\\Threading\\__SuperGlobalArrayThread")
         {
             $sga = SuperGlobalArray::GetInstance();
 
-            $autoload = str_replace("\$gaport = 0x0000", "\$gaport = " . $sga->GetPort(), $autoload);
-            $autoload = str_replace("\$gapid = 0x0000", "\$gapid = " . $sga->GetPid(), $autoload);
+            $bigArg["gaport"] = $sga->GetPort();
+            $bigArg["gapid"] = $sga->GetPid();
         }
-        $autoload = str_replace("\$__PARENTPID = 0x0000", "\$__PARENTPID = " . $parentPid, $autoload);
-        $autoload = str_replace("\$__JSONNEWARGS = []", "\$__JSONNEWARGS = " . $jsonNewArgs, $autoload);
-        $autoload = str_replace("\$__CLASSNAME = \"\"", "\$__CLASSNAME = \"" . $className . "\"", $autoload);
-        $autoload = str_replace("{RANDOMKEY}", md5(microtime(true) . "" . rand(-100, 100)), $autoload);
-        if (DEV_MODE) echo "[THREAD] Parsed [" . round(microtime(true) - $microtime, 6) . "]\n";
         $port = 0;
         $__dm = __DataManager1::GetInstance();
         if ($__dm == null)
@@ -440,21 +413,10 @@ abstract class Thread
             $port = $__dm->__GetPort();
         }
 
-        if (strtolower(substr($autoload, 0, 5)) == "<" . "?" . "php")
-        {
-            $autoload = substr($autoload, 5, strlen($autoload) - 5);
-        }
-        else if (strtolower(substr($autoload, 0, 2)) == "<" . "?")
-        {
-            $autoload = substr($autoload, 2, strlen($autoload) - 2);
-        }
-        if (DEV_MODE) echo "[THREAD] Continuing parsing [" . round(microtime(true) - $microtime, 6) . "]\n";
-        $autoload = str_replace("\$port = 0x0000", "\$port = " . $port, $autoload);
-        $autoload = str_replace("__DIR__", "\"" . $pathToPharContent . "\"", $autoload);
-        $autoload = str_replace("\"" . $pathToPharContent . "\" . DIRECTORY_SEPARATOR", "\"" . $pathToPharContent . "\"", $autoload);
-        $autoload = str_replace(["\n", "\r", "    "], ["", "", ""], $autoload);
-        if (DEV_MODE) echo "[THREAD] Parsed again [" . round(microtime(true) - $microtime, 6) . "]\n";
-        $cmd = $phpCmd . " -r \"eval(base64_decode('" . base64_encode($autoload) . "'));\"";
+        $bigArg["port"] = $port;
+        $bigArg["pathToPharContent"] = $pathToPharContent;
+
+        $cmd = $phpCmd . " -r \"include '" . str_replace("'", "\\'", $executable) . "';\" " . base64_encode(serialize($bigArg));
         if (self::IsWindows())
         {
             $startbi = "start /B /I ";
@@ -508,7 +470,7 @@ abstract class Thread
         $remote_port = $thrinfo[0];
         $childPid = $thrinfo[1];
         if (DEV_MODE) echo "[THREAD] Creating object [" . round(microtime(true) - $microtime, 6) . "]\n";
-        $runtime = new Threaded($childPid, $newArgs, $className, $sock, $remote_port, $handler);
+        $runtime = new Threaded($childPid, $args, $className, $sock, $remote_port, $handler);
 
         self::$childThreads[] = $runtime;
         if (DEV_MODE) echo "[THREAD] Everything done! [" . round(microtime(true) - $microtime, 6) . "]\n";

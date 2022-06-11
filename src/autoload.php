@@ -1,5 +1,5 @@
 <?php
-declare(ticks=1);
+declare(ticks = 1);
 if (!defined("STDIN"))
 {
     die("You can run this program only from CLI.");
@@ -151,4 +151,6 @@ else
 }
 
 if (DEV_MODE) echo "Starting application... [" . round((microtime(true) - $microtime), 6) . "]\n";
+
+new \Scheduler\SchedulerMaster();
 new \Program\Main($args);

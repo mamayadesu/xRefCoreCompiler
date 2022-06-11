@@ -1,4 +1,5 @@
 <?php
+declare(ticks = 1);
 
 namespace CliForms\MenuBox;
 
@@ -648,11 +649,11 @@ class MenuBox extends ListBox
             Console::Write($output);
             if ($this->menuBoxType == MenuBoxTypes::KeyPressType)
             {
-                $pressedKey = Console::ReadKey();
-                while ($pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow")
+                do
                 {
                     $pressedKey = Console::ReadKey();
                 }
+                while ($pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow");
                 $itemsCount = count($this->items);
                 if ($pressedKey == "uparrow")
                 {
@@ -679,10 +680,6 @@ class MenuBox extends ListBox
                     else if($this->SelectedItemNumber < $itemsCount && $this->SelectedItemNumber != 0)
                     {
                         $this->SetSelectedItemNumber($this->SelectedItemNumber + 1);
-                    }
-                    if ($this->SelectedItemChangedEvent != null)
-                    {
-                        $this->SelectedItemChangedEvent->call($this->mythis, $this);
                     }
                     $callbackCalled = false;
                     continue;
@@ -806,11 +803,11 @@ class MenuBox extends ListBox
         Console::Write($output);
         if ($this->menuBoxType == MenuBoxTypes::KeyPressType)
         {
-            $pressedKey = Console::ReadKey();
-            while ($pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow")
+            do
             {
                 $pressedKey = Console::ReadKey();
             }
+            while ($pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow");
             $itemsCount = count($this->items);
             if ($pressedKey == "uparrow")
             {
@@ -821,10 +818,6 @@ class MenuBox extends ListBox
                 else if($this->SelectedItemNumber > 1)
                 {
                     $this->SetSelectedItemNumber($this->SelectedItemNumber - 1);
-                }
-                if ($this->SelectedItemChangedEvent != null)
-                {
-                    $this->SelectedItemChangedEvent->call($this->mythis, $this);
                 }
                 $this->callbackCalled = false;
                 return $this->GetEmptyFunction()->call($this, $this);
@@ -841,10 +834,6 @@ class MenuBox extends ListBox
                 else if($this->SelectedItemNumber < $itemsCount && $this->SelectedItemNumber != 0)
                 {
                     $this->SetSelectedItemNumber($this->SelectedItemNumber + 1);
-                }
-                if ($this->SelectedItemChangedEvent != null)
-                {
-                    $this->SelectedItemChangedEvent->call($this->mythis, $this);
                 }
                 $this->callbackCalled = false;
                 return $this->GetEmptyFunction()->call($this, $this);
