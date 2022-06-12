@@ -77,11 +77,11 @@ class Console
                 $read = "";
                 while (true)
                 {
-                    $read = fgets($stdin);
+                    $read = fread($stdin, 64);
                     if ($read == "\n" || $read == "\r")
                         break;
                     $result .= $read;
-                    time_nanosleep(0, 10 * 1000000);
+                    time_nanosleep(0, 5 * 1000000);
                 }
                 echo "\n";
             }
@@ -166,7 +166,7 @@ class Console
         stream_set_blocking($stdin, false);
         system("stty cbreak -echo");
         $t = 1000000;
-        while (!($keypress = fgets($stdin)))
+        while (($keypress = fread($stdin, 64)) == "")
         {
             time_nanosleep(0, 5 * $t);
         }

@@ -2,19 +2,32 @@
 
 namespace Scheduler;
 
+use HttpServer\Server;
 use Scheduler\Exceptions\NotInitializableClassException;
 
 /**
- * @ignore
+ * Asynchronous tasks manager
  */
 final class SchedulerMaster
 {
+    /**
+     * @ignore
+     */
     private static ?SchedulerMaster $instance = null;
 
+    /**
+     * @ignore
+     */
     private array/*<int, ?AsyncTask>*/ $Queue = array();
 
+    /**
+     * @ignore
+     */
     private bool $HasAtLeastOneTask = false;
 
+    /**
+     * @ignore
+     */
     public function __construct()
     {
         if (self::$instance != null)
@@ -26,6 +39,9 @@ final class SchedulerMaster
         self::$instance = $this;
     }
 
+    /**
+     * @ignore
+     */
     public function AddTaskToQueue(AsyncTask $task) : void
     {
         $this->Queue[$task->GetTaskId()] = $task;
@@ -36,16 +52,55 @@ final class SchedulerMaster
         }
     }
 
+    /**
+     * @ignore
+     */
     public static function GetInstance() : ?SchedulerMaster
     {
         return self::$instance;
     }
 
+    /**
+     * @return array<AsyncTask> All active asynchronous tasks
+     */
+    public static function GetActiveTasks() : array
+    {
+        return self::$instance->__getasynctasks();
+    }
+
+    /**
+     * @ignore
+     *
+     * @return array<AsyncTask> All active asynchronous tasks
+     */
+    public function __getasynctasks(bool $removeSystemClasses = true) : array
+    {
+        /** @var array<AsyncTask> $result */$result = [];
+        foreach (self::GetInstance()->Queue as $Task)
+        {if(!$Task instanceof AsyncTask)continue;
+            if (($removeSystemClasses && ($Task->GetThis() instanceof Server)) || ($Task->IsCancelled() || ($Task->IsOnce() && $Task->WasExecuted())))
+                continue;
+
+            $result[] = $Task;
+        }
+        return $result;
+    }
+
+    /**
+     * @ignore
+     */
+    public function __unregister() : void
+    {
+        unregister_tick_function([$this, "Handle"]);
+    }
+
+    /**
+     * @ignore
+     */
     public function Handle() : void
     {
         if (!$this->HasAtLeastOneTask || count($this->Queue) == 0)
         {
-            unregister_tick_function([$this, "Handle"]);
             $this->HasAtLeastOneTask = false;
             return;
         }

@@ -112,6 +112,14 @@ final class AsyncTask
     }
 
     /**
+     * @return object Your this
+     */
+    public function GetThis() : object
+    {
+        return $this->MyThis;
+    }
+
+    /**
      * Execute task manually.
      *
      * @return void
@@ -152,6 +160,9 @@ final class AsyncTask
         $this->NextExecution = 0;
 
         unset($this->Owner);
+        $sm = SchedulerMaster::GetInstance();
+        if (count($sm->__getasynctasks(false)))
+            $sm->__unregister();
     }
 
     /**
