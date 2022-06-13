@@ -83,6 +83,9 @@ else {
 if ($check -eq $false) {
     Add-Content $profile "`nfunction xrefcore-compiler { php `$HOME\.xRefCoreCompiler\xRefCoreCompiler.phar `$args }`n"
 }
+$q = 'doskey xrefcore-compiler="php" "C:\Users\Semyon\.xRefCoreCompiler\xRefCoreCompiler.phar" $*'
+reg add "HKCU\Software\Microsoft\Command Processor" /v Autorun /d "$q" /f
+reg query "HKCU\Software\Microsoft\Command Processor" /v Autorun
 xrefcore-compiler --configure
 echo "[5/5] Done! Now please run '.`$profile' command. Use 'xrefcore-compiler' command to run"
 pause
