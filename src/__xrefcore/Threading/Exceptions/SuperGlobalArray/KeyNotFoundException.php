@@ -5,7 +5,6 @@ namespace Threading\Exceptions\SuperGlobalArray;
 
 /**
  * Class KeyNotFoundException
- * @package Threading\Exceptions\SuperGlobalArray
  */
 
 class KeyNotFoundException extends \Exception

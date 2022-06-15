@@ -8,8 +8,7 @@ use Data\String\ColoredString;
 use Data\String\ForegroundColors;
 
 /**
- * Console tools
- * @package IO
+ * Contains tools for CLI I/O
  */
 
 class Console
@@ -31,10 +30,10 @@ class Console
     }
 
     /**
-     * Reads line from default input stream. Attention! In child-threads this method works only in Windows but doesn't work in *Unix systems
+     * Reads a line from input stream after user pressed ENTER
      *
      * @param bool $hideInput Hides characters which user is typing
-     * @return string Data from stream input
+     * @return string Data from input stream
      */
     public static function ReadLine(bool $hideInput = false) : string
     {
@@ -125,9 +124,9 @@ class Console
     }
 
     /**
-     * Reads pressed key in input stream
+     * Waits when user press keyboard key and returns character or key name
      *
-     * @return string
+     * @return string Pressed character or key name
      */
     public static function ReadKey() : string
     {
@@ -255,11 +254,11 @@ class Console
     }
 
     /**
-     * Writes text to default stream output and sets pointer to new line
+     * Writes data to stream output and sets pointer to new line
      *
      * @param string $text Input text
-     * @param ForegroundColors $foregroundColor
-     * @param BackgroundColors $backgroundColor
+     * @param ForegroundColors $foregroundColor Text color
+     * @param BackgroundColors $backgroundColor Background color
      */
     public static function WriteLine(string $text, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : void
     {
@@ -267,11 +266,11 @@ class Console
     }
 
     /**
-     * Writes text to default stream output
+     * Writes data to stream output
      *
      * @param string $text Input text
-     * @param ForegroundColors $foregroundColor
-     * @param BackgroundColors $backgroundColor
+     * @param ForegroundColors $foregroundColor Text color
+     * @param BackgroundColors $backgroundColor Background color
      */
     public static function Write(string $text, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : void
     {
@@ -284,7 +283,7 @@ class Console
     }
 
     /**
-     * Clears a line
+     * Removes text from the last line
      *
      * @param string $text Replace whole text on current line to new text
      */

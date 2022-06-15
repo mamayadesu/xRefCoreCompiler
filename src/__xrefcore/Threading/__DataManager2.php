@@ -7,7 +7,6 @@ use Threading\Exceptions\SystemMethodCallException;
 
 /**
  * Class __DataManager2
- * @package Threading
  * @ignore
  */
 

@@ -7,7 +7,6 @@ use \Data\Enum;
 
 /**
  * Types of item headers
- * @package CliForms
  */
 
 class RowHeaderType extends Enum

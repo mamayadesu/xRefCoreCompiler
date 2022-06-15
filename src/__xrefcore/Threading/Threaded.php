@@ -10,7 +10,6 @@ use \Threading\Exceptions\BadDataAccessException;
 
 /**
  * Provides information and access to child thread
- * @package Threading
  */
 
 final class Threaded

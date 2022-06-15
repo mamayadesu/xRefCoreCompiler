@@ -5,7 +5,6 @@ namespace Data\String;
 
 /**
  * Makes your string colored
- * @package ColoredString
  */
 
 class ColoredString

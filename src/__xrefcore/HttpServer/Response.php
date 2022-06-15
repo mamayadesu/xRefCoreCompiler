@@ -7,8 +7,7 @@ use HttpServer\Exceptions\ClosedRequestException;
 use HttpServer\Exceptions\HeadersSentException;
 
 /**
- * Package contains method for response build
- * @package HttpServer
+ * Class contains methods to send response to client and close connection
  */
 
 final class Response

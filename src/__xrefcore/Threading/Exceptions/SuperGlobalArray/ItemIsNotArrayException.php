@@ -5,7 +5,6 @@ namespace Threading\Exceptions\SuperGlobalArray;
 
 /**
  * Class ItemIsNotArrayException
- * @package Threading\Exceptions\SuperGlobalArray
  */
 
 class ItemIsNotArrayException extends \Exception

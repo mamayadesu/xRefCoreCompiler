@@ -13,7 +13,6 @@ use \Threading\Exceptions\NewThreadException;
 
 /**
  * Allows you to initialize classes in another threads. At the same time, this class is using by the child thread to access the parent
- * @package Threading
  */
 
 abstract class Thread

@@ -5,7 +5,6 @@ namespace IO;
 
 /**
  * File system tools
- * @package IO
  */
 
 class FileDirectory

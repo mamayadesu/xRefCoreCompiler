@@ -112,7 +112,7 @@ final class AsyncTask
     }
 
     /**
-     * @return object Your this
+     * @return object Object's context for its execution
      */
     public function GetThis() : object
     {
@@ -150,7 +150,7 @@ final class AsyncTask
     }
 
     /**
-     * Cancel task
+     * Cancel task. If you cancel task, it won't be executable anymore and will be removed from scheduler
      *
      * @return void
      */
@@ -210,7 +210,7 @@ final class AsyncTask
      *
      * @param float $Time New execution time in Unixtime format in milliseconds. If you don't set time, then the next execution time will be "now + interval"
      * @return void
-     * @throws Exception Выбрасывается исключение, если указанное время не кратно 100 либо разница между указанным временем и текущим меньше 100 миллисекунд
+     * @throws InvalidNewExecutionTimeException
      */
     public function SetNextExecution(float $Time = 0) : void
     {
@@ -218,15 +218,12 @@ final class AsyncTask
         $now = floor(microtime(true) * 1000);
         if ($Time == 0)
         {
-            $Time = $now + $this->Interval;
-            while (substr($Time, -2) != "00")
-            {
-                $Time++;
-            }
+            $this->NextExecution = $this->Interval + $now;
+            return;
         }
         if ($Time <= $now)
         {
-            $e = new InvalidNewExecutionTimeException("Cannot set this execution time because current value is less than now");
+            $e = new InvalidNewExecutionTimeException("Cannot set this execution time because current value must be higher than now");
             $e->__xrefcoreexception = true;
             throw $e;
         }

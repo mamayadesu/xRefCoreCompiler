@@ -18,7 +18,6 @@ use IO\Console;
 
 /**
  * Creates customized menu
- * @package CliForms\ListBox
  */
 
 class MenuBox extends ListBox

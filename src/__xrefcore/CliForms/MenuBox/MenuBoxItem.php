@@ -8,7 +8,6 @@ use \Closure;
 
 /**
  * MenuBoxItem
- * @package CliForms\MenuBox
  */
 
 class MenuBoxItem extends ListBoxItem

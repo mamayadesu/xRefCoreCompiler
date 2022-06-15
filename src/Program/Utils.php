@@ -19,7 +19,7 @@ class Utils
             {
                 FileDirectory::Delete($home . "\\.xRefCoreCompiler\\Core");
             }
-            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/__xrefcore", $home . "\\.xRefCoreCompiler\\Core");
+            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/api", $home . "\\.xRefCoreCompiler\\Core");
         }
         else
         {
@@ -35,7 +35,7 @@ class Utils
             }
             @mkdir("/usr/share/xRefCoreCompiler");
             @mkdir($share);
-            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/__xrefcore", $share);
+            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/api", $share);
             FileDirectory::RecursiveChmod(755, $share . "/..");
         }
     }

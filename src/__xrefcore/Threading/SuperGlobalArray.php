@@ -23,8 +23,6 @@ use Threading\Exceptions\SystemMethodCallException;
  * you have to use this:
  * $arr = SuperGlobalArray::GetInstance();
  * $foo = $arr->Get(["subarray", "subsubarray", "bar"]);
- *
- * @package Threading
  */
 
 final class SuperGlobalArray
@@ -114,7 +112,7 @@ final class SuperGlobalArray
     /**
      * Returns value of array key
      *
-     * @param array $keys Path to value. For example, if you want to make thing like this: $array["hello"]["world"]["foo"]["bar"], use this: ["hello", "world", "foo", "bar"]
+     * @param array<string> $keys Path to value. For example, if you want to make thing like this: $array["hello"]["world"]["foo"]["bar"], use this: ["hello", "world", "foo", "bar"]
      * @return mixed
      * @throws ItemIsNotArrayException
      * @throws KeyNotFoundException
@@ -163,7 +161,7 @@ final class SuperGlobalArray
     /**
      * Sets new value for key
      *
-     * @param array $keys Path to value. For example, if you want to make thing like this: $array["hello"]["world"]["foo"]["bar"], use this: ["hello", "world", "foo", "bar"]
+     * @param array<string> $keys Path to value. For example, if you want to make thing like this: $array["hello"]["world"]["foo"]["bar"], use this: ["hello", "world", "foo", "bar"]
      * @param $value mixed Value
      * @throws ItemIsNotArrayException
      * @throws KeyNotFoundException
@@ -212,7 +210,7 @@ final class SuperGlobalArray
     /**
      * Addes value to array with numeric index
      *
-     * @param array $keys Path to value. For example, if you want to make thing like this: $array["hello"]["world"][] = $value, use this: Add(["hello", "world"], $value)
+     * @param array<string> $keys Path to value. For example, if you want to make thing like this: $array["hello"]["world"][] = $value, use this: Add(["hello", "world"], $value)
      * @param $value mixed Value
      * @throws ItemIsNotArrayException
      * @throws KeyNotFoundException
@@ -261,7 +259,7 @@ final class SuperGlobalArray
     /**
      * Returns TRUE if item with same key exists
      *
-     * @param array $keys Path to value
+     * @param array<string> $keys Path to value
      * @return bool
      * @throws ItemIsNotArrayException
      * @throws KeyNotFoundException
@@ -310,7 +308,7 @@ final class SuperGlobalArray
     /**
      * Deletes item in array, like native PHP `unset()` function
      *
-     * @param array $keys Path to value
+     * @param array<string> $keys Path to value
      * @throws ItemIsNotArrayException
      * @throws UnknownErrorException
      */
@@ -357,7 +355,7 @@ final class SuperGlobalArray
     /**
      * Executes operator with array item
      *
-     * @param array $keys Path to value
+     * @param array<string> $keys Path to value
      * @param string $operator Required operator. Available operators: ".=", "+=", "-=", "*=", "/=", "++", "--"
      * @param mixed $value Value for operator. Isn't using with "++" and "--" operators
      * @throws InvalidOperatorException

@@ -5,7 +5,6 @@ namespace Threading\Exceptions\SuperGlobalArray;
 
 /**
  * Class InvalidValueTypeException
- * @package Threading\Exceptions\SuperGlobalArray
  */
 
 class InvalidValueTypeException extends \Exception

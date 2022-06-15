@@ -5,7 +5,6 @@ namespace Threading;
 
 /**
  * Class __SuperGlobalArrayThread
- * @package Threading
  * @ignore
  */
 

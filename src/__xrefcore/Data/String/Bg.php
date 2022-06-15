@@ -5,7 +5,6 @@ namespace Data\String;
 
 /**
  * Short aliases for BackgroundColors
- * @package Data\String
  */
 
 class Bg

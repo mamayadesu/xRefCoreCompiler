@@ -5,7 +5,6 @@ namespace Data\String;
 
 /**
  * Short aliases for ForegroundColors
- * @package Data\String
  */
 
 class Fg

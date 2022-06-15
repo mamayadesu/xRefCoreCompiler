@@ -5,7 +5,6 @@ namespace Threading\Exceptions\SuperGlobalArray;
 
 /**
  * Class InvalidOperatorException
- * @package Threading\Exceptions\SuperGlobalArray
  */
 
 class InvalidOperatorException extends \Exception

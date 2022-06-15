@@ -15,7 +15,6 @@ use Threading\Exceptions\InvalidResultReceivedException;
  * The "parent threaded object" is the second argument of ThreadName::Run()
  *
  * Attention! If you call method or try to get access to property of class, the child thread will be "frozen" until the parent thread will call "WaitForChildAccess()"
- * @package Threading
  */
 
 final class ParentThreadedObject

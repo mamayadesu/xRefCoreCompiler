@@ -7,7 +7,6 @@ use \Data\Exceptions\CreateEnumInstanceException;
 
 /**
  * Creating Enum objects
- * @package Data
  */
 
 abstract class Enum

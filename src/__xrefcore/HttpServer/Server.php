@@ -3,7 +3,6 @@ declare(ticks = 1);
 
 namespace HttpServer;
 
-use HttpServer\Exceptions\ContinueStatusNotSupportedYetException;
 use HttpServer\Exceptions\ServerStartException;
 use HttpServer\Exceptions\UnknownEventException;
 use Scheduler\AsyncTask;
@@ -17,7 +16,7 @@ use Scheduler\AsyncTask;
 final class Server
 {
     /**
-     * @ingore
+     * @ignore
      */
     private ?AsyncTask $asyncServer = null;
 
@@ -84,6 +83,7 @@ final class Server
      *
      * @param string $eventName
      * @param callable $callback
+     * @throws UnknownEventException
      */
     public function On(string $eventName, callable $callback) : void
     {

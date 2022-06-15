@@ -7,7 +7,6 @@ use \Data\Enum;
 
 /**
  * Contains background color codes for CLI
- * @package BackgroundColors
  */
 
 class BackgroundColors extends Enum

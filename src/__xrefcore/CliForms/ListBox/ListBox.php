@@ -14,7 +14,6 @@ use \IO\Console;
 
 /**
  * Creation of customized lists
- * @package CliForms\ListBox
  */
 
 class ListBox

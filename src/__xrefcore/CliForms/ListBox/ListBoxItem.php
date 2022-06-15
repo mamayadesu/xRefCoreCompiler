@@ -8,7 +8,6 @@ use \Data\String\ForegroundColors;
 
 /**
  * ListBoxItem
- * @package CliForms\ListBox
  */
 
 class ListBoxItem
