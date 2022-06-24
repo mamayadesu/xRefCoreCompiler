@@ -111,7 +111,7 @@ class Console
         socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 5000));
         do
         {
-            $r = @socket_recvfrom($socket, $buf, 32, 0, $remote_ip, $remote_port);
+            $r = @socket_recvfrom($socket, $buf, 8192, 0, $remote_ip, $remote_port);
         }
         while ($r === false);
         if ($hideInput) echo "\n";

@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 define("IS_WINDOWS", (strtoupper(substr(PHP_OS, 0, 3)) == "WIN"));
 
 $_ALREADY_REGISTERED = [];
@@ -218,7 +218,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.11.1.1";
+    return "1.12.0.0";
 }
 
 function __CHECK_READKEY() : string
@@ -350,6 +350,17 @@ function __EXCEPTION_HANDLER1(Throwable $e)
     $err = "\nUncaught " . get_class($e) . " '" . $e->getMessage() . "' in " . $e->getFile() . " on line " . $e->getLine();
     fwrite(STDERR, $err);
 }
+
+$GLOBALS["system.tick_functions"] = [];
+function __tick_function() : void
+{
+    foreach ($GLOBALS["system.tick_functions"] as $tickFunc)
+    {
+        call_user_func($tickFunc);
+    }
+}
+
+register_tick_function("__tick_function");
 
 if (MAIN_THREAD)
 {

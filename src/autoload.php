@@ -51,7 +51,6 @@ foreach ($namespaces as $ns)
 {
     if ($ns == "Program")
     {
-        echo "Don't insert 'Program' into namespaces. It is deprecated\n";
         continue;
     }
     including(__DIR__ . DIRECTORY_SEPARATOR . $ns);
@@ -151,6 +150,6 @@ else
 }
 
 if (DEV_MODE) echo "Starting application... [" . round((microtime(true) - $microtime), 6) . "]\n";
-
+function xcd(object... $objects) : void {}
 new \Scheduler\SchedulerMaster();
 new \Program\Main($args);

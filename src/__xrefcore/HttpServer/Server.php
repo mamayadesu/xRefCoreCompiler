@@ -6,6 +6,7 @@ namespace HttpServer;
 use HttpServer\Exceptions\ServerStartException;
 use HttpServer\Exceptions\UnknownEventException;
 use Scheduler\AsyncTask;
+use Scheduler\NoAsyncTaskParameters;
 
 /**
  * HTTP-server
@@ -54,6 +55,11 @@ final class Server
      * @var int Timeout of data reading when connection accepted
      */
     public int $DataReadTimeout = 5;
+
+    /**
+     * @var bool Enables client non-block mode. It means that server won't wait when client will receive data. WARNING!!! USE THIS PARAMETER CAREFULLY! IT CAN MAKE SERVER BEHAVIOR NON-OBVIOUS OR UNPREDICTABLE! IF YOU WANT TO SEND A BIG DATA, SEND EVERY ~64KB
+     */
+    public bool $ClientNonBlockMode = false;
 
     /**
      * @ignore
@@ -124,11 +130,11 @@ final class Server
         if (DEV_MODE) echo "[HttpServer] Waiting for request\n";
         if ($async)
         {
-            $this->asyncServer = new AsyncTask($this, 5, false, function(AsyncTask $task) : void { $this->Handle(); });
+            $this->asyncServer = new AsyncTask($this, 5, false, function(AsyncTask $task, NoAsyncTaskParameters $params) : void { $this->Handle(); });
         }
         else while (true)
         {
-            $this->Handle(null);
+            $this->Handle();
             time_nanosleep(0, 5 * 1000000);
             if ($this->shutdownWasCalled)
             {
@@ -258,7 +264,8 @@ final class Server
             {
                 parse_str($body, $request->Post);
             }
-
+            if ($this->ClientNonBlockMode != null)
+                stream_set_blocking($connect, false);
             $response = new Response($connect);
             $this->responses[] = $response;
             if ($request->RequestError)

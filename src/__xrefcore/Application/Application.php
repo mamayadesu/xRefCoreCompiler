@@ -104,6 +104,10 @@ final class Application
         {
             return;
         }
+        if (defined("DEBUG_MODE"))
+        {
+            $title .= " (DEBUG MODE)";
+        }
         if (!IS_WINDOWS)
         {
             echo "\x1b]0;" . $title . "\x07"; // display title to window name in linux

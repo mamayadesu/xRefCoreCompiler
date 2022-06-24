@@ -48,7 +48,7 @@ final class SchedulerMaster
         if (!$this->HasAtLeastOneTask)
         {
             $this->HasAtLeastOneTask = true;
-            register_tick_function([$this, "Handle"]);
+            $GLOBALS["system.tick_functions"]["schedulermaster"] = [$this, "Handle"];
         }
     }
 
@@ -91,7 +91,7 @@ final class SchedulerMaster
      */
     public function __unregister() : void
     {
-        unregister_tick_function([$this, "Handle"]);
+        unset($GLOBALS["system.tick_functions"]["schedulermaster"]);
     }
 
     /**

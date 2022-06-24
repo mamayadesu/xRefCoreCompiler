@@ -15,33 +15,38 @@ use \Exception;
 class Main
 {
     private array $appPropertyToName;
+    private bool $debugMode = false;
 
     public function __construct(array $args)
     {
         $pargs = Application::ParseArguments($args, "-");
-        if (in_array("-configure", $pargs["uninitialized_keys"]) || in_array("c", $pargs["uninitialized_keys"]))
+        if (in_array("--configure", $args) || in_array("-c", $args))
         {
             Utils::Configure();
             exit;
         }
-
-        if (in_array("-prepare-project", $pargs["uninitialized_keys"]) || in_array("p", $pargs["uninitialized_keys"]))
+        if (in_array("--prepare-project", $args) || in_array("-p", $args))
         {
             Utils::PrepareProject();
             exit;
         }
 
-        if (in_array("-version", $pargs["uninitialized_keys"]) || in_array("v", $pargs["uninitialized_keys"]))
+        if (in_array("--version", $args) || in_array("-v", $args))
         {
             Utils::Version();
             exit;
         }
 
-        if (in_array("-help", $pargs["uninitialized_keys"]) || in_array("h", $pargs["uninitialized_keys"]))
+        if (in_array("--help", $args) || in_array("-h", $args))
         {
             Utils::Help();
             exit;
         }
+
+        /*if (in_array("--debug", $args) || in_array("-d", $args))
+        {
+            $this->debugMode = true;
+        }*/
 
         Console::WriteLine("********** xRefCoreCompiler **********", ForegroundColors::DARK_GREEN, BackgroundColors::LIGHT_GRAY);
         if (!extension_loaded("mbstring"))
@@ -72,7 +77,7 @@ class Main
             }
         }
         $skip = false;
-        if (in_array("-build", $pargs["uninitialized_keys"]) || in_array("b", $pargs["uninitialized_keys"]))
+        if (in_array("--build", $args) || in_array("-b", $args))
         {
             $skip = true;
         }
@@ -245,7 +250,7 @@ class Main
         $f = fopen($tempDir . "app.json", "w");
         fwrite($f, $appJsonString);
         fclose($f);
-        Console::WriteLine("Compiling...", ForegroundColors::BLUE);
+        Console::WriteLine(($this->debugMode ? "Compiling application with enabled debug mode..." : "Compiling..."), ForegroundColors::BLUE);
         $isSuccess = $this->MakeApp($tempDir, $appFileOutput);
         Console::WriteLine("Cleaning up...", ForegroundColors::BLUE);
         FileDirectory::Delete($tempDir);
@@ -283,6 +288,20 @@ class Main
             return false;
         }
         FileDirectory::Delete($dir . "checker.php");
+        if ($this->debugMode)
+        {
+            $autoloadContent = file_get_contents($dir . "autoload.php");
+            $autoloadContent = str_replace(
+                "function xcd(object... \$objects) : void {}",
+                "require __DIR__ . DIRECTORY_SEPARATOR . \"debug.php\";",
+                $autoloadContent
+            );
+            file_put_contents($dir . "autoload.php", $autoloadContent);
+        }
+        else
+        {
+            FileDirectory::Delete($dir . "debug.php");
+        }
         try
         {
             $phar = new \Phar($filename);

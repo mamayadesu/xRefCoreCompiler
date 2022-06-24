@@ -57,6 +57,9 @@ final class __DataManager2
         $p = 0;
         $data = array();
         $info = array();
+        $query = "";
+        $remote_ip = "";
+        $remote_port = 0;
         if (!isset($this->unreadData[$this->currentI]))
         {
             Thread::ReadLongQuery($this->sock, $query, $remote_ip, $remote_port);

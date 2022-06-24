@@ -81,7 +81,7 @@ class Utils
 
     public static function Version() : void
     {
-        Console::WriteLine("http://xrefcore.ru\nhttps://github.com/mamayadesu/xRefCoreCompiler\n\nxRefCoreCompiler v" . Application::GetFrameworkVersion());
+        Console::WriteLine("http://xrefcore.ru\nhttps://github.com/mamayadesu/xRefCoreCompiler\nhttps://vk.com/id155272407\nmamayadesu@gmail.com\n\nxRefCoreCompiler v" . Application::GetFrameworkVersion());
     }
 
     public static function Help() : void
@@ -92,6 +92,8 @@ class Utils
         $usage .= ColoredString::Get("-c", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--configure", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Configure xRefCoreCompiler (use it when it's just installed or updated)", ForegroundColors::PURPLE) . "\n    ";
         $usage .= ColoredString::Get("-p", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--prepare-project", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Generates the main class and symlink in your PhpStorm project. Use it when project just created.", ForegroundColors::PURPLE) . "\n    ";
         $usage .= ColoredString::Get("-b", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--build", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Builds application", ForegroundColors::PURPLE);
+        //$usage .= ColoredString::Get("-b", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--build", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Builds application\n    ", ForegroundColors::PURPLE);
+        //$usage .= ColoredString::Get("-d", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--debug", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Enables debug mode for compiling application. Use this option with --build", ForegroundColors::PURPLE);
         Console::WriteLine($usage);
     }
 }

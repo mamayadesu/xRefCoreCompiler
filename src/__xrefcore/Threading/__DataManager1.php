@@ -65,6 +65,9 @@ final class __DataManager1
         $p = 0;
         $data = array();
         $info = array();
+        $query = "";
+        $remote_ip = "";
+        $remote_port = 0;
         if (!isset($this->unreadData[$this->currentI]))
         {
             do
@@ -116,6 +119,7 @@ final class __DataManager1
         }
         $queryLength1 = $remote_ip = "";
         $queryLength = $remote_port = 0;
+        $query = "";
         $result = [];
         while (true)
         {

@@ -504,17 +504,25 @@ abstract class Thread
     /**
      * @ignore
      */
-    public static function ReadLongQuery($sock, &$query, &$remote_ip, &$remote_port) : void
+    public static function ReadLongQuery($sock, string &$query, string &$remote_ip, int &$remote_port, bool $wait = true) : bool
     {
         $query = "";
         $descriptor = "";
+        $query = $remote_ip = "";
+        $remote_port = -1;
         do
         {
-            @socket_recvfrom($sock, $buffer, self::BYTES_IN_PACKET + 1, 0, $remote_ip, $remote_port);
+            if (!$wait)
+                socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 1000));
+            $result = @socket_recvfrom($sock, $buffer, self::BYTES_IN_PACKET + 1, 0, $remote_ip, $remote_port);
+            if (!$result)
+                return false;
             $query .= substr($buffer, 0, -1);
             $descriptor = substr($buffer, -1);
+            $wait = true;
         }
         while ($descriptor != Thread::QUERY_END);
+        return true;
     }
 
     /**

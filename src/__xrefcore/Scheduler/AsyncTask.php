@@ -54,7 +54,7 @@ final class AsyncTask
     /**
      * @ignore
      */
-    private array/*<mixed, mixed>*/ $Parameters;
+    private IAsyncTaskParameters $Parameters;
 
     /**
      * @ignore
@@ -70,12 +70,17 @@ final class AsyncTask
      * @param object $MyThis Object context where task will be executed
      * @param int $Interval Execution interval in milliseconds
      * @param bool $RunOnce Execute task once
-     * @param callable $TaskCallback Callback-function which will be executed in $MyThis context
-     * @param array<mixed> $Parameters Additional arguments
+     * @param callable $TaskCallback Callback-function which will be executed in $MyThis context. Callback should accept two parameters: AsyncTask (your task) and IAsyncTaskParameters (your parameters)
+     * @param IAsyncTaskParameters|null $Parameters Additional arguments
      * @throws InvalidIntervalException Interval cannot be less than 1 millisecond
+     * @throws InvalidNewExecutionTimeException
      */
-    public function __construct(object $MyThis, int $Interval, bool $RunOnce, callable $TaskCallback, array $Parameters = array())
+    public function __construct(object $MyThis, int $Interval, bool $RunOnce, callable $TaskCallback, ?IAsyncTaskParameters $Parameters = null)
     {
+        if ($Parameters == null)
+        {
+            $Parameters = new NoAsyncTaskParameters();
+        }
         if ($Interval == 0)
         {
             $e = new InvalidIntervalException("Interval cannot be less than 1 millisecond");
@@ -135,9 +140,9 @@ final class AsyncTask
         $this->ExecutingRightNow = true;
 
         if ($this->TaskCallback != null)
-            $this->TaskCallback->call($this->MyThis, $this);
+            $this->TaskCallback->call($this->MyThis, $this, $this->Parameters);
         else
-            call_user_func_array([$this->TaskCallbackObject, $this->TaskCallbackMethodName], [$this]);
+            call_user_func_array([$this->TaskCallbackObject, $this->TaskCallbackMethodName], [$this, $this->Parameters]);
 
         $this->ExecutingRightNow = false;
         $this->Executed = true;
@@ -161,7 +166,7 @@ final class AsyncTask
 
         unset($this->Owner);
         $sm = SchedulerMaster::GetInstance();
-        if (count($sm->__getasynctasks(false)))
+        if (count($sm->__getasynctasks(false)) == 0)
             $sm->__unregister();
     }
 
@@ -174,9 +179,9 @@ final class AsyncTask
     }
 
     /**
-     * @return array<mixed> Additional arguments
+     * @return IAsyncTaskParameters Additional arguments
      */
-    public function GetParameters() : array/*<mixed, mixed>*/
+    public function GetParameters() : IAsyncTaskParameters
     {
         return $this->Parameters;
     }

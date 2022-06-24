@@ -19,6 +19,11 @@ final class Server
      * @var int Timeout of data reading when connection accepted
      */
     public int $DataReadTimeout = 5;
+    
+    /**
+     * @var bool Enables client non-block mode. It means that server won't wait when client will receive data. WARNING!!! USE THIS PARAMETER CAREFULLY! IT CAN MAKE SERVER BEHAVIOR NON-OBVIOUS OR UNPREDICTABLE! IF YOU WANT TO SEND A BIG DATA, SEND EVERY ~64KB
+     */
+    public bool $ClientNonBlockMode = false;
 
     /**
      * Server constructor.
