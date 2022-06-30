@@ -21,6 +21,26 @@ class Console
     /**
      * @ignore
      */
+    private static int $win_reader_pid = 0;
+
+    /**
+     * @ignore
+     */
+    private static int $win_reader_port = 0;
+
+    /**
+     * @ignore
+     */
+    private static int $win_a2r_port = 0;
+
+    /**
+     * @ignore
+     */
+    private static $win_a2r_socket;
+
+    /**
+     * @ignore
+     */
     public static function __setparentpid(int $pid) : void
     {
         if (self::$parentpid != 0)
@@ -79,7 +99,10 @@ class Console
                     $read = fread($stdin, 64);
                     if ($read == "\n" || $read == "\r")
                         break;
-                    $result .= $read;
+                    if ($read == "\010" || $read == "\177")
+                        $result = substr($result, 0, -1);
+                    else
+                        $result .= $read;
                     time_nanosleep(0, 5 * 1000000);
                 }
                 echo "\n";
@@ -95,23 +118,58 @@ class Console
     /**
      * @ignore
      */
-    private static function windows_read_line(bool $hideInput) : string
+    private static function windows_run_reader() : void
     {
         $exe = __CHECK_READKEY();
 
-        $socket = socket_create(AF_INET, SOCK_DGRAM, 0);
+        self::$win_a2r_socket = socket_create(AF_INET, SOCK_DGRAM, 0);
         do
         {
-            $port = rand(5000, 49151);
+            self::$win_a2r_port = rand(5000, 49151);
         }
-        while (!@socket_bind($socket, "127.0.0.1", $port));
-        $cmd = "start /B /I " . $exe . " " . $port . " " . ($hideInput ? "2" : "3") . " 1>&2";
+        while (!@socket_bind(self::$win_a2r_socket, "127.0.0.1", self::$win_a2r_port));
+
+        $check = socket_create(AF_INET, SOCK_DGRAM, 0);
+        do
+        {
+            self::$win_reader_port = rand(5000, 49151);
+        }
+        while (!@socket_bind($check, "127.0.0.1", self::$win_reader_port));
+        socket_close($check);
+
+        $cmd = "start /B /I " . $exe . " " . self::$win_a2r_port . " " . self::$win_reader_port . " 1>&2";
         $proc = proc_open($cmd, [], $pipes);
         proc_close($proc);
-        socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 5000));
+        socket_recvfrom(self::$win_a2r_socket, $buf, 16, 0, $remote_ip, $remote_port);
+
+        self::$win_reader_pid = intval($buf);
+        time_nanosleep(0, 5000000);
+    }
+
+    /**
+     * @ignore
+     */
+    public static function __windows_kill_reader() : void
+    {
+        if (self::$win_reader_pid != 0)
+            pclose(popen("taskkill /F /PID " . self::$win_reader_pid, "r"));
+    }
+
+    /**
+     * @ignore
+     */
+    private static function windows_read_line(bool $hideInput) : string
+    {
+        if (self::$win_reader_pid == 0 || self::$win_reader_port == 0)
+            self::windows_run_reader();
+
+        $data = self::$win_a2r_port . " " . ($hideInput ? 2 : 3);
+
+        socket_sendto(self::$win_a2r_socket, $data, strlen($data), 0, "127.0.0.1", self::$win_reader_port);
+        socket_set_option(self::$win_a2r_socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 5000));
         do
         {
-            $r = @socket_recvfrom($socket, $buf, 8192, 0, $remote_ip, $remote_port);
+            $r = @socket_recvfrom(self::$win_a2r_socket, $buf, 8192, 0, $remote_ip, $remote_port);
         }
         while ($r === false);
         if ($hideInput) echo "\n";
@@ -132,21 +190,15 @@ class Console
     {
         if (IS_WINDOWS)
         {
-            $exe = __CHECK_READKEY();
+            if (self::$win_reader_pid == 0 || self::$win_reader_port == 0)
+                self::windows_run_reader();
 
-            $socket = socket_create(AF_INET, SOCK_DGRAM, 0);
+            $data = self::$win_a2r_port . " 1";
+            socket_sendto(self::$win_a2r_socket, $data, strlen($data), 0, "127.0.0.1", self::$win_reader_port);
+            socket_set_option(self::$win_a2r_socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 5000));
             do
             {
-                $port = rand(100, 49151);
-            }
-            while (!@socket_bind($socket, "127.0.0.1", $port));
-            $cmd = "start /B /I " . $exe . " " . $port . " 1 1>&2";
-            $proc = proc_open($cmd, [], $pipes);
-            proc_close($proc);
-            socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 5000));
-            do
-            {
-                $r = @socket_recvfrom($socket, $buf, 32, 0, $remote_ip, $remote_port);
+                $r = @socket_recvfrom(self::$win_a2r_socket, $buf, 32, 0, $remote_ip, $remote_port);
             }
             while ($r === false);
             if (!$buf)

@@ -57,11 +57,6 @@ final class Server
     public int $DataReadTimeout = 5;
 
     /**
-     * @var bool Enables client non-block mode. It means that server won't wait when client will receive data. WARNING!!! USE THIS PARAMETER CAREFULLY! IT CAN MAKE SERVER BEHAVIOR NON-OBVIOUS OR UNPREDICTABLE! IF YOU WANT TO SEND A BIG DATA, SEND EVERY ~64KB
-     */
-    public bool $ClientNonBlockMode = false;
-
-    /**
      * @ignore
      */
 
@@ -226,7 +221,6 @@ final class Server
             if (isset($parsedHeaders["Content-Length"]) && intval($parsedHeaders["Content-Length"]) > 0)
             {
                 if (DEV_MODE) echo "[HttpServer] Reading content. Length " . intval($parsedHeaders["Content-Length"]) . "\n";
-                stream_set_timeout($connect, 10);
                 $contentLength = intval($parsedHeaders["Content-Length"]);
                 $body = fread($connect, intval($parsedHeaders["Content-Length"]));
             }
@@ -264,8 +258,6 @@ final class Server
             {
                 parse_str($body, $request->Post);
             }
-            if ($this->ClientNonBlockMode != null)
-                stream_set_blocking($connect, false);
             $response = new Response($connect);
             $this->responses[] = $response;
             if ($request->RequestError)

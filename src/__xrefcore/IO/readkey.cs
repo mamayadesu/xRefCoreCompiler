@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Text;
 using System.Net.Sockets;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Threading;
+using System.Diagnostics;
 
 namespace PhpReadkey
 {
@@ -59,22 +61,43 @@ namespace PhpReadkey
 
         static void Main(string[] args)
         {
-            int port, action;
+            int port, localPort;
             try
             {
                 port = Convert.ToInt32(args[0]);
-                action = Convert.ToInt32(args[1]);
+                localPort = Convert.ToInt32(args[1]);
             }
             catch (Exception e)
             {
                 return;
             }
+            Send(Process.GetCurrentProcess().Id.ToString(), port);
 
-            string result = Input(args);
+            UdpClient receiver = new UdpClient(localPort);
+            IPEndPoint remote_ip = null;
+
+            byte[] data;
+            string message, result;
+            string[] a;
+
+            while (true)
+            {
+                data = receiver.Receive(ref remote_ip);
+
+                message = Encoding.UTF8.GetString(data);
+                a = message.Split(' ');
+                port = Convert.ToInt32(a[0]);
+                result = Input(a);
+                Send(result, port);
+            }
+        }
+
+        private static void Send(string data, int port)
+        {
             Byte[] sendBytes;
             try
             {
-                sendBytes = Encoding.UTF8.GetBytes(result);
+                sendBytes = Encoding.UTF8.GetBytes(data);
             }
             catch (Exception e)
             {

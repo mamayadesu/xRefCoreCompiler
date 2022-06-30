@@ -218,13 +218,13 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.12.0.0";
+    return "1.12.1.0";
 }
 
 function __CHECK_READKEY() : string
 {
     global $microtime;
-    $hash = "ebff62b31d6473fe9df5b2866a398b83";
+    $hash = "e130b62274827d2b10f80db47f17d026";
     $readkey_path = sys_get_temp_dir() . "\\";
     $readkey_file = $readkey_path . "readkey" . __GET_FRAMEWORK_VERSION() . ".exe";
     if (!MAIN_THREAD)

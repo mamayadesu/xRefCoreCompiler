@@ -125,6 +125,16 @@ final class Response
     );
 
     /**
+     * @var bool Enables client non-block mode. It means that server won't wait when client will receive data. WARNING!!! USE THIS PARAMETER CAREFULLY! IT CAN MAKE SERVER BEHAVIOR NON-OBVIOUS OR UNPREDICTABLE! IF YOU WANT TO SEND A BIG DATA, SEND EVERY ~8KB
+     */
+    public bool $ClientNonBlockMode = false;
+
+    /**
+     * @var int Maximum waiting time in milliseconds for data to be sent to the client
+     */
+    public int $DataSendTimeout = 0;
+
+    /**
      * @ignore
      */
     public function __construct($connect)
@@ -262,6 +272,12 @@ final class Response
         }
         $data .= "\r\n";
         $this->response = $data;
+        if ($this->DataSendTimeout > 0)
+        {
+            $timeout = $this->getTimeout();
+            stream_set_timeout($this->connect, $timeout[0], $timeout[1]);
+        }
+        stream_set_blocking($this->connect, !$this->ClientNonBlockMode);
         @fwrite($this->connect, $data);
         $this->headersPrinted = true;
     }
@@ -286,7 +302,13 @@ final class Response
         {
             $this->PrintHeaders();
         }
-        $this->response = $plainText;
+        $this->response .= $plainText;
+        if ($this->DataSendTimeout > 0)
+        {
+            $timeout = $this->getTimeout();
+            stream_set_timeout($this->connect, $timeout[0], $timeout[1]);
+        }
+        stream_set_blocking($this->connect, !$this->ClientNonBlockMode);
         @fwrite($this->connect, $plainText);
     }
 
@@ -307,6 +329,12 @@ final class Response
         {
             $this->PrintHeaders();
         }
+        if ($this->DataSendTimeout > 0)
+        {
+            $timeout = $this->getTimeout();
+            stream_set_timeout($this->connect, $timeout[0], $timeout[1]);
+        }
+        stream_set_blocking($this->connect, !$this->ClientNonBlockMode);
         @fwrite($this->connect, $message);
         @fclose($this->connect);
         $this->closed = true;
@@ -321,5 +349,15 @@ final class Response
     public function GetFullResponse() : string
     {
         return $this->response;
+    }
+
+    /**
+     * @ignore
+     */
+    private function getTimeout() : array
+    {
+        $seconds = intval($this->DataSendTimeout / 1000);
+        $microseconds = ($this->DataSendTimeout - $seconds * 1000) * 1000;
+        return [$seconds, $microseconds];
     }
 }

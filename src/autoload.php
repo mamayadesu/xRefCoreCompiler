@@ -125,6 +125,8 @@ function __onshutdown()
             $threaded->Kill();
         }
     }
+
+    \IO\Console::__windows_kill_reader();
 }
 
 function __onsignal(int $signal, $siginfo = null) : void
