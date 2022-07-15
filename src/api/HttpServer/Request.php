@@ -36,7 +36,7 @@ final class Request
      * @var bool TRUE if any error was occured
      */
     public bool $RequestError = false;
-    
+
     /**
      * Returns body of request
      *

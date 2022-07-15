@@ -3,13 +3,19 @@ declare(ticks = 1);
 
 namespace CliForms\MenuBox;
 
+use CliForms\Common\ControlItem;
 use CliForms\Exceptions\InvalidArgumentsPassed;
 use CliForms\Exceptions\InvalidMenuBoxTypeException;
+use CliForms\Exceptions\ItemIsUsingException;
 use CliForms\Exceptions\MenuAlreadyOpenedException;
 use CliForms\Exceptions\MenuIsNotOpenedException;
 use CliForms\Exceptions\NoItemsAddedException;
 use CliForms\ListBox\ListBox;
-use CliForms\RowHeaderType;
+use CliForms\Common\RowHeaderType;
+use CliForms\MenuBox\Events\KeyPressEvent;
+use CliForms\MenuBox\Events\MenuBoxCloseEvent;
+use CliForms\MenuBox\Events\MenuBoxOpenEvent;
+use CliForms\MenuBox\Events\SelectedItemChangedEvent;
 use \Closure;
 use Data\String\BackgroundColors;
 use Data\String\ColoredString;
@@ -23,33 +29,24 @@ use IO\Console;
 class MenuBox extends ListBox
 {
     protected string $titleForegroundColor = ForegroundColors::CYAN,
-        $defaultItemForegroundColor = ForegroundColors::GREEN,
-        $defaultItemHeaderForegroundColor = ForegroundColors::GRAY,
-        $defaultRowHeaderItemDelimiterForegroundColor = ForegroundColors::DARK_GRAY,
         $inputTitleForegroundColor = ForegroundColors::GRAY,
         $inputTitleDelimiterForegroundColor = ForegroundColors::DARK_GRAY,
-        $wrongItemTitleForegroundColor = ForegroundColors::RED,
-
-        $selectedItemHeaderForegroundColor = ForegroundColors::DARK_BLUE,
-        $selectedItemDelimiterForegroundColor = ForegroundColors::GRAY,
-        $selectedItemRowForegroundColor = ForegroundColors::DARK_PURPLE;
+        $wrongItemTitleForegroundColor = ForegroundColors::RED;
 
     protected string $titleBackgroundColor = BackgroundColors::AUTO,
-        $defaultItemBackgroundColor = BackgroundColors::AUTO,
-        $defaultItemHeaderBackgroundColor = BackgroundColors::AUTO,
-        $defaultRowHeaderItemDelimiterBackgroundColor = BackgroundColors::AUTO,
         $inputTitleBackgroundColor = BackgroundColors::AUTO,
         $inputTitleDelimiterBackgroundColor = BackgroundColors::AUTO,
-        $wrongItemTitleBackgroundColor = BackgroundColors::AUTO,
-
-        $selectedItemHeaderBackgroundColor = BackgroundColors::YELLOW,
-        $selectedItemDelimiterBackgroundColor = BackgroundColors::YELLOW,
-        $selectedItemRowBackgroundColor = BackgroundColors::YELLOW;
+        $wrongItemTitleBackgroundColor = BackgroundColors::AUTO;
 
     /**
      * @ignore
      */
     private string $descriptionForegroundColor = ForegroundColors::BROWN;
+
+    /**
+     * @ignore
+     */
+    private string $lastPressedKey = "";
 
     /**
      * @ignore
@@ -83,7 +80,7 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private bool $clearOnRender = false, $closeMenu = true, $render2wrongItemSelected = false, $cleared = false, $callbackCalled = false;
+    private bool $clearOnRender = false, $closeMenu = true, $render2wrongItemSelected = false, $cleared = false, $callbackCalled = false, $refreshCalled = false, $callbackExecuting = false;
 
     /**
      * @ignore
@@ -96,24 +93,24 @@ class MenuBox extends ListBox
     private int $SelectedItemNumber = 1;
 
     /**
-     * @var Closure|null Selected item changed event handler. Function have to accept MenuBox parameter (current MenuBox)
+     * @var Closure|null Selected item changed event handler. Function have to accept `Events\SelectedItemChangedEvent`
      */
     public ?Closure $SelectedItemChangedEvent = null;
 
     /**
-     * @var Closure|null Selected item clicked event handler. Function have to accept MenuBox parameter (current MenuBox)
-     */
-    public ?Closure $ClickedEvent = null;
-
-    /**
-     * @var Closure|null Menu is opening event handler. Function have to accept MenuBox parameter (current MenuBox)
+     * @var Closure|null Menu is opening event handler. Function have to accept `Events\MenuBoxOpenEvent`
      */
     public ?Closure $OpenEvent = null;
 
     /**
-     * @var Closure|null Menu is closing event handler. Function have to accept MenuBox parameter (current MenuBox)
+     * @var Closure|null Menu is closing event handler. Function have to accept `Events\MenuBoxCloseEvent`
      */
     public ?Closure $CloseEvent = null;
+
+    /**
+     * @var Closure|null Key pressed event handler. Works only with MenuBoxTypes::KeyPressType. Function have to accept `Events\KeyPressEvent`
+     */
+    public ?Closure $KeyPressEvent = null;
 
     /**
      * MenuBox constructor.
@@ -123,7 +120,7 @@ class MenuBox extends ListBox
      * @param MenuBoxTypes $menuBoxType
      * @throws InvalidMenuBoxTypeException
      */
-    public function __construct(string $title, object $mythis, int $menuBoxType = MenuBoxTypes::InputItemNumberType)
+    public function __construct(string $title, object $mythis, int $menuBoxType = MenuBoxTypes::KeyPressType)
     {
         if (!MenuBoxTypes::HasItem($menuBoxType))
         {
@@ -139,19 +136,27 @@ class MenuBox extends ListBox
             $this->clearOnRender = true;
         }
     }
+    
+    /**
+     * @return string Last pressed key on keyboard
+     */
+    public function GetLastPressedKey() : string
+    {
+        return $this->lastPressedKey;
+    }
 
     /**
-     * Add item to collection
+     * Adds item to collection
      *
-     * @param MenuBoxItem $item
+     * @param MenuBoxControl $item
      * @return MenuBox
      * @throws InvalidArgumentsPassed
      */
-    public function AddItem($item) : MenuBox
+    public function AddItem(ControlItem $item) : MenuBox
     {
-        if (!$item instanceof MenuBoxItem)
+        if (!$item instanceof MenuBoxControl)
         {
-            $e = new InvalidArgumentsPassed("Item must be instance of MenuBoxItem, " . get_class($item) . " given.");
+            $e = new InvalidArgumentsPassed("Passed item is not a MenuBoxControl item.");
             $e->__xrefcoreexception = true;
             throw $e;
         }
@@ -162,7 +167,7 @@ class MenuBox extends ListBox
     /**
      * Sets zero item to your menu
      *
-     * @param MenuBoxItem $item
+     * @param MenuBoxItem|null $item
      * @return MenuBox
      */
     public function SetZeroItem(?MenuBoxItem $item) : MenuBox
@@ -183,10 +188,17 @@ class MenuBox extends ListBox
         {
             return;
         }
+        $items = $this->GetSortedItems();
+        if (!isset($items[$itemNumber]) || !$items[$itemNumber]->Selectable())
+            return;
         $this->SelectedItemNumber = $itemNumber;
         if ($this->SelectedItemChangedEvent != null)
         {
-            $this->SelectedItemChangedEvent->call($this->mythis, $this);
+            $event = new SelectedItemChangedEvent();
+            $event->MenuBox = $this;
+            $event->Item = $items[$itemNumber];
+            $event->ItemNumber = $itemNumber;
+            $this->SelectedItemChangedEvent->call($this->mythis, $event);
         }
     }
 
@@ -196,6 +208,22 @@ class MenuBox extends ListBox
     public function GetSelectedItemNumber() : int
     {
         return $this->SelectedItemNumber;
+    }
+
+    /**
+     * Returns sorted item number by item. Returns -1 if MenuBox doesn't contain this item.
+     *
+     * @param MenuBoxControl $item
+     * @return int
+     */
+    public function GetItemNumberByItem(MenuBoxControl $item) : int
+    {
+        foreach ($this->GetSortedItems() as $key => $i)
+        {
+            if ($item === $i)
+                return $key;
+        }
+        return -1;
     }
 
     /**
@@ -210,10 +238,20 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
+        if ($this->zeroItem != null)
+        {
+            $this->zeroItem->__setattached(null);
+        }
+        foreach ($this->items as $item)
+        {if(!$item instanceof MenuBoxControl)continue;
+            $item->__setattached(null);
+        }
         $this->closeMenu = true;
         if ($this->CloseEvent != null)
         {
-            $this->CloseEvent->call($this->mythis, $this);
+            $event = new MenuBoxCloseEvent();
+            $event->MenuBox = $this;
+            $this->CloseEvent->call($this->mythis, $event);
         }
     }
 
@@ -228,16 +266,76 @@ class MenuBox extends ListBox
     }
 
     /**
-     * @return MenuBoxItem[] Numbered items. Element with 0 index is zero item (or null)
+     * @param bool $includeZeroItem Includes zero item. Attention! If you exclude zero item, the first index of array will be "1", not "0"
+     * @return MenuBoxControl[] Numbered items. Element with 0 index is zero item (or null)
      */
-    public function GetNumberedItems() : array
+    public function GetNumberedItems(bool $includeZeroItem = true) : array
     {
-        /** @var array<int, ?MenuBoxItem> $result */$result = array($this->zeroItem);
+        /** @var array<int, ?MenuBoxControl> $result */$result = array();
+        $k = 1;
+        if ($includeZeroItem)
+        {
+            $result = array($this->zeroItem);
+        }
+
         foreach ($this->items as $item)
-        {if(!$item instanceof MenuBoxItem)continue;
-            $result[] = $item;
+        {if(!$item instanceof MenuBoxControl)continue;
+            $result[$k] = $item;
+            $k++;
         }
         return $result;
+    }
+
+    /**
+     * @param bool $includeZeroItem Includes zero item. Attention! If you exclude zero item, the first index of array will be "1", not "0"
+     * @return MenuBoxControl[] Sorted and numbered items. Element with 0 index is still zero item (or null). Please note that the indexes of this method are different from those of the GetNumberedItems method.
+     */
+    public function GetSortedItems(bool $includeZeroItem = true) : array
+    {
+        /** @var array<int, ?MenuBoxControl> $result */$result = array();
+        $k = 1;
+        if ($includeZeroItem)
+        {
+            $result = array($this->zeroItem);
+        }
+
+        $copiedArray = $this->items;
+
+        foreach ($this->items as $item)
+        {if(!$item instanceof MenuBoxControl)continue;
+            /** @var ?MenuBoxControl $maxItem */$maxItem = null;
+            $maxItemIndex = -1;
+            foreach ($copiedArray as $index => $copiedItem)
+            {if(!$copiedItem instanceof MenuBoxControl)continue;
+                if ($maxItem == null || $copiedItem->Ordering() < $maxItem->Ordering())
+                {
+                    $maxItem = $copiedItem;
+                    $maxItemIndex = $index;
+                }
+            }
+            array_splice($copiedArray, $maxItemIndex, 1);
+            $result[$k] = $maxItem;
+            $k++;
+        }
+        return $result;
+    }
+
+    /**
+     * Finds item by its ID and returns it. Return NULL if item with specified ID was not found.
+     *
+     * @param string $id
+     * @return MenuBoxControl|null
+     */
+    public function GetElementById(string $id) : ?MenuBoxControl
+    {
+        foreach ($this->GetSortedItems() as $item)
+        {if(!$item instanceof MenuBoxControl)continue;
+            if ($item->Id == $id)
+            {
+                return $item;
+            }
+        }
+        return null;
     }
 
     /**
@@ -275,7 +373,6 @@ class MenuBox extends ListBox
      */
     public function ResultOutput(string $text, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : void
     {
-        Console::Write($text, $foregroundColor, $backgroundColor);
         $this->resultOutput .= ColoredString::Get($text, $foregroundColor, $backgroundColor);
     }
 
@@ -412,109 +509,15 @@ class MenuBox extends ListBox
     }
 
     /**
-     * Sets style for selected item
-     *
-     * @param ForegroundColors $headerForegroundColor
-     * @param BackgroundColors $headerBackgroundColor
-     * @param ForegroundColors $delimiterForegroundColor
-     * @param BackgroundColors $delimiterBackgroundColor
-     * @param ForegroundColors $itemForegroundColor
-     * @param BackgroundColors $itemBackgroundColor
-     * @return MenuBox
-     */
-    public function SetSelectedItemStyle(string $headerForegroundColor, string $headerBackgroundColor, string $delimiterForegroundColor, string $delimiterBackgroundColor, string $itemForegroundColor, string $itemBackgroundColor) : MenuBox
-    {
-        $this->selectedItemHeaderForegroundColor = $headerForegroundColor;
-        $this->selectedItemHeaderBackgroundColor = $headerBackgroundColor;
-        $this->selectedItemDelimiterForegroundColor = $delimiterForegroundColor;
-        $this->selectedItemDelimiterBackgroundColor = $delimiterBackgroundColor;
-        $this->selectedItemRowForegroundColor = $itemForegroundColor;
-        $this->selectedItemRowBackgroundColor = $itemBackgroundColor;
-        return $this;
-    }
-
-    /**
      * @ignore
      */
-    protected function _renderBody(string &$output): void
+    private function formatItem(MenuBoxItem $item, int $k, int $a) : string
     {
-        $k = 1;
-        $itemName = "";
         $header = "";
-        foreach ($this->items as $item)
-        {if (!$item instanceof MenuBoxItem) continue;
-            $itemName = $item->Name;
-            switch ($this->rowsHeaderType)
-            {
-                case RowHeaderType::NUMERIC:
-                    $header = $k . "";
-                    break;
-
-                case RowHeaderType::STARS:
-                    $header = "*";
-                    break;
-
-                case RowHeaderType::DOT1:
-                    $header = "•";
-                    break;
-
-                case RowHeaderType::DOT2:
-                    $header = "○";
-                    break;
-
-                case RowHeaderType::ARROW1:
-                    $header = ">";
-                    break;
-
-                case RowHeaderType::ARROW2:
-                    $header = "->";
-                    break;
-
-                case RowHeaderType::ARROW3:
-                    $header = "→";
-                    break;
-            }
-
-            $headerFg = ($item->HeaderForegroundColor == ForegroundColors::AUTO ? $this->defaultItemHeaderForegroundColor : $item->HeaderForegroundColor);
-            $headerBg = ($item->HeaderBackgroundColor == BackgroundColors::AUTO ? $this->defaultItemHeaderBackgroundColor : $item->ItemBackgroundColor);
-
-            $delimiterFg = ($item->DelimiterForegroundColor == ForegroundColors::AUTO ? $this->defaultRowHeaderItemDelimiterForegroundColor : $item->DelimiterForegroundColor);
-            $delimiterBg = ($item->DelimiterBackgroundColor == BackgroundColors::AUTO ? $this->defaultRowHeaderItemDelimiterBackgroundColor : $item->DelimiterBackgroundColor);
-
-            $itemFg = ($item->ItemForegroundColor == ForegroundColors::AUTO ? $this->defaultItemForegroundColor : $item->ItemForegroundColor);
-            $itemBg = ($item->ItemBackgroundColor == BackgroundColors::AUTO ? $this->defaultItemBackgroundColor : $item->ItemBackgroundColor);
-
-            if ($this->menuBoxType == MenuBoxTypes::KeyPressType && $this->SelectedItemNumber == $k)
-            {
-                $headerFg = $this->selectedItemHeaderForegroundColor;
-                $headerBg = $this->selectedItemHeaderBackgroundColor;
-
-                $delimiterFg = $this->selectedItemDelimiterForegroundColor;
-                $delimiterBg = $this->selectedItemDelimiterBackgroundColor;
-
-                $itemFg = $this->selectedItemRowForegroundColor;
-                $itemBg = $this->selectedItemRowBackgroundColor;
-            }
-
-            $header = ColoredString::Get($header, $headerFg, $headerBg);
-            $header .= ColoredString::Get($this->rowHeaderItemDelimiter, $delimiterFg, $delimiterBg);
-            $itemName = ColoredString::Get($itemName, $itemFg, $itemBg);
-            $output .= $header . $itemName . "\n";
-            $k++;
-        }
-
-        if ($this->zeroItem == null)
-        {
-            return;
-        }
-        $output .= "\n";
-        $header = "";
-        $item = $this->zeroItem;
-        $itemName = $item->Name;
         switch ($this->rowsHeaderType)
         {
             case RowHeaderType::NUMERIC:
-                $header = "0";
+                $header = $k . "";
                 break;
 
             case RowHeaderType::STARS:
@@ -541,36 +544,85 @@ class MenuBox extends ListBox
                 $header = "→";
                 break;
         }
-        $headerFg = ($item->HeaderForegroundColor == ForegroundColors::AUTO ? $this->defaultItemHeaderForegroundColor : $item->HeaderForegroundColor);
-        $headerBg = ($item->HeaderBackgroundColor == BackgroundColors::AUTO ? $this->defaultItemHeaderBackgroundColor : $item->ItemBackgroundColor);
 
-        $delimiterFg = ($item->DelimiterForegroundColor == ForegroundColors::AUTO ? $this->defaultRowHeaderItemDelimiterForegroundColor : $item->DelimiterForegroundColor);
-        $delimiterBg = ($item->DelimiterBackgroundColor == BackgroundColors::AUTO ? $this->defaultRowHeaderItemDelimiterBackgroundColor : $item->DelimiterBackgroundColor);
+        $selected = $this->SelectedItemNumber == $a && $this->menuBoxType == MenuBoxTypes::KeyPressType;
 
-        $itemFg = ($item->ItemForegroundColor == ForegroundColors::AUTO ? $this->defaultItemForegroundColor : $item->ItemForegroundColor);
-        $itemBg = ($item->ItemBackgroundColor == BackgroundColors::AUTO ? $this->defaultItemBackgroundColor : $item->ItemBackgroundColor);
+        $headerFg = $item->HeaderForegroundColor;
+        $headerBg = $item->HeaderBackgroundColor;
 
-        if ($this->menuBoxType == MenuBoxTypes::KeyPressType && $this->SelectedItemNumber == 0)
+        $delimiterFg = $item->DelimiterForegroundColor;
+        $delimiterBg = $item->DelimiterBackgroundColor;
+        if ($selected)
         {
-            $headerFg = $this->selectedItemHeaderForegroundColor;
-            $headerBg = $this->selectedItemHeaderBackgroundColor;
+            $headerFg = $item->HeaderSelectedForegroundColor;
+            $headerBg = $item->HeaderSelectedBackgroundColor;
 
-            $delimiterFg = $this->selectedItemDelimiterForegroundColor;
-            $delimiterBg = $this->selectedItemDelimiterBackgroundColor;
-
-            $itemFg = $this->selectedItemRowForegroundColor;
-            $itemBg = $this->selectedItemRowBackgroundColor;
+            $delimiterFg = $item->DelimiterSelectedForegroundColor;
+            $delimiterBg = $item->DelimiterSelectedBackgroundColor;
         }
 
+        if ($item->Disabled())
+        {
+            $headerFg = $item->HeaderDisabledForegroundColor;
+            $headerBg = $item->HeaderDisabledBackgroundColor;
+
+            $delimiterFg = $item->DelimiterDisabledForegroundColor;
+            $delimiterBg = $item->DelimiterDisabledBackgroundColor;
+
+        }
+
+        if ($selected && $item->Disabled())
+        {
+            $headerFg = $item->HeaderSelectedDisabledForegroundColor;
+            $headerBg = $item->HeaderSelectedDisabledBackgroundColor;
+
+            $delimiterFg = $item->DelimiterSelectedDisabledForegroundColor;
+            $delimiterBg = $item->DelimiterSelectedDisabledBackgroundColor;
+        }
         $header = ColoredString::Get($header, $headerFg, $headerBg);
         $header .= ColoredString::Get($this->rowHeaderItemDelimiter, $delimiterFg, $delimiterBg);
-
-        if ($this->menuBoxType == MenuBoxTypes::KeyPressType && $this->rowsHeaderType == RowHeaderType::NUMERIC)
-        {
+        if (($this->menuBoxType == MenuBoxTypes::KeyPressType && $this->rowsHeaderType == RowHeaderType::NUMERIC && $a == 0) || $item instanceof Checkbox)
             $header = "";
+        $itemName = $item->Render($selected);
+        if ($selected)
+            $itemName .= "  " . ColoredString::Get($item->Hint(), $item->HintForegroundColor, $item->HintBackgroundColor);
+        return $header . $itemName . "\n";
+    }
+
+    /**
+     * @ignore
+     */
+    protected function _renderBody(string &$output): void
+    {
+        $k = 1;
+        $a = 0;
+        $itemName = "";
+        $header = "";
+        foreach ($this->GetSortedItems(false) as $item)
+        {if (!$item instanceof MenuBoxControl) continue;
+            $a++;
+            if (!$item->Visible())
+                continue;
+
+            $itemName = $item->Render();
+
+            if ($item instanceof MenuBoxDelimiter || $item instanceof Label)
+            {
+                $output .= $itemName . "\n";
+                continue;
+            }
+
+            if ($item instanceof MenuBoxItem) $output .= $this->formatItem($item, $k, $a);
+            $k++;
         }
-        $itemName = ColoredString::Get($itemName, $itemFg, $itemBg);
-        $output .= $header . $itemName . "\n";
+
+        if ($this->zeroItem == null)
+        {
+            return;
+        }
+        $output .= "\n";
+
+        $output .= $this->formatItem($this->zeroItem, 0, 0);
     }
 
     /**
@@ -585,9 +637,123 @@ class MenuBox extends ListBox
     }
 
     /**
+     * Renders menu again
+     *
+     * @return void
+     */
+    public function Refresh() : void
+    {
+        if ($this->closeMenu || $this->callbackExecuting)
+            return;
+
+        Console::ClearWindow();
+        Console::WriteLine($this->resultOutput);
+        $output = "";
+        $this->_renderTitle($output);
+        if ($this->description != "")
+        {
+            $output .= ColoredString::Get($this->description, $this->descriptionForegroundColor, $this->descriptionBackgroundColor) . "\n";
+        }
+        $this->_renderBody($output);
+        if ($this->menuBoxType == MenuBoxTypes::InputItemNumberType)
+        {
+            $output .= ColoredString::Get($this->inputTitle, $this->inputTitleForegroundColor, $this->inputTitleBackgroundColor);
+            $output .= ColoredString::Get(":", $this->inputTitleDelimiterForegroundColor, $this->inputTitleDelimiterBackgroundColor) . " ";
+        }
+        Console::Write($output);
+        $this->refreshCalled = true;
+    }
+
+    /**
+     * @ignore
+     */
+    private function getselitem(int $selectedItemId) : ?MenuBoxControl
+    {
+        if ($selectedItemId == 0)
+        {
+            return $this->zeroItem;
+        }
+        if (count($this->items) >= $selectedItemId)
+        {
+            return $this->GetSortedItems(false)[$selectedItemId];
+        }
+        return null;
+    }
+
+    /**
+     * @ignore
+     */
+    private function getalloweditems() : array
+    {
+        $result = array();
+        foreach ($this->GetSortedItems() as $key => $item)
+        {if(!$item instanceof MenuBoxControl)continue;
+            if ($item->Selectable())
+                $result[$key] = $item;
+        }
+        return $result;
+    }
+
+    /**
+     * @ignore
+     */
+    private function getnextalloweditemnumber(bool $directionForward = true) : ?int
+    {
+        $items = $this->getalloweditems();
+        $hasZeroItem = isset($items[0]);
+        if (!$directionForward)
+        {
+            $items = array_reverse($items, true);
+        }
+        $first = null;
+        $returnNext = false;
+        foreach ($items as $key => $item)
+        {if(!$item instanceof MenuBoxControl)continue;
+            $first = $key;
+            if ($returnNext)
+            {
+                if ($key != 0)
+                    return $key;
+
+                return null;
+            }
+            if ($directionForward)
+            {
+                if ($this->SelectedItemNumber == 0)
+                    return null;
+
+                if ($this->SelectedItemNumber > 0)
+                {
+                    if ($this->SelectedItemNumber >= $key)
+                        continue;
+                    else
+                        return $key;
+                }
+            }
+            else
+            {
+                if ($this->SelectedItemNumber == 0)
+                {
+                    return $first;
+                }
+                if ($this->SelectedItemNumber == $key)
+                    $returnNext = true;
+                if ($this->SelectedItemNumber > $key)
+                    return $key;
+            }
+        }
+        if ($directionForward && $hasZeroItem)
+        {
+            return 0;
+        }
+        return null;
+    }
+
+    /**
      * Builds and renders your menu and runs read-line to select menu item
      * @throws NoItemsAddedException
      * @throws MenuAlreadyOpenedException
+     * @throws ItemIsUsingException
      */
     public function Render() : void
     {
@@ -603,18 +769,42 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
+        // Checking items
+        if ($this->zeroItem != null && $this->zeroItem->GetMenuBox() != null && $this->zeroItem->GetMenuBox() !== $this)
+        {
+            $e = new ItemIsUsingException("Passed zero item is already using by another running MenuBox");
+            $e->Control = $this->zeroItem;
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        foreach ($this->items as $item)
+        {if(!$item instanceof MenuBoxControl)continue;
+            if ($item->GetMenuBox() != null && $item->GetMenuBox() !== $this)
+            {
+                $e = new ItemIsUsingException("Item is already using by another running MenuBox");
+                $e->Control = $item;
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            $item->__setattached($this);
+        }
         $this->closeMenu = false; // Open menu again automatically
         if ($this->OpenEvent != null)
         {
-            $this->OpenEvent->call($this->mythis, $this);
+            $event = new MenuBoxOpenEvent();
+            $event->MenuBox = $this;
+            $this->OpenEvent->call($this->mythis, $event);
+
+            // Can be closed from event handler
             if ($this->closeMenu)
             {
                 return;
             }
         }
-        $output = $selectedItemStr = "";
+        $output = "";
         $cleared = false;
         $selectedItemId = 0;
+        $selectedItemIdStr = "0";
         /** @var MenuBoxItem $selectedItem */$selectedItem = null;
         $wrongItemSelected = false;
         $callbackCalled = false;
@@ -633,15 +823,13 @@ class MenuBox extends ListBox
                 $output .= ColoredString::Get($this->inputTitle, $this->inputTitleForegroundColor, $this->inputTitleBackgroundColor);
                 $output .= ColoredString::Get(":", $this->inputTitleDelimiterForegroundColor, $this->inputTitleDelimiterBackgroundColor) . " ";
             }
-            if ($this->clearOnRender && !$cleared)
+            if (($this->clearOnRender && !$cleared) || $this->refreshCalled)
             {
                 Console::ClearWindow();
                 $cleared = true;
+                $this->refreshCalled = false;
             }
-            if (!$callbackCalled)
-            {
-                Console::Write($this->resultOutput);
-            }
+            Console::Write($this->resultOutput);
             Console::WriteLine($wrongItemSelected ? ColoredString::Get($this->wrongItemTitle, $this->wrongItemTitleForegroundColor, $this->wrongItemTitleBackgroundColor) : "");
             $cleared = false;
             $wrongItemSelected = false;
@@ -650,246 +838,76 @@ class MenuBox extends ListBox
             {
                 do
                 {
-                    $pressedKey = Console::ReadKey();
+                    $pressedKey = Console::ReadKey(false);
+                    $this->lastPressedKey = $pressedKey;
+                    $keyCheck = $pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow";
+                    if ($this->KeyPressEvent != null)
+                    {
+                        $event = new KeyPressEvent();
+                        $event->MenuBox = $this;
+                        $event->Key = $pressedKey;
+                        $this->KeyPressEvent->call($this->mythis, $event);
+                        if ($keyCheck) continue 2;
+                    }
                 }
-                while ($pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow");
-                $itemsCount = count($this->items);
-                if ($pressedKey == "uparrow")
+                while ($keyCheck);
+                if ($pressedKey == "enter")
+                    $selectedItem = $this->getselitem($this->SelectedItemNumber);
+                else
                 {
-                    if ($this->SelectedItemNumber == 0)
-                    {
-                        $this->SetSelectedItemNumber($itemsCount);
-                    }
-                    else if($this->SelectedItemNumber > 1)
-                    {
-                        $this->SetSelectedItemNumber($this->SelectedItemNumber - 1);
-                    }
-                    $callbackCalled = false;
+                    $selectedItemId = $this->getnextalloweditemnumber($pressedKey == "downarrow");
+                    if ($selectedItemId !== null)
+                        $this->SetSelectedItemNumber($selectedItemId);
                     continue;
                 }
-                if ($pressedKey == "downarrow")
-                {
-                    if ($this->SelectedItemNumber == $itemsCount)
-                    {
-                        if ($this->zeroItem != null)
-                        {
-                            $this->SetSelectedItemNumber(0);
-                        }
-                    }
-                    else if($this->SelectedItemNumber < $itemsCount && $this->SelectedItemNumber != 0)
-                    {
-                        $this->SetSelectedItemNumber($this->SelectedItemNumber + 1);
-                    }
-                    $callbackCalled = false;
-                    continue;
-                }
-                $selectedItemId = $this->SelectedItemNumber;
-                $selectedItemIdStr = $selectedItemId . "";
             }
             if ($this->menuBoxType == MenuBoxTypes::InputItemNumberType)
             {
-                $selectedItemIdStr = Console::ReadLine();
+                $selectedItemIdStr = Console::ReadLine(false, false);
                 $selectedItemId = intval($selectedItemIdStr);
+                if (($selectedItem = $this->getselitem($selectedItemId)) == null)
+                {
+                    $wrongItemSelected = true;
+                    continue;
+                }
             }
-            $this->resultOutput = "";
-            if ($selectedItemId == 0 && $selectedItemIdStr != "0")
+
+            // Console::ReadLine() returns an empty string if you'll input "0". So it's temporarily broken
+            /*if ($selectedItemId == 0 && $selectedItemIdStr != "0")
             {
                 $wrongItemSelected = true;
                 continue;
-            }
-            if ($selectedItemId == 0)
+            }*/
+
+            if ($selectedItem->Disabled() || !$selectedItem->Selectable())
             {
-                // if zero item selected but it's null
-                if ($this->zeroItem == null)
-                {
-                    $wrongItemSelected = true;
-                    continue;
-                }
-                $selectedItem = $this->zeroItem;
+                continue;
             }
-            if ($selectedItem == null)
-            {
-                // if item is not still selected
-                if (count($this->items) >= $selectedItemId)
-                {
-                    $selectedItem = $this->items[$selectedItemId - 1];
-                }
-                else
-                {
-                    $wrongItemSelected = true;
-                    continue;
-                }
-            }
-            if (!$selectedItem instanceof MenuBoxItem)
-            {
-                echo "\nSelected item is not MenuBoxItem\n";
-                var_dump($selectedItem);
-                exit(255);
-            }
+            $this->resultOutput = "";
             if ($this->clearOnRender && !$cleared)
             {
                 Console::ClearWindow();
                 $cleared = true;
             }
-            if ($this->ClickedEvent != null)
-            {
-                $this->ClickedEvent->call($this->mythis, $this);
-            }
             $callbackCalled = true;
-            $selectedItem->CallOnSelect($this);
-        }
-    }
-
-    /**
-     * Builds and renders your menu and runs read-line to select menu item and returns callback
-     *
-     * Method returns an empty callback which does nothing if wrong item selected
-     *
-     * Use this method in do-while and use (!$menu->IsClosed()) as expression to prevent potential memory leak
-     *
-     * @return callable|null
-     * @throws NoItemsAddedException
-     */
-    public function Render2() : ?callable
-    {
-        if (count($this->items) == 0)
-        {
-            $e = new NoItemsAddedException("No items added to items collection. Nothing to render.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        if ($this->IsClosed())
-        {
-            $this->SelectedItemNumber = 1;
-            $this->cleared = false;
-            $this->callbackCalled = false;
-            $this->closeMenu = false;
-            if ($this->OpenEvent != null)
+            if ($selectedItem instanceof Checkbox)
             {
-                $this->OpenEvent = $this->OpenEvent->call($this->mythis, $this);
-                if ($this->closeMenu)
+                if ($selectedItem instanceof Radiobutton)
                 {
-                    return $this->GetEmptyFunction()->call($this, $this);
+                    if (!$selectedItem->Checked())
+                        $selectedItem->Checked(true);
                 }
-            }
-        }
-        $output = $selectedItemStr = "";
-        $selectedItemId = 0;
-        $selectedItem = null;
-        $this->_renderTitle($output);
-        if ($this->description != "")
-        {
-            $output .= ColoredString::Get($this->description, $this->descriptionForegroundColor, $this->descriptionBackgroundColor) . "\n";
-        }
-        $this->_renderBody($output);
-        if ($this->menuBoxType == MenuBoxTypes::InputItemNumberType)
-        {
-            $output .= ColoredString::Get($this->inputTitle, $this->inputTitleForegroundColor, $this->inputTitleBackgroundColor);
-            $output .= ColoredString::Get(":", $this->inputTitleDelimiterForegroundColor, $this->inputTitleDelimiterBackgroundColor) . " ";
-        }
-        if ($this->clearOnRender && !$this->cleared)
-        {
-            Console::ClearWindow();
-            $cleared = true;
-        }
-        if (!$this->callbackCalled)
-        {
-            Console::Write($this->resultOutput);
-        }
-        Console::WriteLine($this->render2wrongItemSelected ? ColoredString::Get($this->wrongItemTitle, $this->wrongItemTitleForegroundColor, $this->wrongItemTitleBackgroundColor) : "");
-        $this->cleared = false;
-        $this->render2wrongItemSelected = false;
-        Console::Write($output);
-        if ($this->menuBoxType == MenuBoxTypes::KeyPressType)
-        {
-            do
-            {
-                $pressedKey = Console::ReadKey();
-            }
-            while ($pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow");
-            $itemsCount = count($this->items);
-            if ($pressedKey == "uparrow")
-            {
-                if ($this->SelectedItemNumber == 0)
+                else
                 {
-                    $this->SetSelectedItemNumber($itemsCount);
+                    $selectedItem->Checked(!$selectedItem->Checked());
                 }
-                else if($this->SelectedItemNumber > 1)
-                {
-                    $this->SetSelectedItemNumber($this->SelectedItemNumber - 1);
-                }
-                $this->callbackCalled = false;
-                return $this->GetEmptyFunction()->call($this, $this);
-            }
-            if ($pressedKey == "downarrow")
-            {
-                if ($this->SelectedItemNumber == $itemsCount)
-                {
-                    if ($this->zeroItem != null)
-                    {
-                        $this->SetSelectedItemNumber(0);
-                    }
-                }
-                else if($this->SelectedItemNumber < $itemsCount && $this->SelectedItemNumber != 0)
-                {
-                    $this->SetSelectedItemNumber($this->SelectedItemNumber + 1);
-                }
-                $this->callbackCalled = false;
-                return $this->GetEmptyFunction()->call($this, $this);
-            }
-            $selectedItemId = $this->SelectedItemNumber;
-            $selectedItemIdStr = $selectedItemId . "";
-        }
-        if ($this->menuBoxType == MenuBoxTypes::InputItemNumberType)
-        {
-            $selectedItemIdStr = Console::ReadLine();
-            $selectedItemId = intval($selectedItemIdStr);
-        }
-        $this->resultOutput = "";
-        if ($selectedItemId == 0 && $selectedItemIdStr != "0")
-        {
-            $this->render2wrongItemSelected = true;
-            return $this->GetEmptyFunction()->call($this, $this);
-        }
-        if ($selectedItemId == 0)
-        {
-            // if zero item selected but it's null
-            if ($this->zeroItem == null)
-            {
-                $this->render2wrongItemSelected = true;
-                return $this->GetEmptyFunction()->call($this, $this);
-            }
-            $selectedItem = $this->zeroItem;
-        }
-        if ($selectedItem == null)
-        {
-            // if item is not still selected
-            if (count($this->items) >= $selectedItemId)
-            {
-                $selectedItem = $this->items[$selectedItemId - 1];
             }
             else
             {
-                $this->render2wrongItemSelected = true;
-                return $this->GetEmptyFunction()->call($this, $this);
+                $this->callbackExecuting = true;
+                $selectedItem->CallOnSelect($this);
+                $this->callbackExecuting = false;
             }
         }
-        if (!$selectedItem instanceof MenuBoxItem)
-        {
-            echo "\nSelected item is not MenuBoxItem\n";
-            var_dump($selectedItem);
-            exit(255);
-        }
-        if ($this->clearOnRender && !$this->cleared)
-        {
-            Console::ClearWindow();
-            $this->cleared = true;
-        }
-        if ($this->ClickedEvent != null)
-        {
-            $this->ClickedEvent->call($this->mythis, $this);
-        }
-        $this->callbackCalled = true;
-        return $selectedItem->GetCallbackForRender2()->call($selectedItem, $this);
     }
 }

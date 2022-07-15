@@ -6,6 +6,7 @@ namespace IO;
 use Data\String\BackgroundColors;
 use Data\String\ColoredString;
 use Data\String\ForegroundColors;
+use IO\Console\Exceptions\ReadInterruptedException;
 
 /**
  * Contains tools for CLI I/O
@@ -41,6 +42,11 @@ class Console
     /**
      * @ignore
      */
+    private static bool $readInterrupted = false;
+
+    /**
+     * @ignore
+     */
     public static function __setparentpid(int $pid) : void
     {
         if (self::$parentpid != 0)
@@ -50,12 +56,24 @@ class Console
     }
 
     /**
+     * Interrupts already called and still not finished or will be called Console::ReadLine() and Console::ReadKey(). Can be used in asynchronous tasks to stop reading
+     * 
+     * @return void
+     */
+    public static function InterruptRead() : void
+    {
+        self::$readInterrupted = true;
+    }
+
+    /**
      * Reads a line from input stream after user pressed ENTER
      *
      * @param bool $hideInput Hides characters which user is typing
+     * @param bool $interruptible Is method can be interrupted by Console::InterruptRead()
      * @return string Data from input stream
+     * @throws ReadInterruptedException Method was interrupted by Console::InterruptRead()
      */
-    public static function ReadLine(bool $hideInput = false) : string
+    public static function ReadLine(bool $hideInput = false, bool $interruptible = true) : string
     {
         if (!MAIN_THREAD && !IS_WINDOWS)
         {
@@ -71,7 +89,14 @@ class Console
         }
         if (IS_WINDOWS)
         {
-            $result = self::windows_read_line($hideInput);
+            $result = self::windows_read_line($hideInput, $interruptible);
+            if ($result === null)
+            {
+                self::$readInterrupted = false;
+                $e = new ReadInterruptedException("ReadLine was interrupted manually.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
         }
         else
         {
@@ -88,6 +113,13 @@ class Console
             {
                 while (!($result = fgets($stdin)))
                 {
+                    if (self::$readInterrupted && $interruptible)
+                    {
+                        self::$readInterrupted = false;
+                        $e = new ReadInterruptedException("ReadLine was interrupted manually.");
+                        $e->__xrefcoreexception = true;
+                        throw $e;
+                    }
                     time_nanosleep(0, 10 * 1000000);
                 }
             }
@@ -103,6 +135,13 @@ class Console
                         $result = substr($result, 0, -1);
                     else
                         $result .= $read;
+                    if (self::$readInterrupted && $interruptible)
+                    {
+                        self::$readInterrupted = false;
+                        $e = new ReadInterruptedException("ReadLine was interrupted manually.");
+                        $e->__xrefcoreexception = true;
+                        throw $e;
+                    }
                     time_nanosleep(0, 5 * 1000000);
                 }
                 echo "\n";
@@ -158,7 +197,7 @@ class Console
     /**
      * @ignore
      */
-    private static function windows_read_line(bool $hideInput) : string
+    private static function windows_read_line(bool $hideInput, bool $interruptible) : ?string
     {
         if (self::$win_reader_pid == 0 || self::$win_reader_port == 0)
             self::windows_run_reader();
@@ -170,6 +209,10 @@ class Console
         do
         {
             $r = @socket_recvfrom(self::$win_a2r_socket, $buf, 8192, 0, $remote_ip, $remote_port);
+            if (self::$readInterrupted && $interruptible)
+            {
+                return null;
+            }
         }
         while ($r === false);
         if ($hideInput) echo "\n";
@@ -184,9 +227,11 @@ class Console
     /**
      * Waits when user press keyboard key and returns character or key name
      *
+     * @param bool $interruptible Is method can be interrupted by Console::InterruptRead()
      * @return string Pressed character or key name
+     * @throws ReadInterruptedException Throws when method was interrupted manually
      */
-    public static function ReadKey() : string
+    public static function ReadKey(bool $interruptible = true) : string
     {
         if (IS_WINDOWS)
         {
@@ -199,6 +244,13 @@ class Console
             do
             {
                 $r = @socket_recvfrom(self::$win_a2r_socket, $buf, 32, 0, $remote_ip, $remote_port);
+                if (self::$readInterrupted && $interruptible)
+                {
+                    self::$readInterrupted = false;
+                    $e = new ReadInterruptedException("ReadKey was interrupted manually.");
+                    $e->__xrefcoreexception = true;
+                    throw $e;
+                }
             }
             while ($r === false);
             if (!$buf)
@@ -220,6 +272,13 @@ class Console
         while (($keypress = fread($stdin, 64)) == "")
         {
             time_nanosleep(0, 5 * $t);
+            if (self::$readInterrupted && $interruptible)
+            {
+                self::$readInterrupted = false;
+                $e = new ReadInterruptedException("ReadKey was interrupted manually.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
         }
         $keypress_lower = strtolower($keypress);
         stream_set_blocking($stdin, true);

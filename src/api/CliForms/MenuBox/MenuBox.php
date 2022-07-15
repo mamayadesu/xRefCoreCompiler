@@ -2,13 +2,19 @@
 
 namespace CliForms\MenuBox;
 
+use CliForms\Common\ControlItem;
 use CliForms\Exceptions\InvalidArgumentsPassed;
 use CliForms\Exceptions\InvalidMenuBoxTypeException;
+use CliForms\Exceptions\ItemIsUsingException;
 use CliForms\Exceptions\MenuAlreadyOpenedException;
 use CliForms\Exceptions\MenuIsNotOpenedException;
 use CliForms\Exceptions\NoItemsAddedException;
 use CliForms\ListBox\ListBox;
-use CliForms\RowHeaderType;
+use CliForms\Common\RowHeaderType;
+use CliForms\MenuBox\Events\KeyPressEvent;
+use CliForms\MenuBox\Events\MenuBoxCloseEvent;
+use CliForms\MenuBox\Events\MenuBoxOpenEvent;
+use CliForms\MenuBox\Events\SelectedItemChangedEvent;
 use \Closure;
 use Data\String\BackgroundColors;
 use Data\String\ColoredString;
@@ -22,49 +28,34 @@ use IO\Console;
 class MenuBox extends ListBox
 {
     protected string $titleForegroundColor = ForegroundColors::CYAN,
-        $defaultItemForegroundColor = ForegroundColors::GREEN,
-        $defaultItemHeaderForegroundColor = ForegroundColors::GRAY,
-        $defaultRowHeaderItemDelimiterForegroundColor = ForegroundColors::DARK_GRAY,
         $inputTitleForegroundColor = ForegroundColors::GRAY,
         $inputTitleDelimiterForegroundColor = ForegroundColors::DARK_GRAY,
-        $wrongItemTitleForegroundColor = ForegroundColors::RED,
-
-        $selectedItemHeaderForegroundColor = ForegroundColors::DARK_BLUE,
-        $selectedItemDelimiterForegroundColor = ForegroundColors::GRAY,
-        $selectedItemRowForegroundColor = ForegroundColors::DARK_PURPLE;
+        $wrongItemTitleForegroundColor = ForegroundColors::RED;
 
     protected string $titleBackgroundColor = BackgroundColors::AUTO,
-        $defaultItemBackgroundColor = BackgroundColors::AUTO,
-        $defaultItemHeaderBackgroundColor = BackgroundColors::AUTO,
-        $defaultRowHeaderItemDelimiterBackgroundColor = BackgroundColors::AUTO,
         $inputTitleBackgroundColor = BackgroundColors::AUTO,
         $inputTitleDelimiterBackgroundColor = BackgroundColors::AUTO,
-        $wrongItemTitleBackgroundColor = BackgroundColors::AUTO,
-
-        $selectedItemHeaderBackgroundColor = BackgroundColors::YELLOW,
-        $selectedItemDelimiterBackgroundColor = BackgroundColors::YELLOW,
-
-    protected array/*<MenuBoxItem>*/ $items = [];
+        $wrongItemTitleBackgroundColor = BackgroundColors::AUTO;
 
     /**
-     * @var Closure|null Selected item changed event handler. Function have to accept MenuBox parameter (current MenuBox)
+     * @var Closure|null Selected item changed event handler. Function have to accept `Events\SelectedItemChangedEvent`
      */
     public ?Closure $SelectedItemChangedEvent = null;
 
     /**
-     * @var Closure|null Selected item clicked event handler. Function have to accept MenuBox parameter (current MenuBox)
-     */
-    public ?Closure $ClickedEvent = null;
-
-    /**
-     * @var Closure|null Menu is opening event handler. Function have to accept MenuBox parameter (current MenuBox)
+     * @var Closure|null Menu is opening event handler. Function have to accept `Events\MenuBoxOpenEvent`
      */
     public ?Closure $OpenEvent = null;
 
     /**
-     * @var Closure|null Menu is closing event handler. Function have to accept MenuBox parameter (current MenuBox)
+     * @var Closure|null Menu is closing event handler. Function have to accept `Events\MenuBoxCloseEvent`
      */
     public ?Closure $CloseEvent = null;
+
+    /**
+     * @var Closure|null Key pressed event handler. Works only with MenuBoxTypes::KeyPressType. Function have to accept `Events\KeyPressEvent`
+     */
+    public ?Closure $KeyPressEvent = null;
 
     /**
      * MenuBox constructor.
@@ -74,23 +65,29 @@ class MenuBox extends ListBox
      * @param MenuBoxTypes $menuBoxType
      * @throws InvalidMenuBoxTypeException
      */
-    public function __construct(string $title, object $mythis, int $menuBoxType = MenuBoxTypes::InputItemNumberType)
+    public function __construct(string $title, object $mythis, int $menuBoxType = MenuBoxTypes::KeyPressType)
     {}
 
     /**
-     * Add item to collection
+     * @return string Last pressed key on keyboard
+     */
+    public function GetLastPressedKey() : string
+    {}
+
+    /**
+     * Adds item to collection
      *
-     * @param MenuBoxItem $item
+     * @param MenuBoxControl $item
      * @return MenuBox
      * @throws InvalidArgumentsPassed
      */
-    public function AddItem($item) : MenuBox
+    public function AddItem(ControlItem $item) : MenuBox
     {}
 
     /**
      * Sets zero item to your menu
      *
-     * @param MenuBoxItem $item
+     * @param MenuBoxItem|null $item
      * @return MenuBox
      */
     public function SetZeroItem(?MenuBoxItem $item) : MenuBox
@@ -112,6 +109,15 @@ class MenuBox extends ListBox
     {}
 
     /**
+     * Returns sorted item number by item. Returns -1 if MenuBox doesn't contain this item.
+     *
+     * @param MenuBoxControl $item
+     * @return int
+     */
+    public function GetItemNumberByItem(MenuBoxControl $item) : int
+    {}
+
+    /**
      * Closes menu
      * @throws MenuIsNotOpenedException
      */
@@ -127,9 +133,26 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * @return MenuBoxItem[] Numbered items. Element with 0 index is zero item (or null)
+     * @param bool $includeZeroItem Includes zero item. Attention! If you exclude zero item, the first index of array will be "1", not "0"
+     * @return MenuBoxControl[] Numbered items. Element with 0 index is zero item (or null)
      */
-    public function GetNumberedItems() : array
+    public function GetNumberedItems(bool $includeZeroItem = true) : array
+    {}
+
+    /**
+     * @param bool $includeZeroItem Includes zero item. Attention! If you exclude zero item, the first index of array will be "1", not "0"
+     * @return MenuBoxControl[] Sorted and numbered items. Element with 0 index is still zero item (or null). Please note that the indexes of this method are different from those of the GetNumberedItems method.
+     */
+    public function GetSortedItems(bool $includeZeroItem = true) : array
+    {}
+
+    /**
+     * Finds item by its ID and returns it. Return NULL if item with specified ID was not found.
+     *
+     * @param string $id
+     * @return MenuBoxControl|null
+     */
+    public function GetElementById(string $id) : ?MenuBoxControl
     {}
 
     /**
@@ -249,37 +272,19 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Sets style for selected item
+     * Renders menu again
      *
-     * @param ForegroundColors $headerForegroundColor
-     * @param BackgroundColors $headerBackgroundColor
-     * @param ForegroundColors $delimiterForegroundColor
-     * @param BackgroundColors $delimiterBackgroundColor
-     * @param ForegroundColors $itemForegroundColor
-     * @param BackgroundColors $itemBackgroundColor
-     * @return MenuBox
+     * @return void
      */
-    public function SetSelectedItemStyle(string $headerForegroundColor, string $headerBackgroundColor, string $delimiterForegroundColor, string $delimiterBackgroundColor, string $itemForegroundColor, string $itemBackgroundColor) : MenuBox
+    public function Refresh() : void
     {}
-    
+
     /**
      * Builds and renders your menu and runs read-line to select menu item
      * @throws NoItemsAddedException
      * @throws MenuAlreadyOpenedException
+     * @throws ItemIsUsingException
      */
     public function Render() : void
-    {}
-
-    /**
-     * Builds and renders your menu and runs read-line to select menu item and returns callback
-     *
-     * Method returns an empty callback which does nothing if wrong item selected
-     *
-     * Use this method in do-while and use (!$menu->IsClosed()) as expression to prevent potential memory leak
-     *
-     * @return callable|null
-     * @throws NoItemsAddedException
-     */
-    public function Render2() : ?callable
     {}
 }

@@ -5,6 +5,8 @@ namespace HttpServer;
 use HttpServer\Exceptions\ServerStartException;
 use HttpServer\Exceptions\UnknownEventException;
 use Scheduler\AsyncTask;
+use Scheduler\NoAsyncTaskParameters;
+use Throwable;
 
 /**
  * HTTP-server
@@ -14,7 +16,6 @@ use Scheduler\AsyncTask;
 
 final class Server
 {
-
     /**
      * @var int Timeout of data reading when connection accepted
      */
@@ -35,6 +36,7 @@ final class Server
      * * start - calls when server was started. Callback has argument `\HttpServer\Server`
      * * shutdown - calls when server was shutdown. Callback has argument `\HttpServer\Server`
      * * request - calls when request was received. Callback has arguments `\HttpServer\Request` and `\HttpServer\Response`
+     * * throwable - calls on uncaught exception while proceeding request. Callback has arguments `\HttpServer\Request`, `\HttpServer\Response` and `\Throwable`
      *
      * @param string $eventName
      * @param callable $callback

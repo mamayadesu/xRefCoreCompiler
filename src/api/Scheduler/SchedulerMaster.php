@@ -10,7 +10,6 @@ use Scheduler\Exceptions\NotInitializableClassException;
  */
 final class SchedulerMaster
 {
-
     /**
      * @return array<AsyncTask> All active asynchronous tasks
      */

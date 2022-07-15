@@ -1,8 +1,8 @@
 <?php
 
-namespace CliForms;
+namespace CliForms\Common;
 
-use \Data\Enum;
+use Data\Enum;
 
 /**
  * Types of item headers
@@ -10,6 +10,7 @@ use \Data\Enum;
 
 class RowHeaderType extends Enum
 {
+    public const NONE = "none";
     public const NUMERIC = "numeric";
     public const STARS = "stars";
     public const DOT1 = "dot1"; // •

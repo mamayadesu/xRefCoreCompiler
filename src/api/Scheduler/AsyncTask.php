@@ -11,7 +11,7 @@ use Throwable;
 /**
  * Creates an asynchronous task
  *
- * Important note! There is maybe a small bug in PHP. If your asynchronous task doesn't work, try to add "declare(ticks = 1);" right after "<?php"
+ * Important note! There is maybe a small bug in PHP. If your asynchronous task doesn't work correctly, try to add "declare(ticks = 1);" right after "<?php"
  */
 
 final class AsyncTask

@@ -3,13 +3,14 @@ declare(ticks = 1);
 
 namespace CliForms\ListBox;
 
+use CliForms\Common\ControlItem;
 use CliForms\Exceptions\InvalidArgumentsPassed;
 use \CliForms\Exceptions\InvalidHeaderTypeException;
 use CliForms\Exceptions\NoItemsAddedException;
 use \Data\String\BackgroundColors;
 use \Data\String\ForegroundColors;
 use \Data\String\ColoredString;
-use \CliForms\RowHeaderType;
+use \CliForms\Common\RowHeaderType;
 use \IO\Console;
 
 /**
@@ -24,11 +25,13 @@ class ListBox
     public string $Title = "";
     protected string $titleForegroundColor = ForegroundColors::PURPLE,
         $defaultItemForegroundColor = ForegroundColors::WHITE,
+        $defaultDisabledForegroundColor = ForegroundColors::GRAY,
         $defaultItemHeaderForegroundColor = ForegroundColors::GRAY,
         $defaultRowHeaderItemDelimiterForegroundColor = ForegroundColors::DARK_GRAY;
 
     protected string $titleBackgroundColor = BackgroundColors::AUTO,
         $defaultItemBackgroundColor = BackgroundColors::AUTO,
+        $defaultDisabledBackgroundColor = BackgroundColors::AUTO,
         $defaultItemHeaderBackgroundColor = BackgroundColors::AUTO,
         $defaultRowHeaderItemDelimiterBackgroundColor = BackgroundColors::AUTO;
 
@@ -36,9 +39,9 @@ class ListBox
     protected string $rowHeaderItemDelimiter = ". ";
 
     /**
-     * @var array<ListBoxItem> Control items collection
+     * @var array<ListBoxControl> Control items collection
      */
-    protected array/*<ListBoxItem>*/ $items = array();
+    protected array/*<ListBoxControl>*/ $items = array();
 
     /**
      * Creates new ListBox control
@@ -71,31 +74,6 @@ class ListBox
         if ($backgroundColor != "")
         {
             $this->titleBackgroundColor = $backgroundColor;
-        }
-        return $this;
-    }
-
-    /**
-     * Sets default style for all items. You can set custom style for any title
-     *
-     * @param ForegroundColors $itemForegroundColor
-     * @param BackgroundColors $itemBackgroundColor
-     * @param ForegroundColors $itemHeaderForegroundColor
-     * @param BackgroundColors $itemHeaderBackgroundColor
-     * @return ListBox
-     */
-    public function SetDefaultItemStyle(string $itemForegroundColor, string $itemBackgroundColor, string $itemHeaderForegroundColor = "", string $itemHeaderBackgroundColor = "") : ListBox
-    {
-        $this->defaultItemForegroundColor = $itemForegroundColor;
-        $this->defaultItemBackgroundColor = $itemBackgroundColor;
-
-        if ($itemHeaderForegroundColor != "")
-        {
-            $this->defaultItemHeaderForegroundColor = $itemHeaderForegroundColor;
-        }
-        if ($itemHeaderBackgroundColor != "")
-        {
-            $this->defaultItemHeaderBackgroundColor = $itemHeaderBackgroundColor;
         }
         return $this;
     }
@@ -147,17 +125,17 @@ class ListBox
     }
 
     /**
-     * Addes item to ListBox collection
+     * Adds item to ListBox collection
      *
-     * @param ListBoxItem $item
+     * @param ListBoxControl $item
      * @return ListBox
      * @throws InvalidArgumentsPassed
      */
-    public function AddItem($item) : ListBox
+    public function AddItem(ControlItem $item) : ListBox
     {
-        if (!$item instanceof ListBoxItem)
+        if (!$item instanceof ListBoxControl)
         {
-            $e = new InvalidArgumentsPassed("Item must be instance of ListBoxItem, " . get_class($item) . " given.");
+            $e = new InvalidArgumentsPassed("Passed item is not a ListBoxControl.");
             $e->__xrefcoreexception = true;
             throw $e;
         }
@@ -165,12 +143,18 @@ class ListBox
         return $this;
     }
 
+    /**
+     * @ignore
+     */
     protected function _renderTitle(string &$output) : void
     {
         $coloredTitle = ColoredString::Get($this->Title, $this->titleForegroundColor, $this->titleBackgroundColor);
         $output .= $coloredTitle . "\n";
     }
 
+    /**
+     * @ignore
+     */
     protected function _renderBody(string &$output) : void
     {
         $k = 1;
@@ -178,10 +162,21 @@ class ListBox
         $header = "";
 
         foreach ($this->items as $item)
-        {if (!$item instanceof ListBoxItem) continue;
-            $itemName = $item->Name;
+        {if (!$item instanceof ListBoxControl) continue;
+            $itemName = $item->Render();
+
+            if ($item instanceof ListBoxDelimiter)
+            {
+                $output .= $itemName . "\n";
+                continue;
+            }
+
             switch ($this->rowsHeaderType)
             {
+                case RowHeaderType::NONE:
+                    $header = "";
+                    break;
+
                 case RowHeaderType::NUMERIC:
                     $header = $k . "";
                     break;

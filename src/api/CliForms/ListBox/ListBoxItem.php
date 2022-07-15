@@ -2,6 +2,7 @@
 
 namespace CliForms\ListBox;
 
+use CliForms\MenuBox\MenuBoxControl;
 use \Data\String\BackgroundColors;
 use \Data\String\ForegroundColors;
 
@@ -9,34 +10,10 @@ use \Data\String\ForegroundColors;
  * ListBoxItem
  */
 
-class ListBoxItem
+class ListBoxItem extends MenuBoxControl
 {
-    /**
-     * @var string Displayed name
-     */
-    public string $Name = "";
-    public string $ItemForegroundColor = ForegroundColors::AUTO, $HeaderForegroundColor = ForegroundColors::AUTO, $DelimiterForegroundColor = ForegroundColors::AUTO;
-    public string $ItemBackgroundColor = BackgroundColors::AUTO, $HeaderBackgroundColor = BackgroundColors::AUTO, $DelimiterBackgroundColor = BackgroundColors::AUTO;
-
-    public function __construct(string $name = "")
-    {}
-
-    /**
-     * @param string $name Set new displayed name
-     * @return ListBoxItem
-     */
-    public function SetName(string $name) : ListBoxItem
-    {}
-
-    /**
-     * Set style for item
-     *
-     * @param BackgroundColors $foregroundColor
-     * @param ForegroundColors $backgroundColor
-     * @return ListBoxItem
-     */
-    public function SetItemStyle(string $foregroundColor, $backgroundColor = BackgroundColors::AUTO) : ListBoxItem
-    {}
+    public string $HeaderForegroundColor = ForegroundColors::AUTO, $DelimiterForegroundColor = ForegroundColors::AUTO;
+    public string $HeaderBackgroundColor = BackgroundColors::AUTO, $DelimiterBackgroundColor = BackgroundColors::AUTO;
 
     /**
      * Set header style
@@ -56,5 +33,12 @@ class ListBoxItem
      * @return ListBoxItem
      */
     public function SetDelimiterStyle(string $foregroundColor, $backgroundColor = BackgroundColors::AUTO) : ListBoxItem
-    {}
+    {
+        $this->DelimiterForegroundColor = $foregroundColor;
+        if ($backgroundColor != BackgroundColors::AUTO)
+        {
+            $this->DelimiterBackgroundColor = $backgroundColor;
+        }
+        return $this;
+    }
 }

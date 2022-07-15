@@ -31,7 +31,7 @@ abstract class Enum
 
     /**
      * Get all values of Enum
-     * @return array<string> Enum values
+     * @return array<string, mixed> Enum values
      */
     final public static function GetValues() : array
     {
@@ -43,7 +43,7 @@ abstract class Enum
         $arr = [];
         foreach ($reflectionClass->getConstants() as $key => $value)
         {
-            $arr[] = $value;
+            $arr[$key] = $value;
         }
         $obj = null;
         unset($obj);

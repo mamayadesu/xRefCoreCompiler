@@ -15,5 +15,4 @@ use Threading\Exceptions\InvalidResultReceivedException;
  */
 
 final class ChildThreadedObject
-{
-}
+{}

@@ -17,5 +17,4 @@ use Threading\Exceptions\InvalidResultReceivedException;
  */
 
 final class ParentThreadedObject
-{
-}
+{}

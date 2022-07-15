@@ -7,6 +7,7 @@ use HttpServer\Exceptions\ServerStartException;
 use HttpServer\Exceptions\UnknownEventException;
 use Scheduler\AsyncTask;
 use Scheduler\NoAsyncTaskParameters;
+use Throwable;
 
 /**
  * HTTP-server
@@ -69,9 +70,10 @@ final class Server
     {
         $this->address = $addr;
         $this->port = $port;
-        $this->On("start", function (Server $server) { });
-        $this->On("shutdown", function (Server $server) { });
-        $this->On("request", function (Request $request, Response $response) { });
+        $this->On("start", function (Server $server) : void { });
+        $this->On("shutdown", function (Server $server) : void { });
+        $this->On("request", function (Request $request, Response $response) : void { });
+        $this->On("throwable", [$this, "OnThrowable"]);
     }
 
     /**
@@ -81,6 +83,7 @@ final class Server
      * * start - calls when server was started. Callback has argument `\HttpServer\Server`
      * * shutdown - calls when server was shutdown. Callback has argument `\HttpServer\Server`
      * * request - calls when request was received. Callback has arguments `\HttpServer\Request` and `\HttpServer\Response`
+     * * throwable - calls on uncaught exception while proceeding request. Callback has arguments `\HttpServer\Request`, `\HttpServer\Response` and `\Throwable`
      *
      * @param string $eventName
      * @param callable $callback
@@ -88,7 +91,7 @@ final class Server
      */
     public function On(string $eventName, callable $callback) : void
     {
-        $events = ["start", "shutdown", "request"];
+        $events = ["start", "shutdown", "request", "throwable"];
         if (!in_array($eventName, $events))
         {
             $e = new UnknownEventException("Unknown event '" . $eventName . "'. Supported events: " . implode(", ", $events));
@@ -96,6 +99,24 @@ final class Server
             throw $e;
         }
         $this->registeredEvents[$eventName] = $callback;
+    }
+
+    /**
+     * @ignore
+     */
+    private function OnThrowable(Request $request, Response $response, Throwable $throwable) : void
+    {
+        $message =  "  An error occurred while handling HTTP-server request.\n";
+        $message .= "  Uncaught " . get_class($throwable) . " '" . $throwable->getMessage() . "' in " . $throwable->getFile() . " on line " . $throwable->getLine() . ".\n";
+        fwrite(STDERR, $message);
+        try
+        {
+            $response->Status(500);
+            $response->End("500 Internal Server Error");
+        }
+        catch (Throwable $e)
+        {
+        }
     }
 
     /**
@@ -280,13 +301,9 @@ final class Server
             {
                 $this->registeredEvents["request"]($request, $response);
             }
-            catch (\Throwable $e)
+            catch (Throwable $e)
             {
-                $message =  " Failed to handle HTTP-server request.\n";
-                $message .= " Uncaught " . get_class($e) . " '" . $e->getMessage() . "' in " . $e->getFile() . " on line " . $e->getLine() . ".\n";
-                $message .= " HTTP-server is shutting down.";
-                fwrite(STDERR, $message);
-                $this->Shutdown();
+                $this->registeredEvents["throwable"]($request, $response, $e);
             }
             foreach ($this->responses as $key => $response)
             {if(!$response instanceof Response)continue;

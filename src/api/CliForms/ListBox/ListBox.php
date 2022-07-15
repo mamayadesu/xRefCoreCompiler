@@ -2,13 +2,14 @@
 
 namespace CliForms\ListBox;
 
+use CliForms\Common\ControlItem;
 use CliForms\Exceptions\InvalidArgumentsPassed;
 use \CliForms\Exceptions\InvalidHeaderTypeException;
 use CliForms\Exceptions\NoItemsAddedException;
 use \Data\String\BackgroundColors;
 use \Data\String\ForegroundColors;
 use \Data\String\ColoredString;
-use \CliForms\RowHeaderType;
+use \CliForms\Common\RowHeaderType;
 use \IO\Console;
 
 /**
@@ -23,11 +24,13 @@ class ListBox
     public string $Title = "";
     protected string $titleForegroundColor = ForegroundColors::PURPLE,
         $defaultItemForegroundColor = ForegroundColors::WHITE,
+        $defaultDisabledForegroundColor = ForegroundColors::GRAY,
         $defaultItemHeaderForegroundColor = ForegroundColors::GRAY,
         $defaultRowHeaderItemDelimiterForegroundColor = ForegroundColors::DARK_GRAY;
 
     protected string $titleBackgroundColor = BackgroundColors::AUTO,
         $defaultItemBackgroundColor = BackgroundColors::AUTO,
+        $defaultDisabledBackgroundColor = BackgroundColors::AUTO,
         $defaultItemHeaderBackgroundColor = BackgroundColors::AUTO,
         $defaultRowHeaderItemDelimiterBackgroundColor = BackgroundColors::AUTO;
 
@@ -35,9 +38,9 @@ class ListBox
     protected string $rowHeaderItemDelimiter = ". ";
 
     /**
-     * @var array<ListBoxItem> Control items collection
+     * @var array<ListBoxControl> Control items collection
      */
-    protected array/*<ListBoxItem>*/ $items = array();
+    protected array/*<ListBoxControl>*/ $items = array();
 
     /**
      * Creates new ListBox control
@@ -60,18 +63,6 @@ class ListBox
      * @return ListBox
      */
     public function SetTitleColor(string $foregroundColor, string $backgroundColor = "") : ListBox
-    {}
-
-    /**
-     * Sets default style for all items. You can set custom style for any title
-     *
-     * @param ForegroundColors $itemForegroundColor
-     * @param BackgroundColors $itemBackgroundColor
-     * @param ForegroundColors $itemHeaderForegroundColor
-     * @param BackgroundColors $itemHeaderBackgroundColor
-     * @return ListBox
-     */
-    public function SetDefaultItemStyle(string $itemForegroundColor, string $itemBackgroundColor, string $itemHeaderForegroundColor = "", string $itemHeaderBackgroundColor = "") : ListBox
     {}
 
     /**
@@ -104,19 +95,13 @@ class ListBox
     {}
 
     /**
-     * Addes item to ListBox collection
+     * Adds item to ListBox collection
      *
-     * @param ListBoxItem $item
+     * @param ListBoxControl $item
      * @return ListBox
      * @throws InvalidArgumentsPassed
      */
-    public function AddItem($item) : ListBox
-    {}
-
-    protected function _renderTitle(string &$output) : void
-    {}
-
-    protected function _renderBody(string &$output) : void
+    public function AddItem(ControlItem $item) : ListBox
     {}
 
     /**
