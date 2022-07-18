@@ -89,6 +89,7 @@ class MenuBox extends ListBox
      *
      * @param MenuBoxItem|null $item
      * @return MenuBox
+     * @throws ItemIsUsingException
      */
     public function SetZeroItem(?MenuBoxItem $item) : MenuBox
     {}
@@ -103,9 +104,17 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * @return int Selected item number
+     * @return int|null Selected item number. If for some reason the current element is not selected, the method will automatically select the closest available one. If there are no such elements, it will return NULL
      */
-    public function GetSelectedItemNumber() : int
+    public function GetSelectedItemNumber() : ?int
+    {}
+
+    /**
+     * Returns current selected item. If for some reason the current element is not selected, the method will automatically select the closest available one. If there are no such elements, it will return NULL
+     *
+     * @return MenuBoxItem|null
+     */
+    public function GetSelectedItem() : ?MenuBoxItem
     {}
 
     /**

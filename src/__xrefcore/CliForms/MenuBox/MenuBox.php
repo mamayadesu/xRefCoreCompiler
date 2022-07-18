@@ -80,7 +80,7 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private bool $clearOnRender = false, $closeMenu = true, $render2wrongItemSelected = false, $cleared = false, $callbackCalled = false, $refreshCalled = false, $callbackExecuting = false;
+    private bool $clearOnRender = false, $closeMenu = true, $preventCheckingItems = false, $refreshCalled = false, $callbackExecuting = false;
 
     /**
      * @ignore
@@ -90,7 +90,7 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private int $SelectedItemNumber = 1;
+    private ?int $SelectedItemNumber = 1;
 
     /**
      * @var Closure|null Selected item changed event handler. Function have to accept `Events\SelectedItemChangedEvent`
@@ -169,21 +169,65 @@ class MenuBox extends ListBox
      *
      * @param MenuBoxItem|null $item
      * @return MenuBox
+     * @throws ItemIsUsingException
      */
     public function SetZeroItem(?MenuBoxItem $item) : MenuBox
     {
-        $this->zeroItem = $item;
+        if ($item === null)
+        {
+            if ($this->zeroItem !== null)
+            {
+                $this->zeroItem->__setattached(null);
+            }
+            $this->zeroItem = null;
+        }
+        else
+        {
+            if ($this->zeroItem !== null)
+            {
+                $this->zeroItem->__setattached(null);
+            }
+            if ($item->GetMenuBox() !== $this && $item->GetMenuBox() !== null)
+            {
+                $e = new ItemIsUsingException("Passed zero item is already using by another running MenuBox");
+                $e->Control = $item;
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            $this->zeroItem = $item;
+
+            if (!$this->closeMenu)
+                $this->zeroItem->__setattached($this);
+        }
         return $this;
     }
 
     /**
      * Sets selected item number. If item with specified number doesn't exist, does nothing.
      *
-     * @param int $itemNumber
+     * @param int|null $itemNumber
      * @return void
      */
-    public function SetSelectedItemNumber(int $itemNumber) : void
+    public function SetSelectedItemNumber(?int $itemNumber) : void
     {
+        if ($this->closeMenu)
+        {
+            $this->SelectedItemNumber = $itemNumber;
+            return;
+        }
+        if ($itemNumber === null || ($this->getnextalloweditemnumber(true) === null && $this->getnextalloweditemnumber(false) === null))
+        {
+            $this->SelectedItemNumber = null;
+            if ($this->SelectedItemChangedEvent != null)
+            {
+                $event = new SelectedItemChangedEvent();
+                $event->MenuBox = $this;
+                $event->Item = null;
+                $event->ItemNumber = $itemNumber;
+                $this->SelectedItemChangedEvent->call($this->mythis, $event);
+            }
+            return;
+        }
         if ($itemNumber > count($this->items) || ($itemNumber == 0 && $this->zeroItem == null))
         {
             return;
@@ -203,11 +247,33 @@ class MenuBox extends ListBox
     }
 
     /**
-     * @return int Selected item number
+     * @return int|null Selected item number. If for some reason the current element is not selected, the method will automatically select the closest available one. If there are no such elements, it will return NULL
      */
-    public function GetSelectedItemNumber() : int
+    public function GetSelectedItemNumber() : ?int
     {
+        $this->__checkitems();
         return $this->SelectedItemNumber;
+    }
+
+    /**
+     * Returns current selected item. If for some reason the current element is not selected, the method will automatically select the closest available one. If there are no such elements, it will return NULL
+     *
+     * @return MenuBoxItem|null
+     */
+    public function GetSelectedItem() : ?MenuBoxItem
+    {
+        $items = $this->GetSortedItems();
+        $itemNumber = $this->GetSelectedItemNumber();
+        if ($itemNumber === null)
+        {
+            return null;
+        }
+        $item = $items[$itemNumber];
+        if (!$item instanceof MenuBoxItem)
+        {
+            return null;
+        }
+        return $item;
     }
 
     /**
@@ -224,6 +290,44 @@ class MenuBox extends ListBox
                 return $key;
         }
         return -1;
+    }
+
+    /**
+     * @ignore
+     */
+    private function checkcurrentitem(bool $changeIndex) : void
+    {
+        $this->preventCheckingItems = true;
+        $items = $this->GetSortedItems();
+        if (!isset($items[$this->SelectedItemNumber]) || !$items[$this->SelectedItemNumber] instanceof MenuBoxItem || $items[$this->SelectedItemNumber]->GetMenuBox() !== $this || !$items[$this->SelectedItemNumber]->Selectable())
+        {
+            $itemNumber = $this->getnextalloweditemnumber(true);
+            if ($itemNumber === null || !$items[$itemNumber]->Selectable())
+            {
+                $itemNumber = $this->getnextalloweditemnumber(false);
+                if ($itemNumber === null || !$items[$itemNumber]->Selectable())
+                {
+                    $this->SetSelectedItemNumber(null);
+                }
+                else
+                {
+                    $this->SetSelectedItemNumber($itemNumber);
+                }
+            }
+            else
+            {
+                $this->SetSelectedItemNumber($itemNumber);
+            }
+        }
+        if ($changeIndex)
+        {
+            $this->SetSelectedItemNumber($this->SelectedItemNumber);
+        }
+        $item = $items[$this->SelectedItemNumber];
+        if (!$item instanceof MenuBoxItem)
+        {
+            $this->SetSelectedItemNumber(null);
+        }
     }
 
     /**
@@ -271,15 +375,22 @@ class MenuBox extends ListBox
      */
     public function GetNumberedItems(bool $includeZeroItem = true) : array
     {
+        $this->__checkitems();
         /** @var array<int, ?MenuBoxControl> $result */$result = array();
         $k = 1;
         if ($includeZeroItem)
         {
+            if ($this->zeroItem !== null && $this->zeroItem->GetMenuBox() !== $this)
+            {
+                $this->zeroItem = null;
+            }
             $result = array($this->zeroItem);
         }
 
         foreach ($this->items as $item)
         {if(!$item instanceof MenuBoxControl)continue;
+            if ($item->GetMenuBox() !== $this)
+                continue;
             $result[$k] = $item;
             $k++;
         }
@@ -292,6 +403,7 @@ class MenuBox extends ListBox
      */
     public function GetSortedItems(bool $includeZeroItem = true) : array
     {
+        $this->__checkitems();
         /** @var array<int, ?MenuBoxControl> $result */$result = array();
         $k = 1;
         if ($includeZeroItem)
@@ -318,6 +430,35 @@ class MenuBox extends ListBox
             $k++;
         }
         return $result;
+    }
+
+    /**
+     * @ignore
+     */
+    public function __checkitems(bool $updateIndex = false) : void
+    {
+        if ($this->zeroItem !== null && $this->zeroItem->GetMenuBox() !== $this)
+        {
+            $this->zeroItem = null;
+        }
+        $toRemove = [];
+        foreach ($this->items as $key => $item)
+        {if(!$item instanceof MenuBoxControl)continue;
+            if ($item->GetMenuBox() !== $this)
+            {
+                $toRemove[] = $key;
+            }
+        }
+
+        foreach ($toRemove as $index)
+        {
+            unset($this->items[$index]);
+        }
+
+        $this->items = array_values($this->items);
+
+        if (count($toRemove) > 0)
+            $this->checkcurrentitem($updateIndex);
     }
 
     /**
@@ -545,7 +686,7 @@ class MenuBox extends ListBox
                 break;
         }
 
-        $selected = $this->SelectedItemNumber == $a && $this->menuBoxType == MenuBoxTypes::KeyPressType;
+        $selected = $this->GetSelectedItem() !== null && $this->SelectedItemNumber == $a && $this->menuBoxType == MenuBoxTypes::KeyPressType;
 
         $headerFg = $item->HeaderForegroundColor;
         $headerBg = $item->HeaderBackgroundColor;
@@ -643,6 +784,7 @@ class MenuBox extends ListBox
      */
     public function Refresh() : void
     {
+        $this->__checkitems();
         if ($this->closeMenu || $this->callbackExecuting)
             return;
 
@@ -769,13 +911,19 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
+
         // Checking items
-        if ($this->zeroItem != null && $this->zeroItem->GetMenuBox() != null && $this->zeroItem->GetMenuBox() !== $this)
+        if ($this->zeroItem !== null)
         {
-            $e = new ItemIsUsingException("Passed zero item is already using by another running MenuBox");
-            $e->Control = $this->zeroItem;
-            $e->__xrefcoreexception = true;
-            throw $e;
+            if ($this->zeroItem->GetMenuBox() !== null && $this->zeroItem->GetMenuBox() !== $this)
+            {
+                $e = new ItemIsUsingException("Passed zero item is already using by another running MenuBox");
+                $e->Control = $this->zeroItem;
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+
+            $this->zeroItem->__setattached($this);
         }
         foreach ($this->items as $item)
         {if(!$item instanceof MenuBoxControl)continue;
@@ -788,6 +936,12 @@ class MenuBox extends ListBox
             }
             $item->__setattached($this);
         }
+
+        // Cleaning garbage
+        $this->__checkitems();
+
+        // Checking if selected item correct
+        $this->checkcurrentitem(false);
         $this->closeMenu = false; // Open menu again automatically
         if ($this->OpenEvent != null)
         {
@@ -838,15 +992,19 @@ class MenuBox extends ListBox
             {
                 do
                 {
+                    if ($this->closeMenu)
+                        return;
                     $pressedKey = Console::ReadKey(false);
                     $this->lastPressedKey = $pressedKey;
                     $keyCheck = $pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow";
+                    $this->__checkitems();
                     if ($this->KeyPressEvent != null)
                     {
                         $event = new KeyPressEvent();
                         $event->MenuBox = $this;
                         $event->Key = $pressedKey;
                         $this->KeyPressEvent->call($this->mythis, $event);
+                        $this->__checkitems();
                         if ($keyCheck) continue 2;
                     }
                 }
@@ -879,7 +1037,7 @@ class MenuBox extends ListBox
                 continue;
             }*/
 
-            if ($selectedItem->Disabled() || !$selectedItem->Selectable())
+            if ($selectedItem === null || $selectedItem->Disabled() || !$selectedItem->Selectable())
             {
                 continue;
             }

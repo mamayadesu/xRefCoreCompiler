@@ -49,6 +49,30 @@ class MenuBoxControl extends ListBoxControl
     }
 
     /**
+     * Removes element from current MenuBox
+     *
+     * @return void
+     */
+    public function Remove() : void
+    {
+        $callSelectedChanged = false;
+        $menuBox = $this->attachedTo;
+        if ($menuBox !== null)
+        {
+            if ($menuBox->GetSelectedItem() === $this)
+            {
+                $callSelectedChanged = true;
+            }
+        }
+        $this->attachedTo = null;
+        if ($menuBox !== null)
+        {
+            $menuBox->__checkitems($callSelectedChanged);
+            $menuBox->Refresh();
+        }
+    }
+
+    /**
      * @ignore
      */
     public function __setattached(?MenuBox $menu) : void

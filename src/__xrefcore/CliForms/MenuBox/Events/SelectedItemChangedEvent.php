@@ -6,7 +6,7 @@ use CliForms\MenuBox\MenuBoxControl;
 
 class SelectedItemChangedEvent extends MenuBoxEvent
 {
-    public int $ItemNumber;
+    public ?int $ItemNumber;
 
-    public MenuBoxControl $Item;
+    public ?MenuBoxControl $Item;
 }

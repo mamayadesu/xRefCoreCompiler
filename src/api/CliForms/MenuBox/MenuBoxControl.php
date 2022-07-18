@@ -28,6 +28,14 @@ class MenuBoxControl extends ListBoxControl
      */
     public function GetMenuBox() : ?MenuBox
     {}
+    
+    /**
+     * Removes element from current MenuBox
+     * 
+     * @return void
+     */
+    public function Remove() : void
+    {}
 
     /**
      * Returns TRUE if this item is allowed to be clicked. If you pass new value, it will be changed

@@ -410,7 +410,7 @@ class Console
     {
         if (IS_WINDOWS)
         {
-            echo chr(27) . chr(91) . 'H' . chr(27) . chr(91) . 'J';
+            pclose(popen('cls','w'));
         }
         else system("clear");
     }
