@@ -17,6 +17,11 @@ class MenuBoxControl extends ListBoxControl
     /**
      * @ignore
      */
+    private bool $canBeAttached = true;
+
+    /**
+     * @ignore
+     */
     private bool $visible = true;
 
     /**
@@ -65,6 +70,7 @@ class MenuBoxControl extends ListBoxControl
             }
         }
         $this->attachedTo = null;
+        $this->canBeAttached = true;
         if ($menuBox !== null)
         {
             $menuBox->__checkitems($callSelectedChanged);
@@ -75,9 +81,18 @@ class MenuBoxControl extends ListBoxControl
     /**
      * @ignore
      */
-    public function __setattached(?MenuBox $menu) : void
+    public function __canbeattached() : bool
+    {
+        return $this->canBeAttached;
+    }
+
+    /**
+     * @ignore
+     */
+    public function __setattached(?MenuBox $menu, bool $canbeattached) : void
     {
         $this->attachedTo = $menu;
+        $this->canBeAttached = ($menu === null ?:$canbeattached);
     }
 
     /**

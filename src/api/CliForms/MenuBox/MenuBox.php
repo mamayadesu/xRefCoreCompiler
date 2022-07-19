@@ -80,6 +80,7 @@ class MenuBox extends ListBox
      * @param MenuBoxControl $item
      * @return MenuBox
      * @throws InvalidArgumentsPassed
+     * @throws ItemIsUsingException
      */
     public function AddItem(ControlItem $item) : MenuBox
     {}

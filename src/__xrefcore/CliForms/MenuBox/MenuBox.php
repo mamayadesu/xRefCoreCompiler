@@ -151,12 +151,20 @@ class MenuBox extends ListBox
      * @param MenuBoxControl $item
      * @return MenuBox
      * @throws InvalidArgumentsPassed
+     * @throws ItemIsUsingException
      */
     public function AddItem(ControlItem $item) : MenuBox
     {
         if (!$item instanceof MenuBoxControl)
         {
             $e = new InvalidArgumentsPassed("Passed item is not a MenuBoxControl item.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        if ($item->GetMenuBox() !== $this && !$item->__canbeattached())
+        {
+            $e = new ItemIsUsingException("Passed item is already using by another running MenuBox");
+            $e->Control = $item;
             $e->__xrefcoreexception = true;
             throw $e;
         }
@@ -177,7 +185,7 @@ class MenuBox extends ListBox
         {
             if ($this->zeroItem !== null)
             {
-                $this->zeroItem->__setattached(null);
+                $this->zeroItem->__setattached(null, true);
             }
             $this->zeroItem = null;
         }
@@ -185,9 +193,9 @@ class MenuBox extends ListBox
         {
             if ($this->zeroItem !== null)
             {
-                $this->zeroItem->__setattached(null);
+                $this->zeroItem->__setattached(null, true);
             }
-            if ($item->GetMenuBox() !== $this && $item->GetMenuBox() !== null)
+            if ($item->GetMenuBox() !== $this && !$item->__canbeattached())
             {
                 $e = new ItemIsUsingException("Passed zero item is already using by another running MenuBox");
                 $e->Control = $item;
@@ -197,7 +205,7 @@ class MenuBox extends ListBox
             $this->zeroItem = $item;
 
             if (!$this->closeMenu)
-                $this->zeroItem->__setattached($this);
+                $this->zeroItem->__setattached($this, true);
         }
         return $this;
     }
@@ -344,11 +352,11 @@ class MenuBox extends ListBox
         }
         if ($this->zeroItem != null)
         {
-            $this->zeroItem->__setattached(null);
+            $this->zeroItem->__setattached($this, true);
         }
         foreach ($this->items as $item)
         {if(!$item instanceof MenuBoxControl)continue;
-            $item->__setattached(null);
+            $item->__setattached($this, true);
         }
         $this->closeMenu = true;
         if ($this->CloseEvent != null)
@@ -915,7 +923,7 @@ class MenuBox extends ListBox
         // Checking items
         if ($this->zeroItem !== null)
         {
-            if ($this->zeroItem->GetMenuBox() !== null && $this->zeroItem->GetMenuBox() !== $this)
+            if ($this->zeroItem->GetMenuBox() !== $this && !$this->zeroItem->__canbeattached())
             {
                 $e = new ItemIsUsingException("Passed zero item is already using by another running MenuBox");
                 $e->Control = $this->zeroItem;
@@ -923,18 +931,18 @@ class MenuBox extends ListBox
                 throw $e;
             }
 
-            $this->zeroItem->__setattached($this);
+            $this->zeroItem->__setattached($this, false);
         }
         foreach ($this->items as $item)
         {if(!$item instanceof MenuBoxControl)continue;
-            if ($item->GetMenuBox() != null && $item->GetMenuBox() !== $this)
+            if ($item->GetMenuBox() !== $this && !$item->__canbeattached())
             {
                 $e = new ItemIsUsingException("Item is already using by another running MenuBox");
                 $e->Control = $item;
                 $e->__xrefcoreexception = true;
                 throw $e;
             }
-            $item->__setattached($this);
+            $item->__setattached($this, false);
         }
 
         // Cleaning garbage
