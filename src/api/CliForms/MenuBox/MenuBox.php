@@ -7,6 +7,8 @@ use CliForms\Exceptions\InvalidArgumentsPassed;
 use CliForms\Exceptions\InvalidMenuBoxTypeException;
 use CliForms\Exceptions\ItemIsUsingException;
 use CliForms\Exceptions\MenuAlreadyOpenedException;
+use CliForms\Exceptions\MenuBoxCannotBeDesposedException;
+use CliForms\Exceptions\MenuBoxDisposedException;
 use CliForms\Exceptions\MenuIsNotOpenedException;
 use CliForms\Exceptions\NoItemsAddedException;
 use CliForms\ListBox\ListBox;
@@ -27,6 +29,11 @@ use IO\Console;
 
 class MenuBox extends ListBox
 {
+    /**
+     * @var string This ID is using to find your MenuBox. Not for anything else.
+     */
+    public string $Id = "";
+
     protected string $titleForegroundColor = ForegroundColors::CYAN,
         $inputTitleForegroundColor = ForegroundColors::GRAY,
         $inputTitleDelimiterForegroundColor = ForegroundColors::DARK_GRAY,
@@ -69,7 +76,33 @@ class MenuBox extends ListBox
     {}
 
     /**
+     * @return bool TRUE if current MenuBox is disposed
+     */
+    public function IsDisposed() : bool
+    {}
+
+    /**
+     * Disposes current MenuBox and makes unavailable for any actions
+     *
+     * @return void
+     * @throws MenuBoxDisposedException MenuBox is already disposed
+     * @throws MenuBoxCannotBeDesposedException MenuBox is still opened
+     */
+    public function Dispose() : void
+    {}
+
+    /**
+     * Finds and returns MenuBox with the same ID. Returns NULL if MenuBox not found.
+     *
+     * @param string $id
+     * @return MenuBox|null
+     */
+    public static function GetMenuBoxById(string $id) : ?MenuBox
+    {}
+
+    /**
      * @return string Last pressed key on keyboard
+     * @throws MenuBoxDisposedException
      */
     public function GetLastPressedKey() : string
     {}
@@ -81,6 +114,7 @@ class MenuBox extends ListBox
      * @return MenuBox
      * @throws InvalidArgumentsPassed
      * @throws ItemIsUsingException
+     * @throws MenuBoxDisposedException
      */
     public function AddItem(ControlItem $item) : MenuBox
     {}
@@ -91,6 +125,7 @@ class MenuBox extends ListBox
      * @param MenuBoxItem|null $item
      * @return MenuBox
      * @throws ItemIsUsingException
+     * @throws MenuBoxDisposedException
      */
     public function SetZeroItem(?MenuBoxItem $item) : MenuBox
     {}
@@ -100,12 +135,14 @@ class MenuBox extends ListBox
      *
      * @param int $itemNumber
      * @return void
+     * @throws MenuBoxDisposedException
      */
     public function SetSelectedItemNumber(int $itemNumber) : void
     {}
 
     /**
      * @return int|null Selected item number. If for some reason the current element is not selected, the method will automatically select the closest available one. If there are no such elements, it will return NULL
+     * @throws MenuBoxDisposedException
      */
     public function GetSelectedItemNumber() : ?int
     {}
@@ -114,6 +151,7 @@ class MenuBox extends ListBox
      * Returns current selected item. If for some reason the current element is not selected, the method will automatically select the closest available one. If there are no such elements, it will return NULL
      *
      * @return MenuBoxItem|null
+     * @throws MenuBoxDisposedException
      */
     public function GetSelectedItem() : ?MenuBoxItem
     {}
@@ -123,6 +161,7 @@ class MenuBox extends ListBox
      *
      * @param MenuBoxControl $item
      * @return int
+     * @throws MenuBoxDisposedException
      */
     public function GetItemNumberByItem(MenuBoxControl $item) : int
     {}
@@ -130,6 +169,7 @@ class MenuBox extends ListBox
     /**
      * Closes menu
      * @throws MenuIsNotOpenedException
+     * @throws MenuBoxDisposedException
      */
     public function Close() : void
     {}
@@ -138,6 +178,7 @@ class MenuBox extends ListBox
      * Returns TRUE if menu closed
      *
      * @return bool
+     * @throws MenuBoxDisposedException
      */
     public function IsClosed() : bool
     {}
@@ -145,6 +186,7 @@ class MenuBox extends ListBox
     /**
      * @param bool $includeZeroItem Includes zero item. Attention! If you exclude zero item, the first index of array will be "1", not "0"
      * @return MenuBoxControl[] Numbered items. Element with 0 index is zero item (or null)
+     * @throws MenuBoxDisposedException
      */
     public function GetNumberedItems(bool $includeZeroItem = true) : array
     {}
@@ -152,6 +194,7 @@ class MenuBox extends ListBox
     /**
      * @param bool $includeZeroItem Includes zero item. Attention! If you exclude zero item, the first index of array will be "1", not "0"
      * @return MenuBoxControl[] Sorted and numbered items. Element with 0 index is still zero item (or null). Please note that the indexes of this method are different from those of the GetNumberedItems method.
+     * @throws MenuBoxDisposedException
      */
     public function GetSortedItems(bool $includeZeroItem = true) : array
     {}
@@ -161,6 +204,7 @@ class MenuBox extends ListBox
      *
      * @param string $id
      * @return MenuBoxControl|null
+     * @throws MenuBoxDisposedException
      */
     public function GetElementById(string $id) : ?MenuBoxControl
     {}
@@ -170,6 +214,7 @@ class MenuBox extends ListBox
      *
      * @param bool $clear
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetClearWindowOnRender(bool $clear = true) : MenuBox
     {}
@@ -178,6 +223,7 @@ class MenuBox extends ListBox
      * Returns your object which you passed in constructor
      *
      * @return object|null
+     * @throws MenuBoxDisposedException
      */
     public function GetThis() : ?object
     {}
@@ -188,6 +234,7 @@ class MenuBox extends ListBox
      * @param string $text
      * @param ForegroundColors $foregroundColor
      * @param BackgroundColors $backgroundColor
+     * @throws MenuBoxDisposedException
      */
     public function ResultOutput(string $text, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : void
     {}
@@ -198,18 +245,21 @@ class MenuBox extends ListBox
      * @param string $text
      * @param ForegroundColors $foregroundColor
      * @param BackgroundColors $backgroundColor
+     * @throws MenuBoxDisposedException
      */
     public function ResultOutputLine(string $text, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : void
     {}
 
     /**
      * @return void Clears result output
+     * @throws MenuBoxDisposedException
      */
     public function ClearResultOutput() : void
     {}
 
     /**
      * @return string Result output
+     * @throws MenuBoxDisposedException
      */
     public function GetResultOutput() : string
     {}
@@ -219,6 +269,7 @@ class MenuBox extends ListBox
      *
      * @param string $inputTitle
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetInputTitle(string $inputTitle) : MenuBox
     {}
@@ -229,6 +280,7 @@ class MenuBox extends ListBox
      * @param ForegroundColors $foregroundColor
      * @param BackgroundColors $backgroundColor
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetInputTitleStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {}
@@ -239,6 +291,7 @@ class MenuBox extends ListBox
      * @param ForegroundColors $foregroundColor
      * @param BackgroundColors $backgroundColor
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetInputTitleDelimiterStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {}
@@ -248,6 +301,7 @@ class MenuBox extends ListBox
      *
      * @param string $description
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetDescription(string $description = "") : MenuBox
     {}
@@ -258,6 +312,7 @@ class MenuBox extends ListBox
      * @param string $foregroundColor
      * @param string $backgroundColor
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetDescriptionStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {}
@@ -267,6 +322,7 @@ class MenuBox extends ListBox
      *
      * @param string $title
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetWrongItemTitle(string $title) : MenuBox
     {}
@@ -277,6 +333,7 @@ class MenuBox extends ListBox
      * @param string $foregroundColor
      * @param string $backgroundColor
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetWrongItemTitleStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {}
@@ -285,6 +342,7 @@ class MenuBox extends ListBox
      * Renders menu again
      *
      * @return void
+     * @throws MenuBoxDisposedException
      */
     public function Refresh() : void
     {}
@@ -294,6 +352,7 @@ class MenuBox extends ListBox
      * @throws NoItemsAddedException
      * @throws MenuAlreadyOpenedException
      * @throws ItemIsUsingException
+     * @throws MenuBoxDisposedException
      */
     public function Render() : void
     {}

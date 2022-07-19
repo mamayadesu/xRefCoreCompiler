@@ -8,6 +8,8 @@ use CliForms\Exceptions\InvalidArgumentsPassed;
 use CliForms\Exceptions\InvalidMenuBoxTypeException;
 use CliForms\Exceptions\ItemIsUsingException;
 use CliForms\Exceptions\MenuAlreadyOpenedException;
+use CliForms\Exceptions\MenuBoxCannotBeDesposedException;
+use CliForms\Exceptions\MenuBoxDisposedException;
 use CliForms\Exceptions\MenuIsNotOpenedException;
 use CliForms\Exceptions\NoItemsAddedException;
 use CliForms\ListBox\ListBox;
@@ -28,6 +30,17 @@ use IO\Console;
 
 class MenuBox extends ListBox
 {
+    /**
+     * @var string This ID is using to find your MenuBox. Not for anything else.
+     */
+    public string $Id = "";
+
+    /**
+     * @ignore
+     * @var array<MenuBox>
+     */
+    private static array $MenuBoxes = array();
+
     protected string $titleForegroundColor = ForegroundColors::CYAN,
         $inputTitleForegroundColor = ForegroundColors::GRAY,
         $inputTitleDelimiterForegroundColor = ForegroundColors::DARK_GRAY,
@@ -80,7 +93,7 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private bool $clearOnRender = false, $closeMenu = true, $preventCheckingItems = false, $refreshCalled = false, $callbackExecuting = false;
+    private bool $DISPOSED = false, $clearOnRender = false, $closeMenu = true, $preventCheckingItems = false, $refreshCalled = false, $wrongItemSelected = false, $callbackExecuting = false;
 
     /**
      * @ignore
@@ -135,13 +148,101 @@ class MenuBox extends ListBox
         {
             $this->clearOnRender = true;
         }
+        self::$MenuBoxes[] = $this;
     }
-    
+
+    /**
+     * @return bool TRUE if current MenuBox is disposed
+     */
+    public function IsDisposed() : bool
+    {
+        return $this->DISPOSED;
+    }
+
+    /**
+     * Disposes current MenuBox and makes unavailable for any actions
+     *
+     * @return void
+     * @throws MenuBoxDisposedException MenuBox is already disposed
+     * @throws MenuBoxCannotBeDesposedException MenuBox is still opened
+     */
+    public function Dispose() : void
+    {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        if (!$this->closeMenu)
+        {
+            $e = new MenuBoxCannotBeDesposedException("MenuBox cannot be disposed right now because it is still opened.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        $this->SetZeroItem(null);
+
+        foreach ($this->items as $item)
+        {if(!$item instanceof MenuBoxControl)continue;
+            $item->__setattached(null, true);
+        }
+
+        $this->items = [];
+        $this->SelectedItemChangedEvent = null;
+        $this->OpenEvent = null;
+        $this->CloseEvent = null;
+        $this->KeyPressEvent = null;
+        $this->resultOutput = "";
+        $this->mythis = null;
+        $this->Id = "";
+
+        foreach (self::$MenuBoxes as $key => $value)
+        {
+            if ($value === $this)
+            {
+                unset(self::$MenuBoxes[$key]);
+                break;
+            }
+        }
+        self::$MenuBoxes = array_values(self::$MenuBoxes);
+        $this->DISPOSED = true;
+    }
+
+    /**
+     * Finds and returns MenuBox with the same ID. Returns NULL if MenuBox not found.
+     *
+     * @param string $id
+     * @return MenuBox|null
+     */
+    public static function GetMenuBoxById(string $id) : ?MenuBox
+    {
+        $result = null;
+        foreach (self::$MenuBoxes as $key => $menu)
+        {if(!$menu instanceof MenuBox)continue;
+            if ($menu->IsDisposed())
+            {
+                continue;
+            }
+            if ($menu->Id === $id)
+            {
+                $result = $menu;
+            }
+        }
+        return $result;
+    }
+
     /**
      * @return string Last pressed key on keyboard
+     * @throws MenuBoxDisposedException
      */
     public function GetLastPressedKey() : string
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         return $this->lastPressedKey;
     }
 
@@ -152,9 +253,16 @@ class MenuBox extends ListBox
      * @return MenuBox
      * @throws InvalidArgumentsPassed
      * @throws ItemIsUsingException
+     * @throws MenuBoxDisposedException
      */
     public function AddItem(ControlItem $item) : MenuBox
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         if (!$item instanceof MenuBoxControl)
         {
             $e = new InvalidArgumentsPassed("Passed item is not a MenuBoxControl item.");
@@ -178,9 +286,16 @@ class MenuBox extends ListBox
      * @param MenuBoxItem|null $item
      * @return MenuBox
      * @throws ItemIsUsingException
+     * @throws MenuBoxDisposedException
      */
     public function SetZeroItem(?MenuBoxItem $item) : MenuBox
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         if ($item === null)
         {
             if ($this->zeroItem !== null)
@@ -215,9 +330,16 @@ class MenuBox extends ListBox
      *
      * @param int|null $itemNumber
      * @return void
+     * @throws MenuBoxDisposedException
      */
     public function SetSelectedItemNumber(?int $itemNumber) : void
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         if ($this->closeMenu)
         {
             $this->SelectedItemNumber = $itemNumber;
@@ -256,9 +378,16 @@ class MenuBox extends ListBox
 
     /**
      * @return int|null Selected item number. If for some reason the current element is not selected, the method will automatically select the closest available one. If there are no such elements, it will return NULL
+     * @throws MenuBoxDisposedException
      */
     public function GetSelectedItemNumber() : ?int
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->__checkitems();
         return $this->SelectedItemNumber;
     }
@@ -267,9 +396,16 @@ class MenuBox extends ListBox
      * Returns current selected item. If for some reason the current element is not selected, the method will automatically select the closest available one. If there are no such elements, it will return NULL
      *
      * @return MenuBoxItem|null
+     * @throws MenuBoxDisposedException
      */
     public function GetSelectedItem() : ?MenuBoxItem
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $items = $this->GetSortedItems();
         $itemNumber = $this->GetSelectedItemNumber();
         if ($itemNumber === null)
@@ -289,9 +425,16 @@ class MenuBox extends ListBox
      *
      * @param MenuBoxControl $item
      * @return int
+     * @throws MenuBoxDisposedException
      */
     public function GetItemNumberByItem(MenuBoxControl $item) : int
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         foreach ($this->GetSortedItems() as $key => $i)
         {
             if ($item === $i)
@@ -341,9 +484,16 @@ class MenuBox extends ListBox
     /**
      * Closes menu
      * @throws MenuIsNotOpenedException
+     * @throws MenuBoxDisposedException
      */
     public function Close() : void
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         if ($this->closeMenu)
         {
             $e = new MenuIsNotOpenedException("Attempt to close not opened menu.");
@@ -371,18 +521,32 @@ class MenuBox extends ListBox
      * Returns TRUE if menu closed
      *
      * @return bool
+     * @throws MenuBoxDisposedException
      */
     public function IsClosed() : bool
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         return $this->closeMenu;
     }
 
     /**
      * @param bool $includeZeroItem Includes zero item. Attention! If you exclude zero item, the first index of array will be "1", not "0"
      * @return MenuBoxControl[] Numbered items. Element with 0 index is zero item (or null)
+     * @throws MenuBoxDisposedException
      */
     public function GetNumberedItems(bool $includeZeroItem = true) : array
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->__checkitems();
         /** @var array<int, ?MenuBoxControl> $result */$result = array();
         $k = 1;
@@ -408,9 +572,16 @@ class MenuBox extends ListBox
     /**
      * @param bool $includeZeroItem Includes zero item. Attention! If you exclude zero item, the first index of array will be "1", not "0"
      * @return MenuBoxControl[] Sorted and numbered items. Element with 0 index is still zero item (or null). Please note that the indexes of this method are different from those of the GetNumberedItems method.
+     * @throws MenuBoxDisposedException
      */
     public function GetSortedItems(bool $includeZeroItem = true) : array
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->__checkitems();
         /** @var array<int, ?MenuBoxControl> $result */$result = array();
         $k = 1;
@@ -474,9 +645,16 @@ class MenuBox extends ListBox
      *
      * @param string $id
      * @return MenuBoxControl|null
+     * @throws MenuBoxDisposedException
      */
     public function GetElementById(string $id) : ?MenuBoxControl
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         foreach ($this->GetSortedItems() as $item)
         {if(!$item instanceof MenuBoxControl)continue;
             if ($item->Id == $id)
@@ -492,9 +670,16 @@ class MenuBox extends ListBox
      *
      * @param bool $clear
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetClearWindowOnRender(bool $clear = true) : MenuBox
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         if ($this->menuBoxType == MenuBoxTypes::KeyPressType)
         {
             return $this;
@@ -507,9 +692,16 @@ class MenuBox extends ListBox
      * Returns your object which you passed in constructor
      *
      * @return object|null
+     * @throws MenuBoxDisposedException
      */
     public function GetThis() : ?object
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         return $this->mythis;
     }
 
@@ -519,9 +711,16 @@ class MenuBox extends ListBox
      * @param string $text
      * @param ForegroundColors $foregroundColor
      * @param BackgroundColors $backgroundColor
+     * @throws MenuBoxDisposedException
      */
     public function ResultOutput(string $text, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : void
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->resultOutput .= ColoredString::Get($text, $foregroundColor, $backgroundColor);
     }
 
@@ -531,25 +730,46 @@ class MenuBox extends ListBox
      * @param string $text
      * @param ForegroundColors $foregroundColor
      * @param BackgroundColors $backgroundColor
+     * @throws MenuBoxDisposedException
      */
     public function ResultOutputLine(string $text, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : void
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->ResultOutput($text . "\n", $foregroundColor, $backgroundColor);
     }
 
     /**
      * @return void Clears result output
+     * @throws MenuBoxDisposedException
      */
     public function ClearResultOutput() : void
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->resultOutput = "";
     }
 
     /**
      * @return string Result output
+     * @throws MenuBoxDisposedException
      */
     public function GetResultOutput() : string
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         return $this->resultOutput;
     }
 
@@ -558,9 +778,16 @@ class MenuBox extends ListBox
      *
      * @param string $inputTitle
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetInputTitle(string $inputTitle) : MenuBox
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->inputTitle = $inputTitle;
         return $this;
     }
@@ -571,9 +798,16 @@ class MenuBox extends ListBox
      * @param ForegroundColors $foregroundColor
      * @param BackgroundColors $backgroundColor
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetInputTitleStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->inputTitleForegroundColor = $foregroundColor;
         if ($backgroundColor != BackgroundColors::AUTO)
         {
@@ -588,9 +822,16 @@ class MenuBox extends ListBox
      * @param ForegroundColors $foregroundColor
      * @param BackgroundColors $backgroundColor
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetInputTitleDelimiterStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->inputTitleDelimiterForegroundColor = $foregroundColor;
         if ($backgroundColor != BackgroundColors::AUTO)
         {
@@ -604,9 +845,16 @@ class MenuBox extends ListBox
      *
      * @param string $description
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetDescription(string $description = "") : MenuBox
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->description = $description;
         return $this;
     }
@@ -617,9 +865,16 @@ class MenuBox extends ListBox
      * @param string $foregroundColor
      * @param string $backgroundColor
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetDescriptionStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->descriptionForegroundColor = $foregroundColor;
         if ($backgroundColor != BackgroundColors::AUTO)
         {
@@ -633,9 +888,16 @@ class MenuBox extends ListBox
      *
      * @param string $title
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetWrongItemTitle(string $title) : MenuBox
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->wrongItemTitle = $title;
         return $this;
     }
@@ -646,9 +908,16 @@ class MenuBox extends ListBox
      * @param string $foregroundColor
      * @param string $backgroundColor
      * @return MenuBox
+     * @throws MenuBoxDisposedException
      */
     public function SetWrongItemTitleStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->wrongItemTitleForegroundColor = $foregroundColor;
         if ($backgroundColor != BackgroundColors::AUTO)
         {
@@ -789,16 +1058,22 @@ class MenuBox extends ListBox
      * Renders menu again
      *
      * @return void
+     * @throws MenuBoxDisposedException
      */
     public function Refresh() : void
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         $this->__checkitems();
         if ($this->closeMenu || $this->callbackExecuting)
             return;
 
-        Console::ClearWindow();
-        Console::WriteLine($this->resultOutput);
-        $output = "";
+        $output = $this->resultOutput;
+        $output .= ($this->wrongItemSelected ? ColoredString::Get($this->wrongItemTitle, $this->wrongItemTitleForegroundColor, $this->wrongItemTitleBackgroundColor) : "") . "\n";
         $this->_renderTitle($output);
         if ($this->description != "")
         {
@@ -810,7 +1085,7 @@ class MenuBox extends ListBox
             $output .= ColoredString::Get($this->inputTitle, $this->inputTitleForegroundColor, $this->inputTitleBackgroundColor);
             $output .= ColoredString::Get(":", $this->inputTitleDelimiterForegroundColor, $this->inputTitleDelimiterBackgroundColor) . " ";
         }
-        Console::Write($output);
+        Console::ClearWindow($output);
         $this->refreshCalled = true;
     }
 
@@ -904,9 +1179,16 @@ class MenuBox extends ListBox
      * @throws NoItemsAddedException
      * @throws MenuAlreadyOpenedException
      * @throws ItemIsUsingException
+     * @throws MenuBoxDisposedException
      */
     public function Render() : void
     {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
         if (count($this->items) == 0)
         {
             $e = new NoItemsAddedException("No items added to items collection. Nothing to render.");
@@ -964,11 +1246,12 @@ class MenuBox extends ListBox
             }
         }
         $output = "";
+        $__output = "";
         $cleared = false;
         $selectedItemId = 0;
         $selectedItemIdStr = "0";
         /** @var MenuBoxItem $selectedItem */$selectedItem = null;
-        $wrongItemSelected = false;
+        $this->wrongItemSelected = false;
         $callbackCalled = false;
         while (!$this->closeMenu)
         {
@@ -985,17 +1268,21 @@ class MenuBox extends ListBox
                 $output .= ColoredString::Get($this->inputTitle, $this->inputTitleForegroundColor, $this->inputTitleBackgroundColor);
                 $output .= ColoredString::Get(":", $this->inputTitleDelimiterForegroundColor, $this->inputTitleDelimiterBackgroundColor) . " ";
             }
+            $__output = $this->resultOutput;
+            $__output .= ($this->wrongItemSelected ? ColoredString::Get($this->wrongItemTitle, $this->wrongItemTitleForegroundColor, $this->wrongItemTitleBackgroundColor) : "") . "\n";
+            $__output .= $output;
             if (($this->clearOnRender && !$cleared) || $this->refreshCalled)
             {
-                Console::ClearWindow();
+                Console::ClearWindow($__output);
                 $cleared = true;
                 $this->refreshCalled = false;
             }
-            Console::Write($this->resultOutput);
-            Console::WriteLine($wrongItemSelected ? ColoredString::Get($this->wrongItemTitle, $this->wrongItemTitleForegroundColor, $this->wrongItemTitleBackgroundColor) : "");
+            else
+            {
+                Console::Write($__output);
+            }
             $cleared = false;
-            $wrongItemSelected = false;
-            Console::Write($output);
+            $this->wrongItemSelected = false;
             if ($this->menuBoxType == MenuBoxTypes::KeyPressType)
             {
                 do
@@ -1033,7 +1320,7 @@ class MenuBox extends ListBox
                 $selectedItemId = intval($selectedItemIdStr);
                 if (($selectedItem = $this->getselitem($selectedItemId)) == null)
                 {
-                    $wrongItemSelected = true;
+                    $this->wrongItemSelected = true;
                     continue;
                 }
             }
@@ -1041,7 +1328,7 @@ class MenuBox extends ListBox
             // Console::ReadLine() returns an empty string if you'll input "0". So it's temporarily broken
             /*if ($selectedItemId == 0 && $selectedItemIdStr != "0")
             {
-                $wrongItemSelected = true;
+                $this->wrongItemSelected = true;
                 continue;
             }*/
 

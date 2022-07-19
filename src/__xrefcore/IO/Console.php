@@ -405,13 +405,17 @@ class Console
 
     /**
      * Clears all output in window
+     *
+     * @param string $replacement New screen's content
+     * @return void
      */
-    public static function ClearWindow() : void
+    public static function ClearWindow(string $replacement = "") : void
     {
         if (IS_WINDOWS)
         {
             pclose(popen('cls','w'));
         }
         else system("clear");
+        echo $replacement;
     }
 }
