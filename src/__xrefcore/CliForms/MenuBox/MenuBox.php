@@ -276,7 +276,11 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
+        $item->__setattached($this, $this->closeMenu);
         $this->items[] = $item;
+
+        if (!$this->closeMenu)
+            $this->Refresh();
         return $this;
     }
 
@@ -474,7 +478,7 @@ class MenuBox extends ListBox
         {
             $this->SetSelectedItemNumber($this->SelectedItemNumber);
         }
-        $item = $items[$this->SelectedItemNumber];
+        $item = $items[$this->SelectedItemNumber] ?? null;
         if (!$item instanceof MenuBoxItem)
         {
             $this->SetSelectedItemNumber(null);
@@ -1304,7 +1308,8 @@ class MenuBox extends ListBox
                     }
                 }
                 while ($keyCheck);
-                if ($pressedKey == "enter")
+
+                if ($pressedKey == "enter" && $this->SelectedItemNumber !== null)
                     $selectedItem = $this->getselitem($this->SelectedItemNumber);
                 else
                 {
