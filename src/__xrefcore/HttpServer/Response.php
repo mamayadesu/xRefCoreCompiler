@@ -214,8 +214,8 @@ final class Response
 
         $name = rawurlencode($name);
         $value = rawurlencode($value);
-        $domain = rawurlencode($domain);
-        $path = rawurlencode($path);
+        $domain = str_replace("%2F", "/", rawurlencode($domain));
+        $path = str_replace("%2F", "/", rawurlencode($path));
 
         $dt = "";
         if ($expires > 0)

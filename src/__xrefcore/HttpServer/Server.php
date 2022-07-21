@@ -227,14 +227,20 @@ final class Server
                 $headerName = $header1[0];
                 array_shift($header1);
                 $headerValue = implode(' ', $header1);
+
+                $parsedHeaders[$headerName] = $headerValue;
+
                 if (strtolower($headerName) == "cookie")
                 {
-                    $cookieArr = explode('=', $headerValue);
-                    $cookies[rawurldecode($cookieArr[0])] = rawurldecode($cookieArr[1]);
-                }
-                else
-                {
-                    $parsedHeaders[$headerName] = $headerValue;
+                    $cookieArr = explode(';', $headerValue);
+                    foreach ($cookieArr as $unparsedCookie)
+                    {
+                        $unparsedCookieArr = explode('=', $unparsedCookie);
+                        $cookieName = str_replace(" ", "", $unparsedCookieArr[0]);
+                        $cookieValue = $unparsedCookieArr[1];
+
+                        $cookies[rawurldecode($cookieName)] = rawurldecode($cookieValue);
+                    }
                 }
                 $requestDump .= $headerName . ": " . $headerValue . "\n";
             }
