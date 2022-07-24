@@ -322,9 +322,7 @@ class MenuBox extends ListBox
                 throw $e;
             }
             $this->zeroItem = $item;
-
-            if (!$this->closeMenu)
-                $this->zeroItem->__setattached($this, true);
+            $this->zeroItem->__setattached($this, $this->closeMenu);
         }
         return $this;
     }
