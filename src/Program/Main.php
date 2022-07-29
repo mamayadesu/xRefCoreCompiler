@@ -365,7 +365,7 @@ class Main
                 $fullPathInPhar = str_replace("\\", "/", $file->getPathName());
                 $pathInPhar = str_replace($ptp, "", $fullPathInPhar);
                 $sPathInPhar = explode('/', $pathInPhar);
-                if ($pathInPhar == "app.json" || $sPathInPhar[0] == "Program" || $sPathInPhar[0] == "api")
+                if ($pathInPhar == "app.json" || $sPathInPhar[0] == "Program" || $sPathInPhar[0] == "api_en" || $sPathInPhar[0] == "api_ru")
                 {
                     continue;
                 }
