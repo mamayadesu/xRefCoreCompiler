@@ -10,9 +10,7 @@ use Scheduler\NoAsyncTaskParameters;
 use Throwable;
 
 /**
- * HTTP-server
- *
- * WARNING!!! This package IS EXPERIMENTAL! Use this AT OWN RISK!
+ * Built-in, completely pure HTTP server. It can work both in synchronous and asynchronous mode. Request processing is entirely up to you.
  */
 
 final class Server
@@ -63,12 +61,12 @@ final class Server
 
     /**
      * Server constructor.
-     * @param string $addr HTTP-server IP-address
+     * @param string $address Listening IP-address
      * @param int $port Port
      */
-    public function __construct(string $addr, int $port = 8080)
+    public function __construct(string $address = "0.0.0.0", int $port = 8080)
     {
-        $this->address = $addr;
+        $this->address = $address;
         $this->port = $port;
         $this->On("start", function (Server $server) : void { });
         $this->On("shutdown", function (Server $server) : void { });
@@ -77,13 +75,13 @@ final class Server
     }
 
     /**
-     * Add new event
+     * Subscribe to event
      *
      * Supported events:
-     * * start - calls when server was started. Callback has argument `\HttpServer\Server`
-     * * shutdown - calls when server was shutdown. Callback has argument `\HttpServer\Server`
-     * * request - calls when request was received. Callback has arguments `\HttpServer\Request` and `\HttpServer\Response`
-     * * throwable - calls on uncaught exception while proceeding request. Callback has arguments `\HttpServer\Request`, `\HttpServer\Response` and `\Throwable`
+     * * start - triggers when server was started. Callback has argument `\HttpServer\Server`
+     * * shutdown - triggers when server was shutdown. Callback has argument `\HttpServer\Server`
+     * * request - triggers when request was received. Callback has arguments `\HttpServer\Request` and `\HttpServer\Response`
+     * * throwable - triggers on uncaught exception while proceeding request. Callback has arguments `\HttpServer\Request`, `\HttpServer\Response` and `\Throwable`
      *
      * @param string $eventName
      * @param callable $callback
@@ -122,6 +120,8 @@ final class Server
     /**
      * Run server
      *
+     * @param bool $async If you set TRUE, server will be started in background mode. It means this method won't block code execution after this method
+     * @return void
      * @throws ServerStartException
      */
     public function Start(bool $async = false) : void
@@ -137,12 +137,6 @@ final class Server
         }
 
         $this->registeredEvents["start"]($this);
-        $headerName = $headerValue = $firstHeader = $buffer = $buffer1 = $requestDump = $responseDump = "";
-        $headers = [];
-        $parsedHeaders = array();
-        $header1 = [];
-        $headersI = -1;
-        $firstHeader1 = [];
         if (DEV_MODE) echo "[HttpServer] Waiting for request\n";
         if ($async)
         {
@@ -171,11 +165,11 @@ final class Server
             $headers = [];
             $parsedHeaders = array();
             $header1 = [];
-            $headerName = "";
-            $headerValue = "";
+            $headerName = $headerValue = "";
             $headersI = -1;
             $name = stream_socket_get_name($connect, true);
-            if (explode(':', $name)[1] == null)
+            $remote_ip_port = explode(':', $name);
+            if (!isset($remote_ip_port[1]) || intval($remote_ip_port[1]) == 0)
             {
                 fclose($connect);
                 continue;
@@ -331,6 +325,8 @@ final class Server
      */
     public function Shutdown() : void
     {
+        if ($this->shutdownWasCalled)
+            return;
         $this->shutdownWasCalled = true;
         foreach ($this->responses as $response)
         {if($response instanceof Response)continue;

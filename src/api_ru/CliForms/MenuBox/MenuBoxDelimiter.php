@@ -5,12 +5,10 @@ namespace CliForms\MenuBox;
 use CliForms\ListBox\ListBoxDelimiter;
 
 /**
- * Using to delimit MenuBox items
+ * Используется для разделения элементов MenuBox
  */
 class MenuBoxDelimiter extends ListBoxDelimiter
 {
     public function __construct(string $name = "", string $hint = "")
-    {
-        parent::__construct($name, $hint);
-    }
+    {}
 }

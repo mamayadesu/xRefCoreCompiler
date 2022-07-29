@@ -25,7 +25,7 @@ use Data\String\ForegroundColors;
 use IO\Console;
 
 /**
- * Creates customized menu
+ * Creation of pseudo-GUI with elements such as buttons, radiobuttons, checkboxes and some others.
  */
 
 class MenuBox extends ListBox

@@ -10,7 +10,7 @@ use IO\FileDirectory;
 
 class Utils
 {
-    public static function Configure() : void
+    public static function Configure(string $lang) : void
     {
         $home = Application::GetHomeDirectory();
         if (IS_WINDOWS)
@@ -19,7 +19,7 @@ class Utils
             {
                 FileDirectory::Delete($home . "\\.xRefCoreCompiler\\Core");
             }
-            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/api", $home . "\\.xRefCoreCompiler\\Core");
+            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/api_" . $lang, $home . "\\.xRefCoreCompiler\\Core");
         }
         else
         {
@@ -35,7 +35,7 @@ class Utils
             }
             @mkdir("/usr/share/xRefCoreCompiler");
             @mkdir($share);
-            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/api", $share);
+            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/api_" . $lang, $share);
             FileDirectory::RecursiveChmod(755, $share . "/..");
         }
     }
@@ -89,7 +89,7 @@ class Utils
         $usage = ColoredString::Get("xrefcore-compiler", ForegroundColors::WHITE) . "\n    ";
         $usage .= ColoredString::Get("-h", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--help", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Displays this help text", ForegroundColors::PURPLE) . "\n    ";
         $usage .= ColoredString::Get("-v", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--version", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Check xRefCoreCompiler version", ForegroundColors::PURPLE) . "\n    ";
-        $usage .= ColoredString::Get("-c", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--configure", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Configure xRefCoreCompiler (use it when it's just installed or updated)", ForegroundColors::PURPLE) . "\n    ";
+        $usage .= ColoredString::Get("-c lang=en", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--configure lang=en", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Configure xRefCoreCompiler (use it when it's just installed or updated) with specified language. Available languages: en (English (default)), ru (Русский).", ForegroundColors::PURPLE) . "\n    ";
         $usage .= ColoredString::Get("-p", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--prepare-project", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Generates the main class and symlink in your PhpStorm project. Use it when project just created.", ForegroundColors::PURPLE) . "\n    ";
         $usage .= ColoredString::Get("-b", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--build", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Builds application", ForegroundColors::PURPLE);
         //$usage .= ColoredString::Get("-b", ForegroundColors::YELLOW) . " " . ColoredString::Get("OR", ForegroundColors::GRAY) . " " . ColoredString::Get("--build", ForegroundColors::YELLOW) . " " . ColoredString::Get(" - Builds application\n    ", ForegroundColors::PURPLE);

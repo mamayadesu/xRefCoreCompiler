@@ -138,7 +138,7 @@ abstract class Thread
     /**
      * Returns a port of parent thread
      *
-     * @return int PID of parent thread
+     * @return int Port of parent thread
      */
     final function GetParentThreadPort() : int
     {

@@ -22,7 +22,12 @@ class Main
         $pargs = Application::ParseArguments($args, "-");
         if (in_array("--configure", $args) || in_array("-c", $args))
         {
-            Utils::Configure();
+            $lang = "en";
+            if (in_array("lang=ru", $args))
+            {
+                $lang = "ru";
+            }
+            Utils::Configure($lang);
             exit;
         }
         if (in_array("--prepare-project", $args) || in_array("-p", $args))

@@ -24,13 +24,13 @@ use Data\String\ForegroundColors;
 use IO\Console;
 
 /**
- * Creates customized menu
+ * Создание псевдо-GUI с такими элементами как кнопки, радио-кнопки, чекбоксы и некоторые другие
  */
 
 class MenuBox extends ListBox
 {
     /**
-     * @var string This ID is using to find your MenuBox. Not for anything else.
+     * @var string ID нужен лишь для поиска вашего MenuBox и нигде более.
      */
     public string $Id = "";
 
@@ -45,30 +45,30 @@ class MenuBox extends ListBox
         $wrongItemTitleBackgroundColor = BackgroundColors::AUTO;
 
     /**
-     * @var Closure|null Selected item changed event handler. Function have to accept `Events\SelectedItemChangedEvent`
+     * @var Closure|null Обработчик события смены выбранного элемента меню. Callback должен принимать `Events\SelectedItemChangedEvent`
      */
     public ?Closure $SelectedItemChangedEvent = null;
 
     /**
-     * @var Closure|null Menu is opening event handler. Function have to accept `Events\MenuBoxOpenEvent`
+     * @var Closure|null Обработчик открытия меню. Callback должен принимать `Events\MenuBoxOpenEvent`
      */
     public ?Closure $OpenEvent = null;
 
     /**
-     * @var Closure|null Menu is closing event handler. Function have to accept `Events\MenuBoxCloseEvent`
+     * @var Closure|null Обработчик закрытия меню. Callback должен принимать `Events\MenuBoxCloseEvent`
      */
     public ?Closure $CloseEvent = null;
 
     /**
-     * @var Closure|null Key pressed event handler. Works only with MenuBoxTypes::KeyPressType. Function have to accept `Events\KeyPressEvent`
+     * @var Closure|null Обработчик нажатия клавиш в открытом MenuBox. Работает только с MenuBoxTypes::KeyPressType. Callback должен принимать `Events\KeyPressEvent`
      */
     public ?Closure $KeyPressEvent = null;
 
     /**
-     * MenuBox constructor.
+     * Конструктор MenuBox.
      *
-     * @param string $title Title of menu
-     * @param object $mythis These arguments are using to access to your class from callback functions
+     * @param string $title Название меню
+     * @param object $mythis В контексте данного объекта будут выполняться ваши callback-функции
      * @param MenuBoxTypes $menuBoxType
      * @throws InvalidMenuBoxTypeException
      */
@@ -76,23 +76,23 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * @return bool TRUE if current MenuBox is disposed
+     * @return bool TRUE, если данный MenuBox очищен
      */
     public function IsDisposed() : bool
     {}
 
     /**
-     * Disposes current MenuBox and makes unavailable for any actions
+     * Очищает данный MenuBox и делает недоступным для любых дальнейших действий с ним
      *
      * @return void
-     * @throws MenuBoxDisposedException MenuBox is already disposed
-     * @throws MenuBoxCannotBeDesposedException MenuBox is still opened
+     * @throws MenuBoxDisposedException MenuBox уже очищен
+     * @throws MenuBoxCannotBeDesposedException MenuBox всё ещё открыт
      */
     public function Dispose() : void
     {}
 
     /**
-     * Finds and returns MenuBox with the same ID. Returns NULL if MenuBox not found.
+     * Ищет и возвращает MenuBox с указанным ID. Возвращает NULL, если MenuBox не найден
      *
      * @param string $id
      * @return MenuBox|null
@@ -101,14 +101,14 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * @return string Last pressed key on keyboard
+     * @return string Последняя нажатая клавиша
      * @throws MenuBoxDisposedException
      */
     public function GetLastPressedKey() : string
     {}
 
     /**
-     * Adds item to collection
+     * Добавляет элемент в список
      *
      * @param MenuBoxControl $item
      * @return MenuBox
@@ -120,7 +120,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Sets zero item to your menu
+     * Устанавливает нулевой элемент списка
      *
      * @param MenuBoxItem|null $item
      * @return MenuBox
@@ -131,7 +131,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Sets selected item number. If item with specified number doesn't exist, does nothing.
+     * Устанавливает текущий выбранный элемент по его номеру. Если элемента с таким номером в контейнере нет - ничего не делает
      *
      * @param int $itemNumber
      * @return void
@@ -141,14 +141,14 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * @return int|null Selected item number. If for some reason the current element is not selected, the method will automatically select the closest available one. If there are no such elements, it will return NULL
+     * @return int|null Номер выбранного элемента. Если по какой-то причине текущий элемент не выбран, метод автоматически выберет ближайший из доступных. Если таких элементов нет, он вернёт NULL
      * @throws MenuBoxDisposedException
      */
     public function GetSelectedItemNumber() : ?int
     {}
 
     /**
-     * Returns current selected item. If for some reason the current element is not selected, the method will automatically select the closest available one. If there are no such elements, it will return NULL
+     * Возвращает текущий выбранный элемент. Если по какой-то причине текущий элемент не выбран, метод автоматически выберет ближайший из доступных. Если таких элементов нет, он вернет NULL
      *
      * @return MenuBoxItem|null
      * @throws MenuBoxDisposedException
@@ -157,7 +157,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Returns sorted item number by item. Returns -1 if MenuBox doesn't contain this item.
+     * Возвращает отсортированный номер элемента по указанному элементу. Возвращает -1, если MenuBox не содержит данный элемент.
      *
      * @param MenuBoxControl $item
      * @return int
@@ -167,7 +167,8 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Closes menu
+     * Закрывает меню
+     *
      * @throws MenuIsNotOpenedException
      * @throws MenuBoxDisposedException
      */
@@ -175,7 +176,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Returns TRUE if menu closed
+     * Возвращает TRUE, если меню закрыто
      *
      * @return bool
      * @throws MenuBoxDisposedException
@@ -184,23 +185,23 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * @param bool $includeZeroItem Includes zero item. Attention! If you exclude zero item, the first index of array will be "1", not "0"
-     * @return MenuBoxControl[] Numbered items. Element with 0 index is zero item (or null)
+     * @param bool $includeZeroItem Включает нулевой элемент. Внимание! Если вы исключите нулевой элемент, первый индекс массива будет «1», а не «0».
+     * @return MenuBoxControl[] Нумерованные элементы. Элемент с индексом 0 является нулевым элементом (или NULL)
      * @throws MenuBoxDisposedException
      */
     public function GetNumberedItems(bool $includeZeroItem = true) : array
     {}
 
     /**
-     * @param bool $includeZeroItem Includes zero item. Attention! If you exclude zero item, the first index of array will be "1", not "0"
-     * @return MenuBoxControl[] Sorted and numbered items. Element with 0 index is still zero item (or null). Please note that the indexes of this method are different from those of the GetNumberedItems method.
+     * @param bool $includeZeroItem Включает нулевой элемент. Внимание! Если вы исключите нулевой элемент, первый индекс массива будет «1», а не «0».
+     * @return MenuBoxControl[] Отсортированные и пронумерованные предметы. Элемент с индексом 0 по-прежнему является нулевым элементом (или NULL). Обратите внимание, что индексы этого метода отличаются от индексов метода GetNumberedItems.
      * @throws MenuBoxDisposedException
      */
     public function GetSortedItems(bool $includeZeroItem = true) : array
     {}
 
     /**
-     * Finds item by its ID and returns it. Return NULL if item with specified ID was not found.
+     * Находит элемент контейнера по его ID и возвращает его. Возвращает NULL, если элемент с указанным идентификатором не найден в этом контейнере.
      *
      * @param string $id
      * @return MenuBoxControl|null
@@ -210,7 +211,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Menu will be cleared after every render. Always TRUE if type of MenuBox is KeyPressType
+     * Меню будет очищаться после каждого рендера. Всегда TRUE, если тип MenuBox — KeyPressType
      *
      * @param bool $clear
      * @return MenuBox
@@ -220,7 +221,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Returns your object which you passed in constructor
+     * Возвращает ваш $this, который вы передали в конструкторе
      *
      * @return object|null
      * @throws MenuBoxDisposedException
@@ -229,7 +230,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Prints callback output of selected and called MenuBoxItem. It's recommended to use instead of Console::Write, because this method saves output after selecting another item.
+     * Выводит текст в шапку MenuBox. Рекомендуется использовать этот метод вместо Console::Write, так как этот метод сохраняет вывод после выбора другого элемента.
      *
      * @param string $text
      * @param ForegroundColors $foregroundColor
@@ -240,7 +241,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Prints callback output of selected and called MenuBoxItem and moves caret to new line. It's recommended to use instead of Console::WriteLine, because this method saves output after selecting another item.
+     * Выводит текст в шапку MenuBox и помещает каретку на новую строку. Рекомендуется использовать этот метод вместо Console::WriteLine, так как этот метод сохраняет вывод после выбора другого элемента.
      *
      * @param string $text
      * @param ForegroundColors $foregroundColor
@@ -251,21 +252,23 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * @return void Clears result output
+     * Удаляет весь текст, ранее напечатанный через `ResultOutput` и `ResultOutputLine`
+     *
+     * @return void
      * @throws MenuBoxDisposedException
      */
     public function ClearResultOutput() : void
     {}
 
     /**
-     * @return string Result output
+     * @return string Текст, ранее напечатанный через `ResultOutput` и `ResultOutputLine`
      * @throws MenuBoxDisposedException
      */
     public function GetResultOutput() : string
     {}
 
     /**
-     * Sets title for read line input
+     * Устанавливает заголовок для поля выбора элемента
      *
      * @param string $inputTitle
      * @return MenuBox
@@ -275,7 +278,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Sets style for read line title
+     * Устанавливает стиль заголовка для поля выбора элемента
      *
      * @param ForegroundColors $foregroundColor
      * @param BackgroundColors $backgroundColor
@@ -286,7 +289,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Sets style for delimiter of read line
+     * Устанавливает стиль разделителя между заголовком для поля выбора элемента и самим полем
      *
      * @param ForegroundColors $foregroundColor
      * @param BackgroundColors $backgroundColor
@@ -297,7 +300,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Sets description for your menu, which will be displayed between title and items
+     * Устанавливает описание для вашего меню, которое будет отображаться между заголовком и элементами
      *
      * @param string $description
      * @return MenuBox
@@ -307,7 +310,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Sets style for description
+     * Устанавливает стиль для описания
      *
      * @param string $foregroundColor
      * @param string $backgroundColor
@@ -318,7 +321,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Sets title which will be displayed if user selects a non-exists item
+     * Устанавливает заголовок, который будет отображаться, если пользователь выберет несуществующий элемент
      *
      * @param string $title
      * @return MenuBox
@@ -328,7 +331,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Sets style for a non-exists item title
+     * Устанавливает стиль заголовка для ошибки о несуществующем элементе
      *
      * @param string $foregroundColor
      * @param string $backgroundColor
@@ -339,7 +342,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Renders menu again
+     * Повторно рендерит меню
      *
      * @return void
      * @throws MenuBoxDisposedException
@@ -348,7 +351,7 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Builds and renders your menu and runs read-line to select menu item
+     * Генерирует и открывает меню
      * @throws NoItemsAddedException
      * @throws MenuAlreadyOpenedException
      * @throws ItemIsUsingException
