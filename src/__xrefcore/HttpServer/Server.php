@@ -231,7 +231,7 @@ final class Server
                     {
                         $unparsedCookieArr = explode('=', $unparsedCookie);
                         $cookieName = str_replace(" ", "", $unparsedCookieArr[0]);
-                        $cookieValue = $unparsedCookieArr[1];
+                        $cookieValue = $unparsedCookieArr[1] ?? null;
 
                         $cookies[rawurldecode($cookieName)] = rawurldecode($cookieValue);
                     }
