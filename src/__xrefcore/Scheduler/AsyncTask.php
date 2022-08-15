@@ -151,7 +151,10 @@ final class AsyncTask
         {
             $this->NextExecution = 0;
         }
-        $this->ExecutedTimes++;
+        if ($this->ExecutedTimes < PHP_INT_MAX)
+        {
+            $this->ExecutedTimes++;
+        }
     }
 
     /**

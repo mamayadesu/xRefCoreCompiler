@@ -4,10 +4,9 @@ namespace CliForms\MenuBox;
 
 use CliForms\Common\ControlItem;
 use CliForms\Exceptions\InvalidArgumentsPassed;
-use CliForms\Exceptions\InvalidMenuBoxTypeException;
 use CliForms\Exceptions\ItemIsUsingException;
 use CliForms\Exceptions\MenuAlreadyOpenedException;
-use CliForms\Exceptions\MenuBoxCannotBeDesposedException;
+use CliForms\Exceptions\MenuBoxCannotBeDisposedException;
 use CliForms\Exceptions\MenuBoxDisposedException;
 use CliForms\Exceptions\MenuIsNotOpenedException;
 use CliForms\Exceptions\NoItemsAddedException;
@@ -34,15 +33,9 @@ class MenuBox extends ListBox
      */
     public string $Id = "";
 
-    protected string $titleForegroundColor = ForegroundColors::CYAN,
-        $inputTitleForegroundColor = ForegroundColors::GRAY,
-        $inputTitleDelimiterForegroundColor = ForegroundColors::DARK_GRAY,
-        $wrongItemTitleForegroundColor = ForegroundColors::RED;
+    protected string $titleForegroundColor = ForegroundColors::CYAN;
 
-    protected string $titleBackgroundColor = BackgroundColors::AUTO,
-        $inputTitleBackgroundColor = BackgroundColors::AUTO,
-        $inputTitleDelimiterBackgroundColor = BackgroundColors::AUTO,
-        $wrongItemTitleBackgroundColor = BackgroundColors::AUTO;
+    protected string $titleBackgroundColor = BackgroundColors::AUTO;
 
     /**
      * @var Closure|null Обработчик события смены выбранного элемента меню. Callback должен принимать `Events\SelectedItemChangedEvent`
@@ -60,19 +53,62 @@ class MenuBox extends ListBox
     public ?Closure $CloseEvent = null;
 
     /**
-     * @var Closure|null Обработчик нажатия клавиш в открытом MenuBox. Работает только с MenuBoxTypes::KeyPressType. Callback должен принимать `Events\KeyPressEvent`
+     * @var Closure|null Обработчик нажатия клавиш в открытом MenuBox. Callback должен принимать `Events\KeyPressEvent`
      */
     public ?Closure $KeyPressEvent = null;
+    
+    /**
+     * @var Closure|null Обработчик события изменения прокрутки меню. Callback должен принимать `Events\OffsetChangedEvent`
+     */
+    public ?Closure $OffsetChangedEvent = null;
 
     /**
      * Конструктор MenuBox.
      *
      * @param string $title Название меню
      * @param object $mythis В контексте данного объекта будут выполняться ваши callback-функции
-     * @param MenuBoxTypes $menuBoxType
-     * @throws InvalidMenuBoxTypeException
      */
-    public function __construct(string $title, object $mythis, int $menuBoxType = MenuBoxTypes::KeyPressType)
+    public function __construct(string $title, object $mythis)
+    {}
+    
+    /**
+     * Возвращает максимальное количество элементов, отображаемых в контейнере меню. Если задать новое значение, оно будет изменено
+     *
+     * @param int|null $newValue
+     * @return int
+     * @throws MenuBoxDisposedException
+     */
+    public function ItemsContainerHeight(?int $newValue = null) : int
+    {}
+
+    /**
+     * Возвращает количество вниз прокрученных элементов. Если задать новое значение, оно будет изменено
+     *
+     * @param int|null $newValue
+     * @return int
+     * @throws MenuBoxDisposedException
+     */
+    public function ScrollOffset(?int $newValue = null) : int
+    {}
+
+    /**
+     * Возвращает символ, указывающий, что в контейнере меню есть прокрученные элементы выше. Если задать новое значение, оно будет изменено
+     *
+     * @param string|null $newValue
+     * @return string
+     * @throws MenuBoxDisposedException
+     */
+    public function ScrollUpCharacter(?string $newValue = null) : string
+    {}
+
+    /**
+     * Возвращает символ, указывающий, что внизу контейнера меню есть ещё элементы. Если задать новое значение, оно будет изменено
+     *
+     * @param string|null $newValue
+     * @return string
+     * @throws MenuBoxDisposedException
+     */
+    public function ScrollDownCharacter(?string $newValue = null) : string
     {}
 
     /**
@@ -86,7 +122,7 @@ class MenuBox extends ListBox
      *
      * @return void
      * @throws MenuBoxDisposedException MenuBox уже очищен
-     * @throws MenuBoxCannotBeDesposedException MenuBox всё ещё открыт
+     * @throws MenuBoxCannotBeDisposedException MenuBox всё ещё открыт
      */
     public function Dispose() : void
     {}
@@ -211,16 +247,6 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Меню будет очищаться после каждого рендера. Всегда TRUE, если тип MenuBox — KeyPressType
-     *
-     * @param bool $clear
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetClearWindowOnRender(bool $clear = true) : MenuBox
-    {}
-
-    /**
      * Возвращает ваш $this, который вы передали в конструкторе
      *
      * @return object|null
@@ -268,38 +294,6 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Устанавливает заголовок для поля выбора элемента
-     *
-     * @param string $inputTitle
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetInputTitle(string $inputTitle) : MenuBox
-    {}
-
-    /**
-     * Устанавливает стиль заголовка для поля выбора элемента
-     *
-     * @param ForegroundColors $foregroundColor
-     * @param BackgroundColors $backgroundColor
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetInputTitleStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
-    {}
-
-    /**
-     * Устанавливает стиль разделителя между заголовком для поля выбора элемента и самим полем
-     *
-     * @param ForegroundColors $foregroundColor
-     * @param BackgroundColors $backgroundColor
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetInputTitleDelimiterStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
-    {}
-
-    /**
      * Устанавливает описание для вашего меню, которое будет отображаться между заголовком и элементами
      *
      * @param string $description
@@ -318,27 +312,6 @@ class MenuBox extends ListBox
      * @throws MenuBoxDisposedException
      */
     public function SetDescriptionStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
-    {}
-
-    /**
-     * Устанавливает заголовок, который будет отображаться, если пользователь выберет несуществующий элемент
-     *
-     * @param string $title
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetWrongItemTitle(string $title) : MenuBox
-    {}
-
-    /**
-     * Устанавливает стиль заголовка для ошибки о несуществующем элементе
-     *
-     * @param string $foregroundColor
-     * @param string $backgroundColor
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetWrongItemTitleStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {}
 
     /**

@@ -5,10 +5,9 @@ namespace CliForms\MenuBox;
 
 use CliForms\Common\ControlItem;
 use CliForms\Exceptions\InvalidArgumentsPassed;
-use CliForms\Exceptions\InvalidMenuBoxTypeException;
 use CliForms\Exceptions\ItemIsUsingException;
 use CliForms\Exceptions\MenuAlreadyOpenedException;
-use CliForms\Exceptions\MenuBoxCannotBeDesposedException;
+use CliForms\Exceptions\MenuBoxCannotBeDisposedException;
 use CliForms\Exceptions\MenuBoxDisposedException;
 use CliForms\Exceptions\MenuIsNotOpenedException;
 use CliForms\Exceptions\NoItemsAddedException;
@@ -17,6 +16,7 @@ use CliForms\Common\RowHeaderType;
 use CliForms\MenuBox\Events\KeyPressEvent;
 use CliForms\MenuBox\Events\MenuBoxCloseEvent;
 use CliForms\MenuBox\Events\MenuBoxOpenEvent;
+use CliForms\MenuBox\Events\OffsetChangedEvent;
 use CliForms\MenuBox\Events\SelectedItemChangedEvent;
 use \Closure;
 use Data\String\BackgroundColors;
@@ -43,13 +43,11 @@ class MenuBox extends ListBox
 
     protected string $titleForegroundColor = ForegroundColors::CYAN,
         $inputTitleForegroundColor = ForegroundColors::GRAY,
-        $inputTitleDelimiterForegroundColor = ForegroundColors::DARK_GRAY,
-        $wrongItemTitleForegroundColor = ForegroundColors::RED;
+        $inputTitleDelimiterForegroundColor = ForegroundColors::DARK_GRAY;
 
     protected string $titleBackgroundColor = BackgroundColors::AUTO,
         $inputTitleBackgroundColor = BackgroundColors::AUTO,
-        $inputTitleDelimiterBackgroundColor = BackgroundColors::AUTO,
-        $wrongItemTitleBackgroundColor = BackgroundColors::AUTO;
+        $inputTitleDelimiterBackgroundColor = BackgroundColors::AUTO;
 
     /**
      * @ignore
@@ -64,11 +62,6 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private int $menuBoxType;
-
-    /**
-     * @ignore
-     */
     private string $descriptionBackgroundColor = BackgroundColors::AUTO;
 
     /**
@@ -79,9 +72,9 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private string $inputTitle = "Input number of item which you want",
-        $wrongItemTitle = "Wrong item selected. Please select the correct item.",
-        $description = "";
+    private string $description = "",
+        $scrollUpCharacter = "↑",
+        $scrollDownCharacter = "↓";
 
     /**
      * @ignore
@@ -93,7 +86,7 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private bool $DISPOSED = false, $clearOnRender = false, $closeMenu = true, $preventCheckingItems = false, $refreshCalled = false, $wrongItemSelected = false, $callbackExecuting = false;
+    private bool $DISPOSED = false, $closeMenu = true, $preventOffsetChangedEvent = false, $preventSelectedChangedEvent = false, $superPreventRefresh = false, $preventRefresh = false, $preventCheckingItems = false, $refreshCalled = false, $callbackExecuting = false;
 
     /**
      * @ignore
@@ -103,7 +96,7 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private ?int $SelectedItemNumber = 1;
+    private ?int $SelectedItemNumber = 1, $itemsContainerHeight = 0, $scrollOffset = 0;
 
     /**
      * @var Closure|null Selected item changed event handler. Function have to accept `Events\SelectedItemChangedEvent`
@@ -121,34 +114,158 @@ class MenuBox extends ListBox
     public ?Closure $CloseEvent = null;
 
     /**
-     * @var Closure|null Key pressed event handler. Works only with MenuBoxTypes::KeyPressType. Function have to accept `Events\KeyPressEvent`
+     * @var Closure|null Key pressed event handler. Function have to accept `Events\KeyPressEvent`
      */
     public ?Closure $KeyPressEvent = null;
+
+    /**
+     * @var Closure|null Offset changed event handler. Function have to accept `Events\OffsetChangedEvent`
+     */
+    public ?Closure $OffsetChangedEvent = null;
 
     /**
      * MenuBox constructor.
      *
      * @param string $title Title of menu
      * @param object $mythis These arguments are using to access to your class from callback functions
-     * @param MenuBoxTypes $menuBoxType
-     * @throws InvalidMenuBoxTypeException
      */
-    public function __construct(string $title, object $mythis, int $menuBoxType = MenuBoxTypes::KeyPressType)
+    public function __construct(string $title, object $mythis)
     {
-        if (!MenuBoxTypes::HasItem($menuBoxType))
+        parent::__construct($title);
+        $this->mythis = $mythis;
+        self::$MenuBoxes[] = $this;
+    }
+
+    /**
+     * Returns a count of items which can be rendered. If you pass new value, it will be changed
+     *
+     * @param int|null $newValue
+     * @return int
+     * @throws MenuBoxDisposedException
+     */
+    public function ItemsContainerHeight(?int $newValue = null) : int
+    {
+        if ($this->DISPOSED)
         {
-            $e = new InvalidMenuBoxTypeException("Invalid menu box type given");
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
             $e->__xrefcoreexception = true;
             throw $e;
         }
-        parent::__construct($title);
-        $this->mythis = $mythis;
-        $this->menuBoxType = $menuBoxType;
-        if ($menuBoxType == MenuBoxTypes::KeyPressType)
+        if ($newValue === null)
         {
-            $this->clearOnRender = true;
+            return $this->itemsContainerHeight;
         }
-        self::$MenuBoxes[] = $this;
+
+        if ($newValue < 0)
+        {
+            $newValue = 1;
+        }
+
+        $this->itemsContainerHeight = $newValue;
+        $this->Refresh();
+        return $newValue;
+    }
+
+    /**
+     * Returns a scroll offset from top. If you pass new value, it will be changed
+     *
+     * @param int|null $newValue
+     * @return int
+     * @throws MenuBoxDisposedException
+     */
+    public function ScrollOffset(?int $newValue = null) : int
+    {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        if ($newValue === null)
+        {
+            return $this->scrollOffset;
+        }
+
+        if ($newValue < 0)
+        {
+            $newValue = 0;
+        }
+
+        $maxValue = $this->getOffsetMaxValue();
+        $oldValue = $this->scrollOffset;
+        if ($newValue > $maxValue)
+        {
+            $newValue = $maxValue;
+        }
+
+        $callEvent = ($this->scrollOffset != $newValue);
+
+        $this->scrollOffset = $newValue;
+
+        if ($callEvent && $this->OffsetChangedEvent !== null && !$this->preventOffsetChangedEvent)
+        {
+            $this->preventOffsetChangedEvent = true;
+            $event = new OffsetChangedEvent();
+            $event->MenuBox = $this;
+            $event->PreviousOffset = $oldValue;
+            $event->Offset = $newValue;
+            $this->OffsetChangedEvent->call($this->mythis, $event);
+            $this->preventOffsetChangedEvent = false;
+        }
+
+        if (!$this->callbackExecuting)
+            $this->Refresh();
+        return $newValue;
+    }
+
+    /**
+     * Returns a character which displays in top of items container if there are items above. If you pass new value, it will be changed
+     *
+     * @param string|null $newValue
+     * @return string
+     * @throws MenuBoxDisposedException
+     */
+    public function ScrollUpCharacter(?string $newValue = null) : string
+    {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        if ($newValue === null)
+        {
+            return $this->scrollUpCharacter;
+        }
+
+        $this->scrollUpCharacter = $newValue;
+        $this->Refresh();
+        return $newValue;
+    }
+
+    /**
+     * Returns a character which displays in bottom of items container if there are items below. If you pass new value, it will be changed
+     *
+     * @param string|null $newValue
+     * @return string
+     * @throws MenuBoxDisposedException
+     */
+    public function ScrollDownCharacter(?string $newValue = null) : string
+    {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        if ($newValue === null)
+        {
+            return $this->scrollDownCharacter;
+        }
+
+        $this->scrollDownCharacter = $newValue;
+        $this->Refresh();
+        return $newValue;
     }
 
     /**
@@ -164,7 +281,7 @@ class MenuBox extends ListBox
      *
      * @return void
      * @throws MenuBoxDisposedException MenuBox is already disposed
-     * @throws MenuBoxCannotBeDesposedException MenuBox is still opened
+     * @throws MenuBoxCannotBeDisposedException MenuBox is still opened
      */
     public function Dispose() : void
     {
@@ -176,7 +293,7 @@ class MenuBox extends ListBox
         }
         if (!$this->closeMenu)
         {
-            $e = new MenuBoxCannotBeDesposedException("MenuBox cannot be disposed right now because it is still opened.");
+            $e = new MenuBoxCannotBeDisposedException("MenuBox cannot be disposed right now because it is still opened.");
             $e->__xrefcoreexception = true;
             throw $e;
         }
@@ -350,13 +467,15 @@ class MenuBox extends ListBox
         if ($itemNumber === null || ($this->getnextalloweditemnumber(true) === null && $this->getnextalloweditemnumber(false) === null))
         {
             $this->SelectedItemNumber = null;
-            if ($this->SelectedItemChangedEvent != null)
+            if ($this->SelectedItemChangedEvent != null && !$this->preventSelectedChangedEvent)
             {
+                $this->preventSelectedChangedEvent = true;
                 $event = new SelectedItemChangedEvent();
                 $event->MenuBox = $this;
                 $event->Item = null;
                 $event->ItemNumber = $itemNumber;
                 $this->SelectedItemChangedEvent->call($this->mythis, $event);
+                $this->preventSelectedChangedEvent = false;
             }
             return;
         }
@@ -376,6 +495,52 @@ class MenuBox extends ListBox
             $event->ItemNumber = $itemNumber;
             $this->SelectedItemChangedEvent->call($this->mythis, $event);
         }
+
+        $this->preventRefresh = true;
+        if ($this->ItemsContainerHeight() == 0)
+        {
+            // Do nothing?
+        }
+
+        // if item is above
+        else if ($this->SelectedItemNumber <= $this->ScrollOffset() && $this->SelectedItemNumber != 0)
+        {
+            $this->ScrollOffset($this->SelectedItemNumber - 1);
+        }
+
+        // if item is below
+        else if ($this->SelectedItemNumber == 0 || $this->SelectedItemNumber > $this->ScrollOffset() + $this->ItemsContainerHeight())
+        {
+            if ($this->SelectedItemNumber == 0)
+            {
+                $this->ScrollOffset($this->getOffsetMaxValue());
+            }
+            else
+            {
+                $hiddenItems = 0;
+                $j = $this->SelectedItemNumber + 1;
+                for ($i = $this->SelectedItemNumber; $i >= $this->SelectedItemNumber - $this->ItemsContainerHeight(); $i--)
+                {
+                    $j--;
+                    if ($i <= 0 || $j <= 0)
+                    {
+                        break;
+                    }
+                    if (!$items[$j]->Visible())
+                    {
+                        $hiddenItems++;
+                        $i++;
+                    }
+                }
+                if ($this->SelectedItemNumber > $this->ScrollOffset() + $this->ItemsContainerHeight() + $hiddenItems)
+                {
+                    $difference = $this->SelectedItemNumber - $this->ItemsContainerHeight() - $hiddenItems;
+                    $this->ScrollOffset($difference);
+                }
+            }
+        }
+        $this->preventRefresh = false;
+        $this->Refresh();
     }
 
     /**
@@ -443,6 +608,31 @@ class MenuBox extends ListBox
                 return $key;
         }
         return -1;
+    }
+
+    /**
+     * @ignore
+     */
+    private function getOffsetMaxValue() : int
+    {
+        $items = $this->GetSortedItems(false);
+        $count = count($items);
+        $hiddenItems = 0;
+        $j = $count + 1;
+        for ($i = $count; $i >= $count - $this->ItemsContainerHeight(); $i--)
+        {
+            $j--;
+            if ($i <= 0 || $j <= 0)
+            {
+                break;
+            }
+            if (!$items[$j]->Visible())
+            {
+                $hiddenItems++;
+                $i++;
+            }
+        }
+        return max($count - $hiddenItems - $this->itemsContainerHeight, 0);
     }
 
     /**
@@ -668,29 +858,6 @@ class MenuBox extends ListBox
     }
 
     /**
-     * Menu will be cleared after every render. Always TRUE if type of MenuBox is KeyPressType
-     *
-     * @param bool $clear
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetClearWindowOnRender(bool $clear = true) : MenuBox
-    {
-        if ($this->DISPOSED)
-        {
-            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        if ($this->menuBoxType == MenuBoxTypes::KeyPressType)
-        {
-            return $this;
-        }
-        $this->clearOnRender = $clear;
-        return $this;
-    }
-
-    /**
      * Returns your object which you passed in constructor
      *
      * @return object|null
@@ -776,73 +943,6 @@ class MenuBox extends ListBox
     }
 
     /**
-     * Sets title for read line input
-     *
-     * @param string $inputTitle
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetInputTitle(string $inputTitle) : MenuBox
-    {
-        if ($this->DISPOSED)
-        {
-            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        $this->inputTitle = $inputTitle;
-        return $this;
-    }
-
-    /**
-     * Sets style for read line title
-     *
-     * @param ForegroundColors $foregroundColor
-     * @param BackgroundColors $backgroundColor
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetInputTitleStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
-    {
-        if ($this->DISPOSED)
-        {
-            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        $this->inputTitleForegroundColor = $foregroundColor;
-        if ($backgroundColor != BackgroundColors::AUTO)
-        {
-            $this->inputTitleBackgroundColor = $backgroundColor;
-        }
-        return $this;
-    }
-
-    /**
-     * Sets style for delimiter of read line
-     *
-     * @param ForegroundColors $foregroundColor
-     * @param BackgroundColors $backgroundColor
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetInputTitleDelimiterStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
-    {
-        if ($this->DISPOSED)
-        {
-            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        $this->inputTitleDelimiterForegroundColor = $foregroundColor;
-        if ($backgroundColor != BackgroundColors::AUTO)
-        {
-            $this->inputTitleDelimiterBackgroundColor = $backgroundColor;
-        }
-        return $this;
-    }
-
-    /**
      * Sets description for your menu, which will be displayed between title and items
      *
      * @param string $description
@@ -886,49 +986,6 @@ class MenuBox extends ListBox
     }
 
     /**
-     * Sets title which will be displayed if user selects a non-exists item
-     *
-     * @param string $title
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetWrongItemTitle(string $title) : MenuBox
-    {
-        if ($this->DISPOSED)
-        {
-            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        $this->wrongItemTitle = $title;
-        return $this;
-    }
-
-    /**
-     * Sets style for a non-exists item title
-     *
-     * @param string $foregroundColor
-     * @param string $backgroundColor
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetWrongItemTitleStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
-    {
-        if ($this->DISPOSED)
-        {
-            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        $this->wrongItemTitleForegroundColor = $foregroundColor;
-        if ($backgroundColor != BackgroundColors::AUTO)
-        {
-            $this->wrongItemTitleBackgroundColor = $backgroundColor;
-        }
-        return $this;
-    }
-
-    /**
      * @ignore
      */
     private function formatItem(MenuBoxItem $item, int $k, int $a) : string
@@ -965,7 +1022,7 @@ class MenuBox extends ListBox
                 break;
         }
 
-        $selected = $this->GetSelectedItem() !== null && $this->SelectedItemNumber == $a && $this->menuBoxType == MenuBoxTypes::KeyPressType;
+        $selected = $this->GetSelectedItem() !== null && $this->SelectedItemNumber == $a;
 
         $headerFg = $item->HeaderForegroundColor;
         $headerBg = $item->HeaderBackgroundColor;
@@ -1001,7 +1058,7 @@ class MenuBox extends ListBox
         }
         $header = ColoredString::Get($header, $headerFg, $headerBg);
         $header .= ColoredString::Get($this->rowHeaderItemDelimiter, $delimiterFg, $delimiterBg);
-        if (($this->menuBoxType == MenuBoxTypes::KeyPressType && $this->rowsHeaderType == RowHeaderType::NUMERIC && $a == 0) || $item instanceof Checkbox)
+        if (($this->rowsHeaderType == RowHeaderType::NUMERIC && $a == 0) || $item instanceof Checkbox)
             $header = "";
         $itemName = $item->Render($selected);
         if ($selected)
@@ -1011,36 +1068,127 @@ class MenuBox extends ListBox
 
     /**
      * @ignore
+     * @param array<MenuBoxControl> $items
+     * @return array<MenuBoxControl>
+     */
+    private function excludeInvisibleItems(array $items) : array
+    {
+        $newArray = [];
+        foreach ($items as $item)
+        {
+            if ($item->Visible())
+            {
+                $newArray[] = $item;
+            }
+        }
+        return $newArray;
+    }
+
+    /**
+     * @ignore
      */
     protected function _renderBody(string &$output): void
     {
+        $output .= $this->ScrollOffset() > 0 ? $this->ScrollUpCharacter() . "\n" : "\n";
         $k = 1;
         $a = 0;
         $itemName = "";
         $header = "";
-        foreach ($this->GetSortedItems(false) as $item)
+        $renderedItems = 0;
+        $scrollDownCharacterRendered = false;
+        $allItems = $this->GetSortedItems();
+        foreach ($allItems as $key => $item)
         {if (!$item instanceof MenuBoxControl) continue;
-            $a++;
-            if (!$item->Visible())
+            if ($key == 0)
                 continue;
+            $a++;
+            if ($a <= $this->ScrollOffset())
+            {
+                if ($item->Visible() && !$item instanceof MenuBoxDelimiter && !$item instanceof Label && $item instanceof MenuBoxItem)
+                {
+                    $k++;
+                }
+
+                continue;
+            }
+            if ($renderedItems >= $this->ItemsContainerHeight() && $this->ItemsContainerHeight() != 0 && $this->SelectedItemNumber != 0)
+            {
+                // Checking are there not hidden elements below
+                $startFrom = $this->ScrollOffset() + 1;
+                $has = false;
+                $j = $startFrom - 1;
+                $b = 0;
+                for ($i = $startFrom; $i < count($allItems); $i++)
+                {
+                    if ($b == $this->ItemsContainerHeight())
+                    {
+                        break;
+                    }
+                    $j++;
+                    if (!isset($allItems[$j]))
+                    {
+                        break;
+                    }
+                    $startFrom++;
+                    if (!$allItems[$j]->Visible())
+                    {
+                        $i--;
+                        continue;
+                    }
+                    $b++;
+                }
+                for ($i = $startFrom; $i < count($allItems); $i++)
+                {
+                    if (!isset($allItems[$i]))
+                    {
+                        break;
+                    }
+
+                    if ($allItems[$i]->Visible())
+                    {
+                        $has = true;
+                        break;
+                    }
+                }
+                if (!$has)
+                {
+                    break;
+                }
+                $output .= $this->ScrollDownCharacter() . "\n";
+                $scrollDownCharacterRendered = true;
+                break;
+            }
+            if (!$item->Visible())
+            {
+                continue;
+            }
 
             $itemName = $item->Render();
 
             if ($item instanceof MenuBoxDelimiter || $item instanceof Label)
             {
                 $output .= $itemName . "\n";
+                $renderedItems++;
                 continue;
             }
 
-            if ($item instanceof MenuBoxItem) $output .= $this->formatItem($item, $k, $a);
+            if ($item instanceof MenuBoxItem)
+            {
+                $output .= $this->formatItem($item, $k, $a);
+                $renderedItems++;
+            }
             $k++;
+        }
+
+        if (!$scrollDownCharacterRendered)
+        {
+            $output .= "\n";
         }
 
         if ($this->zeroItem == null)
         {
             return;
         }
-        $output .= "\n";
 
         $output .= $this->formatItem($this->zeroItem, 0, 0);
     }
@@ -1070,23 +1218,26 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
+        if ($this->superPreventRefresh)
+        {
+            return;
+        }
+        if ($this->preventRefresh)
+        {
+            $this->preventRefresh = false;
+            return;
+        }
         $this->__checkitems();
         if ($this->closeMenu || $this->callbackExecuting)
             return;
 
         $output = $this->resultOutput;
-        $output .= ($this->wrongItemSelected ? ColoredString::Get($this->wrongItemTitle, $this->wrongItemTitleForegroundColor, $this->wrongItemTitleBackgroundColor) : "") . "\n";
         $this->_renderTitle($output);
         if ($this->description != "")
         {
             $output .= ColoredString::Get($this->description, $this->descriptionForegroundColor, $this->descriptionBackgroundColor) . "\n";
         }
         $this->_renderBody($output);
-        if ($this->menuBoxType == MenuBoxTypes::InputItemNumberType)
-        {
-            $output .= ColoredString::Get($this->inputTitle, $this->inputTitleForegroundColor, $this->inputTitleBackgroundColor);
-            $output .= ColoredString::Get(":", $this->inputTitleDelimiterForegroundColor, $this->inputTitleDelimiterBackgroundColor) . " ";
-        }
         Console::ClearWindow($output);
         $this->refreshCalled = true;
     }
@@ -1191,7 +1342,7 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
-        if (count($this->items) == 0)
+        if (count($this->items) == 0 && $this->zeroItem === null)
         {
             $e = new NoItemsAddedException("No items added to items collection. Nothing to render.");
             $e->__xrefcoreexception = true;
@@ -1265,15 +1416,9 @@ class MenuBox extends ListBox
                 $output .= ColoredString::Get($this->description, $this->descriptionForegroundColor, $this->descriptionBackgroundColor) . "\n";
             }
             $this->_renderBody($output);
-            if ($this->menuBoxType == MenuBoxTypes::InputItemNumberType)
-            {
-                $output .= ColoredString::Get($this->inputTitle, $this->inputTitleForegroundColor, $this->inputTitleBackgroundColor);
-                $output .= ColoredString::Get(":", $this->inputTitleDelimiterForegroundColor, $this->inputTitleDelimiterBackgroundColor) . " ";
-            }
             $__output = $this->resultOutput;
-            $__output .= ($this->wrongItemSelected ? ColoredString::Get($this->wrongItemTitle, $this->wrongItemTitleForegroundColor, $this->wrongItemTitleBackgroundColor) : "") . "\n";
             $__output .= $output;
-            if (($this->clearOnRender && !$cleared) || $this->refreshCalled)
+            if ((!$cleared) || $this->refreshCalled)
             {
                 Console::ClearWindow($__output);
                 $cleared = true;
@@ -1285,47 +1430,49 @@ class MenuBox extends ListBox
             }
             $cleared = false;
             $this->wrongItemSelected = false;
-            if ($this->menuBoxType == MenuBoxTypes::KeyPressType)
+            do
             {
-                do
+                if ($this->closeMenu)
+                    return;
+                $pressedKey = Console::ReadKey(false);
+                $this->lastPressedKey = $pressedKey;
+                $keyCheck = $pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow";
+                $this->__checkitems();
+                if ($this->KeyPressEvent != null)
                 {
-                    if ($this->closeMenu)
-                        return;
-                    $pressedKey = Console::ReadKey(false);
-                    $this->lastPressedKey = $pressedKey;
-                    $keyCheck = $pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow";
+                    $event = new KeyPressEvent();
+                    $event->MenuBox = $this;
+                    $event->Key = $pressedKey;
+                    $this->KeyPressEvent->call($this->mythis, $event);
                     $this->__checkitems();
-                    if ($this->KeyPressEvent != null)
-                    {
-                        $event = new KeyPressEvent();
-                        $event->MenuBox = $this;
-                        $event->Key = $pressedKey;
-                        $this->KeyPressEvent->call($this->mythis, $event);
-                        $this->__checkitems();
-                        if ($keyCheck) continue 2;
-                    }
-                }
-                while ($keyCheck);
-
-                if ($pressedKey == "enter" && $this->SelectedItemNumber !== null)
-                    $selectedItem = $this->getselitem($this->SelectedItemNumber);
-                else
-                {
-                    $selectedItemId = $this->getnextalloweditemnumber($pressedKey == "downarrow");
-                    if ($selectedItemId !== null)
-                        $this->SetSelectedItemNumber($selectedItemId);
-                    continue;
+                    if ($keyCheck) continue 2;
                 }
             }
-            if ($this->menuBoxType == MenuBoxTypes::InputItemNumberType)
+            while ($keyCheck);
+
+            if ($pressedKey == "enter" && $this->SelectedItemNumber !== null)
+                $selectedItem = $this->getselitem($this->SelectedItemNumber);
+            else
             {
-                $selectedItemIdStr = Console::ReadLine(false, false);
-                $selectedItemId = intval($selectedItemIdStr);
-                if (($selectedItem = $this->getselitem($selectedItemId)) == null)
+                $selectedItemId = $this->getnextalloweditemnumber($pressedKey == "downarrow");
+                $this->superPreventRefresh = true;
+                if ($selectedItemId !== null)
+                    $this->SetSelectedItemNumber($selectedItemId);
+                else if ($this->ItemsContainerHeight() > 0)
                 {
-                    $this->wrongItemSelected = true;
-                    continue;
+                    if ($pressedKey == "downarrow")
+                    {
+                        $offset = count($this->GetSortedItems(false)) - $this->ItemsContainerHeight();
+                    }
+                    else
+                    {
+                        $offset = 0;
+                    }
+
+                    $this->ScrollOffset($offset);
                 }
+                $this->superPreventRefresh = false;
+                continue;
             }
 
             // Console::ReadLine() returns an empty string if you'll input "0". So it's temporarily broken
@@ -1340,7 +1487,7 @@ class MenuBox extends ListBox
                 continue;
             }
             $this->resultOutput = "";
-            if ($this->clearOnRender && !$cleared)
+            if (!$cleared)
             {
                 Console::ClearWindow();
                 $cleared = true;

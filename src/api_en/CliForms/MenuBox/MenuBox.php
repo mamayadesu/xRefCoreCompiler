@@ -4,10 +4,9 @@ namespace CliForms\MenuBox;
 
 use CliForms\Common\ControlItem;
 use CliForms\Exceptions\InvalidArgumentsPassed;
-use CliForms\Exceptions\InvalidMenuBoxTypeException;
 use CliForms\Exceptions\ItemIsUsingException;
 use CliForms\Exceptions\MenuAlreadyOpenedException;
-use CliForms\Exceptions\MenuBoxCannotBeDesposedException;
+use CliForms\Exceptions\MenuBoxCannotBeDisposedException;
 use CliForms\Exceptions\MenuBoxDisposedException;
 use CliForms\Exceptions\MenuIsNotOpenedException;
 use CliForms\Exceptions\NoItemsAddedException;
@@ -34,15 +33,9 @@ class MenuBox extends ListBox
      */
     public string $Id = "";
 
-    protected string $titleForegroundColor = ForegroundColors::CYAN,
-        $inputTitleForegroundColor = ForegroundColors::GRAY,
-        $inputTitleDelimiterForegroundColor = ForegroundColors::DARK_GRAY,
-        $wrongItemTitleForegroundColor = ForegroundColors::RED;
+    protected string $titleForegroundColor = ForegroundColors::CYAN;
 
-    protected string $titleBackgroundColor = BackgroundColors::AUTO,
-        $inputTitleBackgroundColor = BackgroundColors::AUTO,
-        $inputTitleDelimiterBackgroundColor = BackgroundColors::AUTO,
-        $wrongItemTitleBackgroundColor = BackgroundColors::AUTO;
+    protected string $titleBackgroundColor = BackgroundColors::AUTO;
 
     /**
      * @var Closure|null Selected item changed event handler. Function have to accept `Events\SelectedItemChangedEvent`
@@ -60,19 +53,62 @@ class MenuBox extends ListBox
     public ?Closure $CloseEvent = null;
 
     /**
-     * @var Closure|null Key pressed event handler. Works only with MenuBoxTypes::KeyPressType. Function have to accept `Events\KeyPressEvent`
+     * @var Closure|null Key pressed event handler. Function have to accept `Events\KeyPressEvent`
      */
     public ?Closure $KeyPressEvent = null;
+    
+    /**
+     * @var Closure|null Offset changed event handler. Function have to accept `Events\OffsetChangedEvent`
+     */
+    public ?Closure $OffsetChangedEvent = null;
 
     /**
      * MenuBox constructor.
      *
      * @param string $title Title of menu
      * @param object $mythis These arguments are using to access to your class from callback functions
-     * @param MenuBoxTypes $menuBoxType
-     * @throws InvalidMenuBoxTypeException
      */
-    public function __construct(string $title, object $mythis, int $menuBoxType = MenuBoxTypes::KeyPressType)
+    public function __construct(string $title, object $mythis)
+    {}
+    
+    /**
+     * Returns a count of items which can be rendered. If you pass new value, it will be changed
+     *
+     * @param int|null $newValue
+     * @return int
+     * @throws MenuBoxDisposedException
+     */
+    public function ItemsContainerHeight(?int $newValue = null) : int
+    {}
+
+    /**
+     * Returns a scroll offset from top. If you pass new value, it will be changed
+     *
+     * @param int|null $newValue
+     * @return int
+     * @throws MenuBoxDisposedException
+     */
+    public function ScrollOffset(?int $newValue = null) : int
+    {}
+
+    /**
+     * Returns a character which displays in top of items container if there are items above. If you pass new value, it will be changed
+     *
+     * @param string|null $newValue
+     * @return string
+     * @throws MenuBoxDisposedException
+     */
+    public function ScrollUpCharacter(?string $newValue = null) : string
+    {}
+
+    /**
+     * Returns a character which displays in bottom of items container if there are items below. If you pass new value, it will be changed
+     *
+     * @param string|null $newValue
+     * @return string
+     * @throws MenuBoxDisposedException
+     */
+    public function ScrollDownCharacter(?string $newValue = null) : string
     {}
 
     /**
@@ -86,7 +122,7 @@ class MenuBox extends ListBox
      *
      * @return void
      * @throws MenuBoxDisposedException MenuBox is already disposed
-     * @throws MenuBoxCannotBeDesposedException MenuBox is still opened
+     * @throws MenuBoxCannotBeDisposedException MenuBox is still opened
      */
     public function Dispose() : void
     {}
@@ -210,16 +246,6 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Menu will be cleared after every render. Always TRUE if type of MenuBox is KeyPressType
-     *
-     * @param bool $clear
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetClearWindowOnRender(bool $clear = true) : MenuBox
-    {}
-
-    /**
      * Returns your object which you passed in constructor
      *
      * @return object|null
@@ -265,38 +291,6 @@ class MenuBox extends ListBox
     {}
 
     /**
-     * Sets title for read line input
-     *
-     * @param string $inputTitle
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetInputTitle(string $inputTitle) : MenuBox
-    {}
-
-    /**
-     * Sets style for read line title
-     *
-     * @param ForegroundColors $foregroundColor
-     * @param BackgroundColors $backgroundColor
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetInputTitleStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
-    {}
-
-    /**
-     * Sets style for delimiter of read line
-     *
-     * @param ForegroundColors $foregroundColor
-     * @param BackgroundColors $backgroundColor
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetInputTitleDelimiterStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
-    {}
-
-    /**
      * Sets description for your menu, which will be displayed between title and items
      *
      * @param string $description
@@ -315,27 +309,6 @@ class MenuBox extends ListBox
      * @throws MenuBoxDisposedException
      */
     public function SetDescriptionStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
-    {}
-
-    /**
-     * Sets title which will be displayed if user selects a non-exists item
-     *
-     * @param string $title
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetWrongItemTitle(string $title) : MenuBox
-    {}
-
-    /**
-     * Sets style for a non-exists item title
-     *
-     * @param string $foregroundColor
-     * @param string $backgroundColor
-     * @return MenuBox
-     * @throws MenuBoxDisposedException
-     */
-    public function SetWrongItemTitleStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {}
 
     /**
