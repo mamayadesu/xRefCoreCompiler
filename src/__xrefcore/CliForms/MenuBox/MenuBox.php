@@ -1495,6 +1495,7 @@ class MenuBox extends ListBox
             $callbackCalled = true;
             if ($selectedItem instanceof Checkbox)
             {
+                $this->callbackExecuting = true;
                 if ($selectedItem instanceof Radiobutton)
                 {
                     if (!$selectedItem->Checked())
@@ -1504,6 +1505,7 @@ class MenuBox extends ListBox
                 {
                     $selectedItem->Checked(!$selectedItem->Checked());
                 }
+                $this->callbackExecuting = false;
             }
             else
             {
