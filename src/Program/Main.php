@@ -188,6 +188,11 @@ class Main
         {
             Console::WriteLine("");
             $appJson = $this->AppJson();
+            if (in_array("resources", $appJson["namespaces"]))
+            {
+                Console::WriteLine("'resources' is reserved directory and cannot be a namespace! Compilation halted.", ForegroundColors::RED);
+                exit(0);
+            }
             Console::Write("Do you want to save application config to project directory? (y - yes; n - no): ");
             $a = strtolower(Console::ReadLine());
             sleep(1);
@@ -200,6 +205,11 @@ class Main
         }
         else
         {
+            if (in_array("resources", $appJson["namespaces"]))
+            {
+                Console::WriteLine("'resources' is reserved directory and cannot be a namespace! Compilation halted.", ForegroundColors::RED);
+                exit(0);
+            }
             if (isset($appJson["framework_version"]) && version_compare(Application::GetFrameworkVersion(), $appJson["framework_version"], '<'))
             {
                 Console::WriteLine("WARNING! This application was created on higher version of xRefCoreCompiler (" . $appJson["framework_version"] . "). Your version is " . Application::GetFrameworkVersion() . ". Errors may occur after or during building. Do you want to compile it anyway? (y - yes | n - no): ", ForegroundColors::YELLOW);
@@ -215,11 +225,11 @@ class Main
             $f = fopen($projectDir . "app.json", "w");
             fwrite($f, $appJsonString);
         }
-        $tempDir = sys_get_temp_dir() . $ds . md5($appJsonString . rand(1, 100000) . time()) . $ds;
-        while (is_dir($tempDir))
+        do
         {
             $tempDir = sys_get_temp_dir() . $ds . md5($appJsonString . rand(1, 100000) . time()) . $ds;
         }
+        while (is_dir($tempDir));
         $otherProjectFolders = [];
         foreach (scandir($projectDir) as $dirname)
         {
@@ -293,6 +303,16 @@ class Main
             return false;
         }
         FileDirectory::Delete($dir . "checker.php");
+        if (file_exists($dir . "resources") && is_file($dir . "resources"))
+        {
+            Console::WriteLine("'resources' is reserved directory!", ForegroundColors::RED);
+            @rmdir($dir);
+            return false;
+        }
+        if (!file_exists($dir . "resources"))
+        {
+            @mkdir($dir . "resources");
+        }
         if ($this->debugMode)
         {
             $autoloadContent = file_get_contents($dir . "autoload.php");
@@ -365,7 +385,7 @@ class Main
                 $fullPathInPhar = str_replace("\\", "/", $file->getPathName());
                 $pathInPhar = str_replace($ptp, "", $fullPathInPhar);
                 $sPathInPhar = explode('/', $pathInPhar);
-                if ($pathInPhar == "app.json" || $sPathInPhar[0] == "Program" || $sPathInPhar[0] == "api_en" || $sPathInPhar[0] == "api_ru")
+                if ($pathInPhar == "app.json" || $sPathInPhar[0] == "Program" || $sPathInPhar[0] == "resources")
                 {
                     continue;
                 }

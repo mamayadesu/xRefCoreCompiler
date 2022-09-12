@@ -3,6 +3,7 @@
 namespace Program;
 
 use Application\Application;
+use Application\Resource;
 use Data\String\ColoredString;
 use Data\String\ForegroundColors;
 use IO\Console;
@@ -19,7 +20,7 @@ class Utils
             {
                 FileDirectory::Delete($home . "\\.xRefCoreCompiler\\Core");
             }
-            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/api_" . $lang, $home . "\\.xRefCoreCompiler\\Core");
+            Resource::SaveResourcesDirectory("api_" . $lang, $home . "\\.xRefCoreCompiler\\Core");
         }
         else
         {
@@ -35,7 +36,7 @@ class Utils
             }
             @mkdir("/usr/share/xRefCoreCompiler");
             @mkdir($share);
-            FileDirectory::Copy("phar://" . Application::GetExecutableFileName() . "/api_" . $lang, $share);
+            Resource::SaveResourcesDirectory("api_" . $lang, $share);
             FileDirectory::RecursiveChmod(755, $share . "/..");
         }
     }
