@@ -90,6 +90,16 @@ class MenuBox extends ListBox
      */
     public function ScrollOffset(?int $newValue = null) : int
     {}
+    
+    /**
+     * Returns TRUE if this MenuBox contains this item
+     *
+     * @param MenuBoxControl $control
+     * @return bool
+     * @throws MenuBoxDisposedException
+     */
+    public function HasItem(MenuBoxControl $control) : bool
+    {}
 
     /**
      * Returns a character which displays in top of items container if there are items above. If you pass new value, it will be changed
@@ -153,6 +163,26 @@ class MenuBox extends ListBox
      * @throws MenuBoxDisposedException
      */
     public function AddItem(ControlItem $item) : MenuBox
+    {}
+    
+    /**
+     * Clears items
+     * 
+     * @param bool $removeZeroItem
+     * @return MenuBox
+     * @throws MenuBoxDisposedException
+     */
+    public function ClearItems(bool $removeZeroItem = true) : MenuBox
+    {}
+
+    /**
+     * Removes item from this MenuBox
+     *
+     * @param MenuBoxControl $control
+     * @return void
+     * @throws MenuBoxDisposedException
+     */
+    public function RemoveItem(MenuBoxControl $control) : void
     {}
 
     /**
@@ -309,6 +339,13 @@ class MenuBox extends ListBox
      * @throws MenuBoxDisposedException
      */
     public function SetDescriptionStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
+    {}
+    
+    /**
+     * Prevents next container's refresh
+     * @return void
+     */
+    public function PreventNextRefresh() : void
     {}
 
     /**

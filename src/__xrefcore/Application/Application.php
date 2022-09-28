@@ -3,6 +3,8 @@ declare(ticks = 1);
 
 namespace Application;
 
+use IO\FileDirectory;
+
 final class Application
 {
 
@@ -145,9 +147,13 @@ final class Application
     {
         if (IS_WINDOWS)
         {
-            return $_SERVER["USERPROFILE"];
+            $path = $_SERVER["USERPROFILE"];
         }
-        return $_SERVER["HOME"];
+        else
+        {
+            $path = $_SERVER["HOME"];
+        }
+        return FileDirectory::FormatDirectoryPath($path);
     }
 
     /**

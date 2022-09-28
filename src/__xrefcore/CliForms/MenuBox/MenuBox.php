@@ -37,6 +37,21 @@ class MenuBox extends ListBox
 
     /**
      * @ignore
+     */
+    public bool $__updatesortedcache = true, $__updateallowedcache = true, $__updatemaxoffsetvaluecache = true;
+
+    /**
+     * @ignore
+     */
+    private array $sortedCache = [], $allowedCache = [];
+
+    /**
+     * @ignore
+     */
+    private ?int $maxOffsetValueCache = 0;
+
+    /**
+     * @ignore
      * @var array<MenuBox>
      */
     private static array $MenuBoxes = array();
@@ -81,7 +96,10 @@ class MenuBox extends ListBox
      */
     private ?object $mythis = null;
 
-    protected array/*<MenuBoxItem>*/ $items = [];
+    /**
+     * @var array<MenuBoxControl>
+     */
+    protected array $items = [];
 
     /**
      * @ignore
@@ -160,7 +178,7 @@ class MenuBox extends ListBox
         {
             $newValue = 1;
         }
-
+        $this->__updatemaxoffsetvaluecache = true;
         $this->itemsContainerHeight = $newValue;
         $this->Refresh();
         return $newValue;
@@ -216,6 +234,25 @@ class MenuBox extends ListBox
         if (!$this->callbackExecuting)
             $this->Refresh();
         return $newValue;
+    }
+
+    /**
+     * Returns TRUE if this MenuBox contains this item
+     *
+     * @param MenuBoxControl $control
+     * @return bool
+     * @throws MenuBoxDisposedException
+     */
+    public function HasItem(MenuBoxControl $control) : bool
+    {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+
+        return in_array($control, $this->items, true) || $this->zeroItem === $control;
     }
 
     /**
@@ -299,12 +336,10 @@ class MenuBox extends ListBox
         }
         $this->SetZeroItem(null);
 
-        foreach ($this->items as $item)
-        {if(!$item instanceof MenuBoxControl)continue;
-            $item->__setattached(null, true);
-        }
-
         $this->items = [];
+        $this->sortedCache = [];
+        $this->allowedCache = [];
+        $this->setcachestoupdate();
         $this->SelectedItemChangedEvent = null;
         $this->OpenEvent = null;
         $this->CloseEvent = null;
@@ -386,19 +421,77 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
-        if ($item->GetMenuBox() !== $this && !$item->__canbeattached())
+        if (!$item->__canbeattached())
         {
-            $e = new ItemIsUsingException("Passed item is already using by another running MenuBox");
+            $e = new ItemIsUsingException("Passed item is already using by MenuBox");
             $e->Control = $item;
             $e->__xrefcoreexception = true;
             throw $e;
         }
         $item->__setattached($this, $this->closeMenu);
         $this->items[] = $item;
-
+        $this->setcachestoupdate();
         if (!$this->closeMenu)
             $this->Refresh();
         return $this;
+    }
+
+    /**
+     * Clears items
+     *
+     * @param bool $removeZeroItem
+     * @return MenuBox
+     * @throws MenuBoxDisposedException
+     */
+    public function ClearItems(bool $removeZeroItem = true) : MenuBox
+    {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        $this->Refresh();
+        $this->items = array();
+        $this->sortedCache = array();
+        $this->allowedCache = array();
+        if ($removeZeroItem)
+        {
+            $this->zeroItem = null;
+        }
+        $this->setcachestoupdate();
+        return $this;
+    }
+
+    /**
+     * Removes item from this MenuBox
+     *
+     * @param MenuBoxControl $control
+     * @return void
+     * @throws MenuBoxDisposedException
+     */
+    public function RemoveItem(MenuBoxControl $control) : void
+    {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+
+        if ($control === $this->zeroItem)
+        {
+            $this->zeroItem = null;
+            $this->Refresh();
+        }
+        if (in_array($control, $this->items, true))
+        {
+            $key = array_keys($this->items, $control, true)[0];
+            unset($this->items[$key]);
+            $this->items = array_values($this->items);
+            $this->setcachestoupdate();
+            $this->Refresh();
+        }
     }
 
     /**
@@ -441,6 +534,7 @@ class MenuBox extends ListBox
             $this->zeroItem = $item;
             $this->zeroItem->__setattached($this, $this->closeMenu);
         }
+        $this->sortedCache[0] = $this->zeroItem;
         return $this;
     }
 
@@ -459,11 +553,11 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
-        if ($this->closeMenu)
+        /*if ($this->closeMenu)
         {
             $this->SelectedItemNumber = $itemNumber;
             return;
-        }
+        }*/
         if ($itemNumber === null || ($this->getnextalloweditemnumber(true) === null && $this->getnextalloweditemnumber(false) === null))
         {
             $this->SelectedItemNumber = null;
@@ -555,7 +649,6 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
-        $this->__checkitems();
         return $this->SelectedItemNumber;
     }
 
@@ -615,6 +708,10 @@ class MenuBox extends ListBox
      */
     private function getOffsetMaxValue() : int
     {
+        if (!$this->__updatemaxoffsetvaluecache)
+        {
+            return $this->maxOffsetValueCache;
+        }
         $items = $this->GetSortedItems(false);
         $count = count($items);
         $hiddenItems = 0;
@@ -632,13 +729,15 @@ class MenuBox extends ListBox
                 $i++;
             }
         }
-        return max($count - $hiddenItems - $this->itemsContainerHeight, 0);
+        $this->__updatemaxoffsetvaluecache = false;
+        $this->maxOffsetValueCache = max($count - $hiddenItems - $this->itemsContainerHeight, 0);
+        return $this->maxOffsetValueCache;
     }
 
     /**
      * @ignore
      */
-    private function checkcurrentitem(bool $changeIndex) : void
+    public function __checkcurrentitem(bool $changeIndex) : void
     {
         $this->preventCheckingItems = true;
         $items = $this->GetSortedItems();
@@ -648,7 +747,7 @@ class MenuBox extends ListBox
             if ($itemNumber === null || !$items[$itemNumber]->Selectable())
             {
                 $itemNumber = $this->getnextalloweditemnumber(false);
-                if ($itemNumber === null || !$items[$itemNumber]->Selectable())
+                if ($itemNumber === null || !$items[$itemNumber] || !$items[$itemNumber]->Selectable())
                 {
                     $this->SetSelectedItemNumber(null);
                 }
@@ -701,6 +800,7 @@ class MenuBox extends ListBox
             $item->__setattached($this, true);
         }
         $this->closeMenu = true;
+        Console::ClearWindow();
         if ($this->CloseEvent != null)
         {
             $event = new MenuBoxCloseEvent();
@@ -739,7 +839,6 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
-        $this->__checkitems();
         /** @var array<int, ?MenuBoxControl> $result */$result = array();
         $k = 1;
         if ($includeZeroItem)
@@ -774,7 +873,19 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
-        $this->__checkitems();
+        if (!$this->__updatesortedcache)
+        {
+            $result = $this->sortedCache;
+            if ($includeZeroItem)
+            {
+                $result[0] = $this->zeroItem;
+            }
+            else
+            {
+                unset($result[0]);
+            }
+            return $result;
+        }
         /** @var array<int, ?MenuBoxControl> $result */$result = array();
         $k = 1;
         if ($includeZeroItem)
@@ -800,36 +911,20 @@ class MenuBox extends ListBox
             $result[$k] = $maxItem;
             $k++;
         }
+        $this->sortedCache = $result;
+        $this->sortedCache[0] = $this->zeroItem;
+        $this->__updatesortedcache = false;
         return $result;
     }
 
     /**
      * @ignore
      */
-    public function __checkitems(bool $updateIndex = false) : void
+    private function setcachestoupdate() : void
     {
-        if ($this->zeroItem !== null && $this->zeroItem->GetMenuBox() !== $this)
-        {
-            $this->zeroItem = null;
-        }
-        $toRemove = [];
-        foreach ($this->items as $key => $item)
-        {if(!$item instanceof MenuBoxControl)continue;
-            if ($item->GetMenuBox() !== $this)
-            {
-                $toRemove[] = $key;
-            }
-        }
-
-        foreach ($toRemove as $index)
-        {
-            unset($this->items[$index]);
-        }
-
-        $this->items = array_values($this->items);
-
-        if (count($toRemove) > 0)
-            $this->checkcurrentitem($updateIndex);
+        $this->__updatesortedcache = true;
+        $this->__updateallowedcache = true;
+        $this->__updatemaxoffsetvaluecache = true;
     }
 
     /**
@@ -1205,6 +1300,15 @@ class MenuBox extends ListBox
     }
 
     /**
+     * Prevents next container's refresh
+     * @return void
+     */
+    public function PreventNextRefresh() : void
+    {
+        $this->preventRefresh = true;
+    }
+
+    /**
      * Renders menu again
      *
      * @return void
@@ -1227,7 +1331,6 @@ class MenuBox extends ListBox
             $this->preventRefresh = false;
             return;
         }
-        $this->__checkitems();
         if ($this->closeMenu || $this->callbackExecuting)
             return;
 
@@ -1263,12 +1366,18 @@ class MenuBox extends ListBox
      */
     private function getalloweditems() : array
     {
+        if (!$this->__updateallowedcache)
+        {
+            return $this->allowedCache;
+        }
         $result = array();
         foreach ($this->GetSortedItems() as $key => $item)
         {if(!$item instanceof MenuBoxControl)continue;
             if ($item->Selectable())
                 $result[$key] = $item;
         }
+        $this->__updateallowedcache = false;
+        $this->allowedCache = $result;
         return $result;
     }
 
@@ -1380,11 +1489,8 @@ class MenuBox extends ListBox
             $item->__setattached($this, false);
         }
 
-        // Cleaning garbage
-        $this->__checkitems();
-
         // Checking if selected item correct
-        $this->checkcurrentitem(false);
+        $this->__checkcurrentitem(false);
         $this->closeMenu = false; // Open menu again automatically
         if ($this->OpenEvent != null)
         {
@@ -1437,14 +1543,13 @@ class MenuBox extends ListBox
                 $pressedKey = Console::ReadKey(false);
                 $this->lastPressedKey = $pressedKey;
                 $keyCheck = $pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow";
-                $this->__checkitems();
-                if ($this->KeyPressEvent != null)
+                if ($this->KeyPressEvent !== null)
                 {
                     $event = new KeyPressEvent();
                     $event->MenuBox = $this;
                     $event->Key = $pressedKey;
                     $this->KeyPressEvent->call($this->mythis, $event);
-                    $this->__checkitems();
+                    $this->callbackExecuting = false;
                     if ($keyCheck) continue 2;
                 }
             }

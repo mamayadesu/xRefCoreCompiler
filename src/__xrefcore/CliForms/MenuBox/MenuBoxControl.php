@@ -3,6 +3,7 @@
 namespace CliForms\MenuBox;
 
 use CliForms\Common\ControlItem;
+use CliForms\Exceptions\MenuBoxDisposedException;
 use CliForms\ListBox\ListBoxControl;
 use Data\String\BackgroundColors;
 use Data\String\ForegroundColors;
@@ -50,7 +51,7 @@ class MenuBoxControl extends ListBoxControl
      */
     public function GetMenuBox() : ?MenuBox
     {
-        return $this->attachedTo;
+        return $this->__attachedto();
     }
 
     /**
@@ -61,7 +62,7 @@ class MenuBoxControl extends ListBoxControl
     public function Remove() : void
     {
         $callSelectedChanged = false;
-        $menuBox = $this->attachedTo;
+        $menuBox = $this->__attachedto();
         if ($menuBox !== null)
         {
             if ($menuBox->GetSelectedItem() === $this)
@@ -69,12 +70,11 @@ class MenuBoxControl extends ListBoxControl
                 $callSelectedChanged = true;
             }
         }
-        $this->attachedTo = null;
-        $this->canBeAttached = true;
         if ($menuBox !== null)
         {
-            $menuBox->__checkitems($callSelectedChanged);
-            $menuBox->Refresh();
+            $this->__setattached(null, true);
+            $menuBox->RemoveItem($this);
+            $menuBox->__checkcurrentitem($callSelectedChanged);
         }
     }
 
@@ -92,7 +92,28 @@ class MenuBoxControl extends ListBoxControl
     public function __setattached(?MenuBox $menu, bool $canbeattached) : void
     {
         $this->attachedTo = $menu;
-        $this->canBeAttached = ($menu === null ?:$canbeattached);
+        $this->canBeAttached = ($menu === null ?: $canbeattached);
+    }
+
+    private function __attachedto() : ?MenuBox
+    {
+        if ($this->attachedTo !== null)
+        {
+            try
+            {
+                $attached = $this->attachedTo->HasItem($this);
+            }
+            catch (MenuBoxDisposedException $e)
+            {
+                $attached = false;
+            }
+            if (!$attached)
+            {
+                $this->attachedTo = null;
+                $this->canBeAttached = true;
+            }
+        }
+        return $this->attachedTo;
     }
 
     /**
@@ -121,7 +142,10 @@ class MenuBoxControl extends ListBoxControl
             return false;
         $result = parent::Selectable($newValue);
         if ($this->GetMenuBox() !== null && $newValue !== null)
+        {
+            $this->GetMenuBox()->__updateallowedcache = true;
             $this->GetMenuBox()->Refresh();
+        }
         return $result;
     }
 
@@ -180,8 +204,13 @@ class MenuBoxControl extends ListBoxControl
      */
     public function Visible(?bool $newValue = null) : bool
     {
-        if ($this->GetMenuBox() !== null && $newValue !== null)
-            $this->GetMenuBox()->Refresh();
+        $menu = $this->GetMenuBox();
+        if ($menu !== null && $newValue !== null)
+        {
+            $menu->Refresh();
+            $menu->__updateallowedcache = true;
+            $menu->__updatemaxoffsetvaluecache = true;
+        }
 
         if ($newValue !== null)
             $this->visible = $newValue;
@@ -198,7 +227,10 @@ class MenuBoxControl extends ListBoxControl
     {
         $result = parent::Ordering($newValue);
         if ($this->GetMenuBox() !== null && $newValue !== null)
+        {
+            $this->GetMenuBox()->__updatesortedcache = true;
             $this->GetMenuBox()->Refresh();
+        }
         return $result;
     }
 }

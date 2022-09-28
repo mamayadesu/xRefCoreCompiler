@@ -36,4 +36,13 @@ class FileDirectory
      */
     public static function RecursiveChmod(int $mode, string $target) : void
     {}
+
+    /**
+     * Форматирует путь к папке или файлу, учитывая при этом точки-указатели
+     *
+     * @param string $path Неформатированный путь (например "/var/www/../log")
+     * @return string Пример: "/var/log/"
+     */
+    public static function FormatDirectoryPath(string $path) : string
+    {}
 }

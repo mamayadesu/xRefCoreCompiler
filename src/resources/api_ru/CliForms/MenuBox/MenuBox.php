@@ -90,6 +90,16 @@ class MenuBox extends ListBox
      */
     public function ScrollOffset(?int $newValue = null) : int
     {}
+    
+    /**
+     * Возвращает TRUE, если данный элемент содержится в MenuBox
+     *
+     * @param MenuBoxControl $control
+     * @return bool
+     * @throws MenuBoxDisposedException
+     */
+    public function HasItem(MenuBoxControl $control) : bool
+    {}
 
     /**
      * Возвращает символ, указывающий, что в контейнере меню есть прокрученные элементы выше. Если задать новое значение, оно будет изменено
@@ -153,6 +163,26 @@ class MenuBox extends ListBox
      * @throws MenuBoxDisposedException
      */
     public function AddItem(ControlItem $item) : MenuBox
+    {}
+    
+    /**
+     * Удаляет все элементы из MenuBox
+     * 
+     * @param bool $removeZeroItem
+     * @return MenuBox
+     * @throws MenuBoxDisposedException
+     */
+    public function ClearItems(bool $removeZeroItem = true) : MenuBox
+    {}
+    
+    /**
+     * Удаляет элемент из MenuBox
+     *
+     * @param MenuBoxControl $control
+     * @return void
+     * @throws MenuBoxDisposedException
+     */
+    public function RemoveItem(MenuBoxControl $control) : void
     {}
 
     /**
@@ -313,6 +343,15 @@ class MenuBox extends ListBox
      */
     public function SetDescriptionStyle(string $foregroundColor, string $backgroundColor = BackgroundColors::AUTO) : MenuBox
     {}
+    
+    /**
+     * Предотвращает следующее обновление контейнера
+     * @return void
+     */
+    public function PreventNextRefresh() : void
+    {
+        $this->preventRefresh = true;
+    }
 
     /**
      * Повторно рендерит меню

@@ -359,6 +359,60 @@ class Console
             case "\e":
                 $keypress = "Escace";
                 break;
+
+            case "\x1BOP":
+            case "\x1B[11~":
+                $keypress = "f1";
+                break;
+
+            case "\x1BOQ":
+            case "\x1B[12~":
+                $keypress = "f2";
+                break;
+
+            case "\x1BOR":
+            case "\x1B[13~":
+                $keypress = "f3";
+                break;
+
+            case "\x1BOS":
+            case "\x1B[14~":
+                $keypress = "f4";
+                break;
+
+            case "\x1B[15~":
+                $keypress = "f5";
+                break;
+
+            case "\x1B[17~":
+                $keypress = "f6";
+                break;
+
+            case "\x1B[18~":
+                $keypress = "f7";
+                break;
+
+            case "\x1B[19~":
+                $keypress = "f8";
+                break;
+
+            case "\x1B[20~":
+                $keypress = "f9";
+                break;
+
+            case "\x1B[21~":
+                $keypress = "f10";
+                break;
+
+            case "\x1B[23~\x1B":
+            case "\x1B[23~":
+                $keypress = "f11";
+                break;
+
+            case "\x1B[24~\b":
+            case "\x1B[24~":
+                $keypress = "f12";
+                break;
         }
         system("stty -cbreak echo");
         return strtolower($keypress);

@@ -36,4 +36,13 @@ class FileDirectory
      */
     public static function RecursiveChmod(int $mode, string $target) : void
     {}
+
+    /**
+     * Formats path to target, including returning to parent directories
+     *
+     * @param string $path Non-formatted path (for example "/var/www/../log")
+     * @return string Example: "/var/log/"
+     */
+    public static function FormatDirectoryPath(string $path) : string
+    {}
 }
