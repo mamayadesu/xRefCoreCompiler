@@ -91,6 +91,7 @@ final class SchedulerMaster
      */
     public function __unregister() : void
     {
+        $this->HasAtLeastOneTask = false;
         unset($GLOBALS["system.tick_functions"]["schedulermaster"]);
     }
 

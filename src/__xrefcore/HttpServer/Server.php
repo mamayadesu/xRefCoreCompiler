@@ -138,14 +138,15 @@ final class Server
 
         $this->registeredEvents["start"]($this);
         if (DEV_MODE) echo "[HttpServer] Waiting for request\n";
+        $interval = 2;
         if ($async)
         {
-            $this->asyncServer = new AsyncTask($this, 5, false, function(AsyncTask $task, NoAsyncTaskParameters $params) : void { $this->Handle(); });
+            $this->asyncServer = new AsyncTask($this, $interval, false, function(AsyncTask $task, NoAsyncTaskParameters $params) : void { $this->Handle(); });
         }
         else while (true)
         {
             $this->Handle();
-            time_nanosleep(0, 5 * 1000000);
+            time_nanosleep(0, $interval * 1000000);
             if ($this->shutdownWasCalled)
             {
                 return;
