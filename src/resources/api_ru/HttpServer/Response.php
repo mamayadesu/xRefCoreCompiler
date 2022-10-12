@@ -3,6 +3,7 @@
 namespace HttpServer;
 
 use HttpServer\Exceptions\ClosedRequestException;
+use HttpServer\Exceptions\ConnectionLostException;
 use HttpServer\Exceptions\HeadersSentException;
 
 /**
@@ -20,6 +21,11 @@ final class Response
      * @var int Максимальное время ожидания, когда до клиента дойдут данные
      */
     public int $DataSendTimeout = 0;
+    
+    /**
+     * @var bool Если `true`, методы `End`, `PrintBody` и `PrintHeaders` не выбросят исключение в случае ошибки, а вернут `false`
+     */
+    public static bool $IgnoreConnectionLost = true;
 
     /**
      * Добавляет заголовок ответа
@@ -62,36 +68,31 @@ final class Response
     /**
      * Отправляет все установленные заголовки клиенту
      *
-     * @return void
+     * @return bool `TRUE` в случае успеха, `FALSE` в случае ошибки. Обратите внимание, если соединение с сервером было закрыто, запросу будет автоматически присвоен статус "Closed"
      * @throws HeadersSentException
+     * @throws ConnectionLostException
      */
-    public function PrintHeaders() : void
+    public function PrintHeaders() : bool
     {}
 
     /**
      * Отправляет тело ответа клиенту
      *
      * @param string $plainText
-     * @return void
+     * @return bool `TRUE` в случае успеха, `FALSE` в случае ошибки. Обратите внимание, если соединение с сервером было закрыто, запросу будет автоматически присвоен статус "Closed"
      * @throws ClosedRequestException
-     * @throws HeadersSentException
+     * @throws ConnectionLostException
      */
-    public function PrintBody(string $plainText) : void
+    public function PrintBody(string $plainText) : bool
     {}
 
     /**
      * Отправляет тело ответа клиенту и закрывает соединение
      *
+     * @return bool `TRUE` в случае успеха, `FALSE` в случае ошибки.
      * @param string $message
+     * @throws ConnectionLostException
      */
-    public function End(string $message = "") : void
-    {}
-
-    /**
-     * Возвращает полный ответ клиенту, включая заголовки
-     *
-     * @return string
-     */
-    public function GetFullResponse() : string
+    public function End(string $message = "") : bool
     {}
 }

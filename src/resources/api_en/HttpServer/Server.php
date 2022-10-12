@@ -42,6 +42,14 @@ final class Server
      */
     public function On(string $eventName, callable $callback) : void
     {}
+    
+    /**
+     * Returns the array of unclosed requests (to be more precise, unsent responses).
+     *
+     * @return array<Response>
+     */
+    public function GetUnsentResponses() : array
+    {}
 
     /**
      * Run server

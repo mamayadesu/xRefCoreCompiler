@@ -306,19 +306,30 @@ final class Server
             {
                 $this->registeredEvents["throwable"]($request, $response, $e);
             }
-            foreach ($this->responses as $key => $response)
-            {if(!$response instanceof Response)continue;
-                if ($response->IsClosed())
-                {
-                    unset($this->responses[$key]);
-                }
-            }
-            $this->responses = array_values($this->responses);
+            $this->GetUnsentResponses();
             if ($this->shutdownWasCalled)
             {
                 return;
             }
         }
+    }
+
+    /**
+     * Returns the array of unclosed requests (to be more precise, unsent responses).
+     *
+     * @return array<Response>
+     */
+    public function GetUnsentResponses() : array
+    {
+        foreach ($this->responses as $key => $response)
+        {if(!$response instanceof Response)continue;
+            if ($response->IsClosed())
+            {
+                unset($this->responses[$key]);
+            }
+        }
+        $this->responses = array_values($this->responses);
+        return $this->responses;
     }
 
     /**

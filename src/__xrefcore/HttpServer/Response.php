@@ -4,6 +4,7 @@ declare(ticks = 1);
 namespace HttpServer;
 
 use HttpServer\Exceptions\ClosedRequestException;
+use HttpServer\Exceptions\ConnectionLostException;
 use HttpServer\Exceptions\HeadersSentException;
 
 /**
@@ -12,11 +13,6 @@ use HttpServer\Exceptions\HeadersSentException;
 
 final class Response
 {
-    /**
-     * @ignore
-     */
-    private string $response = "";
-
     /**
      * @ignore
      */
@@ -135,6 +131,11 @@ final class Response
     public int $DataSendTimeout = 0;
 
     /**
+     * @var bool If `true`, methods `End`, `PrintBody` and `PrintHeaders` won't throw an exception on failure, but will return `false`
+     */
+    public static bool $IgnoreConnectionLost = true;
+
+    /**
      * @ignore
      */
     public function __construct($connect)
@@ -249,10 +250,11 @@ final class Response
     /**
      * Sends all set headers to client
      *
-     * @return void
+     * @return bool `TRUE` if success, `FALSE` on any error. Pay attention, if server fails to send message to client, request will be automatically closed
      * @throws HeadersSentException
+     * @throws ConnectionLostException
      */
-    public function PrintHeaders() : void
+    public function PrintHeaders() : bool
     {
         if ($this->headersPrinted)
         {
@@ -271,26 +273,32 @@ final class Response
             $data .= "Set-Cookie: " . $cookieString . "\r\n";
         }
         $data .= "\r\n";
-        $this->response = $data;
         if ($this->DataSendTimeout > 0)
         {
             $timeout = $this->getTimeout();
             stream_set_timeout($this->connect, $timeout[0], $timeout[1]);
         }
         stream_set_blocking($this->connect, !$this->ClientNonBlockMode);
-        @fwrite($this->connect, $data);
         $this->headersPrinted = true;
+        $result = $this->send($data);
+        if ($result !== null && !self::$IgnoreConnectionLost)
+        {
+            $e = new ConnectionLostException($result->getMessage());
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        return $result === null;
     }
 
     /**
      * Adds plain text to response body
      *
      * @param string $plainText
-     * @return void
+     * @return bool `TRUE` if success, `FALSE` on any error. Pay attention, if server fails to send message to client, request will be automatically closed
      * @throws ClosedRequestException
-     * @throws HeadersSentException
+     * @throws ConnectionLostException
      */
-    public function PrintBody(string $plainText) : void
+    public function PrintBody(string $plainText) : bool
     {
         if ($this->closed)
         {
@@ -302,22 +310,30 @@ final class Response
         {
             $this->PrintHeaders();
         }
-        $this->response .= $plainText;
         if ($this->DataSendTimeout > 0)
         {
             $timeout = $this->getTimeout();
             stream_set_timeout($this->connect, $timeout[0], $timeout[1]);
         }
         stream_set_blocking($this->connect, !$this->ClientNonBlockMode);
-        @fwrite($this->connect, $plainText);
+        $result = $this->send($plainText);
+        if ($result !== null && !self::$IgnoreConnectionLost)
+        {
+            $e = new ConnectionLostException($result->getMessage());
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        return $result === null;
     }
 
     /**
      * Adds response for client and closes connection
      *
      * @param string $message
+     * @return bool `TRUE` if success, `FALSE` on any error.
+     * @throws ConnectionLostException
      */
-    public function End(string $message = "") : void
+    public function End(string $message = "") : bool
     {
         if ($this->closed)
         {
@@ -335,20 +351,41 @@ final class Response
             stream_set_timeout($this->connect, $timeout[0], $timeout[1]);
         }
         stream_set_blocking($this->connect, !$this->ClientNonBlockMode);
-        @fwrite($this->connect, $message);
+        $result = $this->send($message);
         @fclose($this->connect);
         $this->closed = true;
-        $this->response .= $message;
+        if ($result !== null && !self::$IgnoreConnectionLost)
+        {
+            $e = new ConnectionLostException($result->getMessage());
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+        return $result === null;
     }
 
     /**
-     * Returns full response with all headers
-     *
-     * @return string
+     * @ignore
      */
-    public function GetFullResponse() : string
+    private function send(string $message) : ?\ErrorException
     {
-        return $this->response;
+        set_error_handler(function($errno, $errstr, $errfile, $errline) {
+            throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
+        });
+        try
+        {
+            fwrite($this->connect, $message);
+        }
+        catch (\ErrorException $e)
+        {
+            if ($e->getCode() == 8)
+            {
+                $this->closed = true;
+            }
+            restore_error_handler();
+            return $e;
+        }
+        restore_error_handler();
+        return null;
     }
 
     /**

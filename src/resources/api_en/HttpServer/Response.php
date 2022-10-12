@@ -3,6 +3,7 @@
 namespace HttpServer;
 
 use HttpServer\Exceptions\ClosedRequestException;
+use HttpServer\Exceptions\ConnectionLostException;
 use HttpServer\Exceptions\HeadersSentException;
 
 /**
@@ -20,6 +21,11 @@ final class Response
      * @var int Maximum waiting time in milliseconds for data to be sent to the client
      */
     public int $DataSendTimeout = 0;
+    
+    /**
+     * @var bool If `true`, methods `End`, `PrintBody` and `PrintHeaders` won't throw an exception on failure, but will return `false`
+     */
+    public static bool $IgnoreConnectionLost = true;
 
     /**
      * Adds header for response
@@ -62,36 +68,31 @@ final class Response
     /**
      * Sends all set headers to client
      *
-     * @return void
+     * @return bool `TRUE` if success, `FALSE` on any error. Pay attention, if server fails to send message to client, request will be automatically closed
      * @throws HeadersSentException
+     * @throws ConnectionLostException
      */
-    public function PrintHeaders() : void
+    public function PrintHeaders() : bool
     {}
 
     /**
      * Adds plain text to response body
      *
      * @param string $plainText
-     * @return void
+     * @return bool `TRUE` if success, `FALSE` on any error. Pay attention, if server fails to send message to client, request will be automatically closed
      * @throws ClosedRequestException
-     * @throws HeadersSentException
+     * @throws ConnectionLostException
      */
-    public function PrintBody(string $plainText) : void
+    public function PrintBody(string $plainText) : bool
     {}
 
     /**
      * Adds response for client and closes connection
      *
      * @param string $message
+     * @return bool `TRUE` if success, `FALSE` on any error.
+     * @throws ConnectionLostException
      */
-    public function End(string $message = "") : void
-    {}
-
-    /**
-     * Returns full response with all headers
-     *
-     * @return string
-     */
-    public function GetFullResponse() : string
+    public function End(string $message = "") : bool
     {}
 }

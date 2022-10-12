@@ -42,6 +42,14 @@ final class Server
      */
     public function On(string $eventName, callable $callback) : void
     {}
+    
+    /**
+     * Возвращает массив незакрытых запросов (если быть точнее, неотправленных ответов).
+     *
+     * @return array<Response>
+     */
+    public function GetUnsentResponses() : array
+    {}
 
     /**
      * Запускает сервер
