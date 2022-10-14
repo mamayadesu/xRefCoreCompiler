@@ -77,6 +77,6 @@ class Dialog
      * @param string|null $defaultPath Файловый менеджер запустится с этой папки или домашнего каталога пользователя
      * @return string|null Полный путь к выбранной папке или NULL, если папка не выбрана
      */
-    public static function OpenFolder(?string $defaultPath = null)
+    public static function OpenFolder(?string $defaultPath = null) : ?string
     {}
 }

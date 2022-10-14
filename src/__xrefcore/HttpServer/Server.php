@@ -56,10 +56,6 @@ final class Server
     public int $DataReadTimeout = 5;
 
     /**
-     * @ignore
-     */
-
-    /**
      * Server constructor.
      * @param string $address Listening IP-address
      * @param int $port Port

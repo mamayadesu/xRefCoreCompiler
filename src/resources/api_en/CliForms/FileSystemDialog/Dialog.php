@@ -77,6 +77,6 @@ class Dialog
      * @param string|null $defaultPath File manager will start from this directory or from user's home path
      * @return string|null Full path to selected directory or NULL if no directory selected
      */
-    public static function OpenFolder(?string $defaultPath = null)
+    public static function OpenFolder(?string $defaultPath = null) : ?string
     {}
 }
