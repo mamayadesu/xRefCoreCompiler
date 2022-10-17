@@ -104,7 +104,7 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private bool $DISPOSED = false, $closeMenu = true, $preventOffsetChangedEvent = false, $preventSelectedChangedEvent = false, $superPreventRefresh = false, $preventRefresh = false, $preventCheckingItems = false, $refreshCalled = false, $callbackExecuting = false;
+    private bool $DISPOSED = false, $closeMenu = true, $preventOffsetChangedEvent = false, $preventSelectedChangedEvent = false, $superPreventRefresh = false, $preventRefresh = false, $refreshCalled = false, $callbackExecuting = false;
 
     /**
      * @ignore
@@ -649,6 +649,13 @@ class MenuBox extends ListBox
             $e->__xrefcoreexception = true;
             throw $e;
         }
+
+        $items = $this->GetSortedItems();
+        if (!isset($items[$this->SelectedItemNumber]) || !$items[$this->SelectedItemNumber]->Selectable())
+        {
+            $this->__checkcurrentitem(false);
+        }
+
         return $this->SelectedItemNumber;
     }
 
@@ -739,7 +746,6 @@ class MenuBox extends ListBox
      */
     public function __checkcurrentitem(bool $changeIndex) : void
     {
-        $this->preventCheckingItems = true;
         $items = $this->GetSortedItems();
         if (!isset($items[$this->SelectedItemNumber]) || !$items[$this->SelectedItemNumber] instanceof MenuBoxItem || $items[$this->SelectedItemNumber]->GetMenuBox() !== $this || !$items[$this->SelectedItemNumber]->Selectable())
         {
