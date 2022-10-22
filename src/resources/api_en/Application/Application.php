@@ -115,4 +115,12 @@ final class Application
      */
     public static function ParseArguments(array $args, string $propertyNameDelimiter, bool $skipFirstElement = true) : array
     {}
+    
+    /**
+     * Returns a size of window as array with "columns" and "rows" keys
+     *
+     * @return array{columns: int, rows: int}
+     */
+    public static function GetWindowSize() : array
+    {}
 }

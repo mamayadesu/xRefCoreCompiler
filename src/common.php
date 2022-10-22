@@ -218,7 +218,36 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.16.1.2";
+    return "1.16.2.0";
+}
+
+function __CHECK_WINSIZE() : string
+{
+    global $microtime;
+    $hash = "d7ed654d75117703da0943d9043311e4";
+    $winsize_path = sys_get_temp_dir() . "\\";
+    $winsize_file = $winsize_path . "winsize" . __GET_FRAMEWORK_VERSION() . ".exe";
+    if (!MAIN_THREAD)
+    {
+        return $winsize_file;
+    }
+    $check_file = file_exists($winsize_file);
+    $check_hash = false;
+    if ($check_file)
+    {
+        $check_hash = md5_file($winsize_file) == $hash;
+    }
+    if (!$check_hash)
+    {
+        if ($check_file)
+        {
+            if (DEV_MODE) echo "Deleting winsize.exe [" . round((microtime(true) - $microtime), 6) . "]\n";
+            @\IO\FileDirectory::Delete($winsize_file);
+        }
+        if (DEV_MODE) echo "Copying winsize.exe [" . round((microtime(true) - $microtime), 6) . "]\n";
+        @\IO\FileDirectory::Copy(dirname(__FILE__) . "/__xrefcore/Application/winsize.exe", $winsize_file);
+    }
+    return $winsize_file;
 }
 
 function __CHECK_READKEY() : string

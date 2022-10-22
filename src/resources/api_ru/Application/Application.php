@@ -115,4 +115,12 @@ final class Application
      */
     public static function ParseArguments(array $args, string $propertyNameDelimiter, bool $skipFirstElement = true) : array
     {}
+    
+    /**
+     * Возвращает размер окна консоли с ключами "columns" и "rows"
+     *
+     * @return array{columns: int, rows: int}
+     */
+    public static function GetWindowSize() : array
+    {}
 }

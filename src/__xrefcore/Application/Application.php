@@ -7,6 +7,53 @@ use IO\FileDirectory;
 
 final class Application
 {
+    /**
+     * @ignore
+     */
+    private static int $win_winsize_pid = 0;
+
+    /**
+     * @ignore
+     */
+    private static int $win_winsize_port = 0;
+
+    /**
+     * @ignore
+     */
+    private static int $win_a2r_port = 0;
+
+    /**
+     * @ignore
+     */
+    private static $win_a2r_socket;
+
+    /**
+     * @ignore
+     */
+    private static function windows_run_winsize() : void
+    {
+        $exe = __CHECK_WINSIZE();
+
+        self::$win_a2r_socket = socket_create(AF_INET, SOCK_DGRAM, 0);
+        do
+        {
+            self::$win_a2r_port = rand(5000, 49151);
+        }
+        while (!@socket_bind(self::$win_a2r_socket, "127.0.0.1", self::$win_a2r_port));
+        $check = socket_create(AF_INET, SOCK_DGRAM, 0);
+        do
+        {
+            self::$win_winsize_port = rand(5000, 49151);
+        }
+        while (!@socket_bind($check, "127.0.0.1", self::$win_winsize_port));
+        socket_close($check);
+        $cmd = "start /B /I " . $exe . " " . self::$win_a2r_port . " " . self::$win_winsize_port . " 1>&2";
+        $proc = proc_open($cmd, [], $pipes);
+        proc_close($proc);
+        socket_recvfrom(self::$win_a2r_socket, $buf, 16, 0, $remote_ip, $remote_port);
+        self::$win_winsize_pid = intval($buf);
+        time_nanosleep(0, 5000000);
+    }
 
     /**
      * Returns required PHP version
@@ -233,5 +280,63 @@ final class Application
             $result["uninitialized_keys"][] = $currentPropertyName;
         }
         return $result;
+    }
+
+    /**
+     * Returns a size of window as array with "columns" and "rows" keys
+     *
+     * @return array{columns: int, rows: int}
+     */
+    public static function GetWindowSize() : array
+    {
+        $result = [
+            "columns" => 0,
+            "rows" => 0
+        ];
+
+        if (!IS_WINDOWS)
+        {
+            exec("tput cols; tput lines", $output);
+        }
+        else
+        {
+            $output = self::windows_winsize();
+        }
+        if (count($output) < 2)
+            return $result;
+
+        $result["columns"] = intval($output[0]);
+        $result["rows"] = intval($output[1]);
+        return $result;
+    }
+
+    /**
+     * @ignore
+     */
+    public static function __windows_kill_winsize() : void
+    {
+        if (self::$win_winsize_pid != 0)
+            pclose(popen("taskkill /F /PID " . self::$win_winsize_pid, "r"));
+    }
+
+    /**
+     * @ignore
+     */
+    private static function windows_winsize() : ?array
+    {
+        if (self::$win_winsize_pid == 0 || self::$win_winsize_port == 0)
+            self::windows_run_winsize();
+
+        $data = self::$win_a2r_port . " 1";
+
+        socket_sendto(self::$win_a2r_socket, $data, strlen($data), 0, "127.0.0.1", self::$win_winsize_port);
+        $r = @socket_recvfrom(self::$win_a2r_socket, $buf, 8192, 0, $remote_ip, $remote_port);
+        if ($r === false)
+            return ["-1", "-1"];
+        if (!$buf)
+        {
+            return ["-2", "-2"];
+        }
+        return explode("\n", $buf);
     }
 }

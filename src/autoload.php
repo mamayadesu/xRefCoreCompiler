@@ -127,6 +127,7 @@ function __onshutdown()
     }
 
     \IO\Console::__windows_kill_reader();
+    \Application\Application::__windows_kill_winsize();
 }
 
 function __onsignal(int $signal, $siginfo = null) : void
