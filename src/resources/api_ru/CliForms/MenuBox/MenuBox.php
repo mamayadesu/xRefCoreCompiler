@@ -275,6 +275,16 @@ class MenuBox extends ListBox
      */
     public function GetElementById(string $id) : ?MenuBoxControl
     {}
+    
+    /**
+     * Возвращает список элементов с указанным типом
+     *
+     * @param string $className Полный путь к классу. Для упрощения, в качестве параметра можете указать, например `Checkbox::class` или `Label::class`
+     * @return array<MenuBoxControl>
+     * @throws MenuBoxDisposedException
+     */
+    public function GetElementsByType(string $className) : array
+    {}
 
     /**
      * Возвращает ваш $this, который вы передали в конструкторе

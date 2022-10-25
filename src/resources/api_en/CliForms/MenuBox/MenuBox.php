@@ -274,6 +274,16 @@ class MenuBox extends ListBox
      */
     public function GetElementById(string $id) : ?MenuBoxControl
     {}
+    
+    /**
+     * Returns a list of element of specified type
+     *
+     * @param string $className Full path to class. To simplify, you can pass `Checkbox::class` or `Label::class`
+     * @return array<MenuBoxControl>
+     * @throws MenuBoxDisposedException
+     */
+    public function GetElementsByType(string $className) : array
+    {}
 
     /**
      * Returns your object which you passed in constructor

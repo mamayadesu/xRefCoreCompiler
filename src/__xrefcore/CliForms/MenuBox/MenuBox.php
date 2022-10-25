@@ -959,6 +959,38 @@ class MenuBox extends ListBox
     }
 
     /**
+     * Returns a list of element of specified type
+     *
+     * @param string $className Full path to class. To simplify, you can pass `Checkbox::class` or `Label::class`
+     * @return array<MenuBoxControl>
+     * @throws MenuBoxDisposedException
+     */
+    public function GetElementsByType(string $className) : array
+    {
+        if ($this->DISPOSED)
+        {
+            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+            $e->__xrefcoreexception = true;
+            throw $e;
+        }
+
+        $result = [];
+
+        foreach ($this->GetSortedItems() as $item)
+        {
+            if
+            (
+                ($className == Radiobutton::class && $item instanceof Radiobutton) ||
+                ($className == Checkbox::class && $item instanceof Checkbox && !$item instanceof Radiobutton) ||
+                ($className == MenuBoxItem::class && $item instanceof MenuBoxItem && !$item instanceof Checkbox)
+            )
+                $result[] = $item;
+        }
+
+        return $result;
+    }
+
+    /**
      * Returns your object which you passed in constructor
      *
      * @return object|null
@@ -1554,6 +1586,7 @@ class MenuBox extends ListBox
                     $event = new KeyPressEvent();
                     $event->MenuBox = $this;
                     $event->Key = $pressedKey;
+                    $this->callbackExecuting = true;
                     $this->KeyPressEvent->call($this->mythis, $event);
                     $this->callbackExecuting = false;
                     if ($keyCheck) continue 2;

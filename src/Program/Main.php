@@ -17,8 +17,11 @@ class Main
     private array $appPropertyToName;
     private bool $debugMode = false;
 
+    public static Main $main;
+
     public function __construct(array $args)
     {
+        self::$main = $this;
         $pargs = Application::ParseArguments($args, "-");
         if (in_array("--configure", $args) || in_array("-c", $args))
         {
@@ -144,6 +147,7 @@ class Main
         sleep(1);
         $appJsonError = false;
         $a = "n";
+        $projectName = basename($projectDir);
         if (file_exists($projectDir . "app.json"))
         {
             if (!$skip)
@@ -158,7 +162,7 @@ class Main
                 if ($appJson == null)
                 {
                     Console::WriteLine("Invalid 'app.json'", ForegroundColors::RED);
-                    $appJson = $this->AppJson();
+                    $appJson = $this->AppJson($projectName);
                 }
                 else
                 {
@@ -173,8 +177,8 @@ class Main
                     if (count($notContainsProperties) > 0)
                     {
                         Console::WriteLine("Error! 'app.json' doesn't contain next fields: " . implode(', ', $notContainsProperties), ForegroundColors::RED);
-                        Console::WriteLine("Fill application data manually.\n");
-                        $appJson = $this->AppJson();
+                        Console::WriteLine("Fill application config manually.\n");
+                        $appJson = $this->AppJson($projectName);
                     }
                 }
                 $appJsonString = json_encode($appJson, JSON_PRETTY_PRINT);
@@ -187,7 +191,7 @@ class Main
         if ($appJsonError || ($a != "y" && !$skip))
         {
             Console::WriteLine("");
-            $appJson = $this->AppJson();
+            $appJson = $this->AppJson($projectName);
             if (in_array("resources", $appJson["namespaces"]))
             {
                 Console::WriteLine("'resources' is reserved directory and cannot be a namespace! Compilation halted.", ForegroundColors::RED);
@@ -417,8 +421,8 @@ class Main
     {
         $this->appPropertyToName = array
         (
-            "php_version" => "PHP-version",
-            "app_name" => "Application name",
+            "php_version" => "PHP-version (leave blank and press ENTER to set " . phpversion() . ")",
+            "app_name" => "Application name (leave blank to set %s0)",
             "app_version" => "Version",
             "app_author" => "Author",
             "app_description" => "Description",
@@ -471,7 +475,7 @@ class Main
         return $projectDir;
     }
 
-    public function AppJson() : array
+    public function AppJson(string $proj_name) : array
     {
         $a = "";
         $appJson = array();
@@ -485,17 +489,23 @@ class Main
                 }
                 $a = "";
                 Console::WriteLine($title . ":");
-                Console::WriteLine("Input value on each line. Leave the last line empty to stop");
+                Console::WriteLine("Input value on each line. Leave the last line empty to stop. If you don't want to input anything, just press ENTER.");
                 while (true)
                 {
                     $a = Console::ReadLine();
+                    $sa = strtolower($a);
                     if ($a == "")
                     {
                         break;
                     }
-                    if ($a == "Program")
+                    if ($sa == "Program")
                     {
-                        Console::WriteLine("Do not put 'Program', because it is a default namespace.", ForegroundColors::YELLOW);
+                        Console::WriteLine("Do not input 'Program', because it is a default namespace.", ForegroundColors::YELLOW);
+                        continue;
+                    }
+                    if ($sa == "resource")
+                    {
+                        Console::WriteLine("'resource' is reserved directory for application resources and cannot be a namespace.", ForegroundColors::RED);
                         continue;
                     }
                     if (strpos("\\", $a) !== false || strpos("/", $a) !== false)
@@ -503,16 +513,38 @@ class Main
                         Console::WriteLine("Input ONLY roots of namespaces.", ForegroundColors::RED);
                         continue;
                     }
+                    if (!preg_match("/^([a-zA-Z_]{1}[a-zA-Z_0-9]+|[a-zA-Z_]{1})+$/", $a))
+                    {
+                        Console::WriteLine("Invalid namespace name.", ForegroundColors::RED);
+                        continue;
+                    }
                     $appJson[$propRealName][] = $a;
                 }
             }
             else
             {
+                if ($propRealName == "app_name")
+                {
+                    $title = str_replace("%s0", $proj_name, $title);
+                }
                 $a = "";
                 while ($a == "")
                 {
                     Console::Write($title . ": ");
                     $a = Console::ReadLine();
+                    if ($propRealName == "php_version" && version_compare("7.4", $a, '<'))
+                    {
+                        Console::WriteLine("xRefCore supports PHP 7.4 or above! Please, set a valid PHP-version.", ForegroundColors::RED);
+                        continue;
+                    }
+                    if ($propRealName == "php_version" && $a == "")
+                    {
+                        $a = phpversion();
+                    }
+                    if ($propRealName == "app_name" && $a == "")
+                    {
+                        $a = $proj_name;
+                    }
                     $appJson[$propRealName] = $a;
                     if ($propRealName == "app_description")
                     {

@@ -78,4 +78,74 @@ class Console
      */
     public static function ClearWindow(string $replacement = "") : void
     {}
+    
+    /**
+     * Moves the cursor up
+     *
+     * @param int $rows Count of rows to up
+     * @return void
+     */
+    public static function MoveCursorUp(int $rows = 1) : void
+    {}
+
+    /**
+     * Moves the cursor down
+     *
+     * @param int $rows Count of rows to down
+     * @return void
+     */
+    public static function MoveCursorDown(int $rows = 1) : void
+    {}
+
+    /**
+     * Moves the cursor left
+     *
+     * @param int $columns Count of columns to move
+     * @return void
+     */
+    public static function MoveCursorLeft(int $columns = 1) : void
+    {}
+
+    /**
+     * Moves the cursor right
+     *
+     * @param int $columns Count of columns to move
+     * @return void
+     */
+    public static function MoveCursorRight(int $columns = 1) : void
+    {}
+
+    /**
+     * Moves the cursor to next line
+     *
+     * @param int $lines
+     * @return void
+     */
+    public static function MoveCursorToNextLine(int $lines = 1) : void
+    {}
+
+    /**
+     * Moves the cursor to previous line
+     *
+     * @param int $lines
+     * @return void
+     */
+    public static function MoveCursorToPreviousLine(int $lines = 1) : void
+    {}
+
+    /**
+     * Hides the cursor
+     *
+     * @return void
+     */
+    public static function HideCursor() : void
+    {}
+
+    /**
+     * Shows the cursor
+     *
+     * @return void
+     */
+    public static function ShowCursor() : void
+    {}
 }

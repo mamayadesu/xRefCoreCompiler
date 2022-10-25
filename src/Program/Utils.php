@@ -78,6 +78,27 @@ class Utils
             fclose($f);
         }
         Console::WriteLine("Done! IMPORTANT: Execute " . ColoredString::Get("cd " . $proj_name, ForegroundColors::YELLOW) . " to moving to your project code.\nUse " . ColoredString::Get("xrefcore-compiler", ForegroundColors::YELLOW) . ColoredString::Get(" --build", ForegroundColors::BROWN) . " to compile application.");
+
+        $pathToCfg = getcwd() . DIRECTORY_SEPARATOR . $proj_name . DIRECTORY_SEPARATOR . "app.json";
+
+        if (file_exists($pathToCfg))
+        {
+            return;
+        }
+
+        Console::Write("Do you want to setup application config right now? Input ", ForegroundColors::BLUE); Console::Write("y", ForegroundColors::YELLOW); Console::Write(" (yes) ", ForegroundColors::DARK_GRAY); Console::Write("and press ENTER to start setup or just press ENTER to skip: ", ForegroundColors::BLUE);
+        $q = Console::ReadLine();
+        if (strtolower($q) == "y")
+        {
+            Main::$main->InitAppPropertyToName();
+            $config = Main::$main->AppJson($proj_name);
+
+            $json = json_encode($config, JSON_PRETTY_PRINT);
+            $f = fopen($pathToCfg, "w+");
+            fwrite($f, $json);
+            fclose($f);
+            Console::WriteLine("Done! Config saved as " . $pathToCfg, ForegroundColors::GREEN);
+        }
     }
 
     public static function Version() : void

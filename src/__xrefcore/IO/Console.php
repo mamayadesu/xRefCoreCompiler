@@ -472,4 +472,108 @@ class Console
         else system("clear");
         echo $replacement;
     }
+
+    /**
+     * Moves the cursor up
+     *
+     * @param int $rows Count of rows to up
+     * @return void
+     */
+    public static function MoveCursorUp(int $rows = 1) : void
+    {
+        if ($rows < 1)
+            return;
+
+        echo "\033[" . $rows . "A";
+    }
+
+    /**
+     * Moves the cursor down
+     *
+     * @param int $rows Count of rows to down
+     * @return void
+     */
+    public static function MoveCursorDown(int $rows = 1) : void
+    {
+        if ($rows < 1)
+            return;
+
+        echo "\033[" . $rows . "B";
+    }
+
+    /**
+     * Moves the cursor left
+     *
+     * @param int $columns Count of columns to move
+     * @return void
+     */
+    public static function MoveCursorLeft(int $columns = 1) : void
+    {
+        if ($columns < 1)
+            return;
+
+        echo "\033[" . $columns . "D";
+    }
+
+    /**
+     * Moves the cursor right
+     *
+     * @param int $columns Count of columns to move
+     * @return void
+     */
+    public static function MoveCursorRight(int $columns = 1) : void
+    {
+        if ($columns < 1)
+            return;
+
+        echo "\033[" . $columns . "C";
+    }
+
+    /**
+     * Moves the cursor to next line
+     *
+     * @param int $lines
+     * @return void
+     */
+    public static function MoveCursorToNextLine(int $lines = 1) : void
+    {
+        if ($lines < 1)
+            return;
+
+        echo "\033[" . $lines . "E";
+    }
+
+    /**
+     * Moves the cursor to previous line
+     *
+     * @param int $lines
+     * @return void
+     */
+    public static function MoveCursorToPreviousLine(int $lines = 1) : void
+    {
+        if ($lines < 1)
+            return;
+
+        echo "\033[" . $lines . "F";
+    }
+
+    /**
+     * Hides the cursor
+     *
+     * @return void
+     */
+    public static function HideCursor() : void
+    {
+        echo "\033[?25l";
+    }
+
+    /**
+     * Shows the cursor
+     *
+     * @return void
+     */
+    public static function ShowCursor() : void
+    {
+        echo "\033[?25h";
+    }
 }

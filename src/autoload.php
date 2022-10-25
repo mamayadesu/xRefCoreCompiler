@@ -29,11 +29,6 @@ if (DEV_MODE) echo "Initializing... [" . round((microtime(true) - $microtime), 6
 
 require_once "common.php";
 
-if (IS_WINDOWS && !function_exists("readline"))
-{
-    die("Readline not found");
-}
-
 if (DEV_MODE) echo "Checking PHP-version [" . round((microtime(true) - $microtime), 6) . "]\n";
 if (version_compare(phpversion(), $_APP["php_version"], '<'))
 {

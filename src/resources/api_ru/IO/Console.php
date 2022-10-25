@@ -78,4 +78,74 @@ class Console
      */
     public static function ClearWindow(string $replacement = "") : void
     {}
+    
+    /**
+     * Перемещает курсор вверх
+     *
+     * @param int $rows Количество строк для перемещения вверх
+     * @return void
+     */
+    public static function MoveCursorUp(int $rows = 1) : void
+    {}
+
+    /**
+     * Перемещает курсор вниз
+     *
+     * @param int $rows Количество строк для перемещения вниз
+     * @return void
+     */
+    public static function MoveCursorDown(int $rows = 1) : void
+    {}
+
+    /**
+     * Перемещает курсор влево
+     *
+     * @param int $columns Количество строк для перемещения влево
+     * @return void
+     */
+    public static function MoveCursorLeft(int $columns = 1) : void
+    {}
+
+    /**
+     * Перемещает курсор вправо
+     *
+     * @param int $columns Количество строк для перемещения вправо
+     * @return void
+     */
+    public static function MoveCursorRight(int $columns = 1) : void
+    {}
+
+    /**
+     * Перемещает курсор для перемещения на следующую строку
+     *
+     * @param int $lines
+     * @return void
+     */
+    public static function MoveCursorToNextLine(int $lines = 1) : void
+    {}
+
+    /**
+     * Перемещает курсор на предыдущую строку
+     *
+     * @param int $lines
+     * @return void
+     */
+    public static function MoveCursorToPreviousLine(int $lines = 1) : void
+    {}
+
+    /**
+     * Скрывает курсор
+     *
+     * @return void
+     */
+    public static function HideCursor() : void
+    {}
+
+    /**
+     * Показывает курсор
+     *
+     * @return void
+     */
+    public static function ShowCursor() : void
+    {}
 }
