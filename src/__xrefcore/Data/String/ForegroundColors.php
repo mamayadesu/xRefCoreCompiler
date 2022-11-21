@@ -28,4 +28,7 @@ class ForegroundColors extends Enum
     const YELLOW = "1;33";
     const GRAY = "0;37";
     const WHITE = "1;37";
+    const BOLD = "1;1";
+    const UNDERLINE = "1;4";
+    const REVERSED = "1;7";
 }

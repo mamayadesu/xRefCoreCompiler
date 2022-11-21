@@ -5,7 +5,7 @@ namespace Data\String;
 use \Data\Enum;
 
 /**
- * Contains foreground color codes for CLI
+ * Содержит набор цветов для текста в CLI
  */
 
 class ForegroundColors extends Enum
@@ -27,4 +27,7 @@ class ForegroundColors extends Enum
     const YELLOW = "1;33";
     const GRAY = "0;37";
     const WHITE = "1;37";
+    const BOLD = "1;1";
+    const UNDERLINE = "1;4";
+    const REVERSED = "1;7";
 }

@@ -3,10 +3,9 @@
 namespace Data\String;
 
 /**
- * Превращает вашу строку в цветную
+ * Укороченный алиас для класса `ColoredString`
  */
-
-class ColoredString
+class Cs
 {
     /**
      * @param string $str Строка
@@ -14,6 +13,6 @@ class ColoredString
      * @param BackgroundColors $backgroundColor
      * @return string Цветная строка
      */
-    public static function Get(string $str, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : string
+    public static function g(string $str, string $foregroundColor = ForegroundColors::AUTO, string $backgroundColor = BackgroundColors::AUTO) : string
     {}
 }

@@ -5,7 +5,7 @@ namespace Data\String;
 use \Data\Enum;
 
 /**
- * Contains background color codes for CLI
+ * Содержит цветовые коды фона для CLI
  */
 
 class BackgroundColors extends Enum

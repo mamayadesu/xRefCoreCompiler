@@ -31,6 +31,11 @@ final class Response
     /**
      * @ignore
      */
+    private bool $aborted = false;
+
+    /**
+     * @ignore
+     */
 
     private bool $headersPrinted = false;
 
@@ -178,6 +183,27 @@ final class Response
             return;
         }
         $this->status = $status;
+    }
+
+    /**
+     * Returns TRUE if client aborted connection
+     *
+     * @return bool
+     */
+    public function IsConnectionAborted() : bool
+    {
+        if ($this->closed)
+        {
+            return $this->aborted;
+        }
+        $aborted = feof($this->connect);
+        if ($aborted)
+        {
+            @fclose($this->connect);
+            $this->closed = true;
+            $this->aborted = true;
+        }
+        return $this->aborted;
     }
 
     /**

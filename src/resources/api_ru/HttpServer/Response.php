@@ -45,6 +45,14 @@ final class Response
     {}
 
     /**
+     * Возвращает TRUE, если клиент оборвал соединение с сервером
+     *
+     * @return bool
+     */
+    public function IsConnectionAborted() : bool
+    {}
+
+    /**
      * Возвращает TRUE, если соединение закрыто сервером
      *
      * @return bool

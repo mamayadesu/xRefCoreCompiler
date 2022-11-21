@@ -3,6 +3,7 @@ declare(ticks = 1);
 
 namespace HttpServer;
 
+use Application\Application;
 use HttpServer\Exceptions\ServerStartException;
 use HttpServer\Exceptions\UnknownEventException;
 use Scheduler\AsyncTask;
@@ -66,7 +67,7 @@ final class Server
         $this->port = $port;
         $this->On("start", function (Server $server) : void { });
         $this->On("shutdown", function (Server $server) : void { });
-        $this->On("request", function (Request $request, Response $response) : void { });
+        $this->On("request", [$this, "OnRequest"]);
         $this->On("throwable", [$this, "OnThrowable"]);
     }
 
@@ -111,6 +112,23 @@ final class Server
         catch (Throwable $e)
         {
         }
+    }
+
+    private function OnRequest(Request $request, Response $response) : void
+    {
+        $appName = basename(Application::GetExecutableFileName());
+        $result = <<<HTML
+<html>
+    <head>
+        <title>xRefCore HTTP-server</title>
+    </head>
+    <body>
+        <h1>It works!</h1>
+        <p>Your application <b>$appName</b> is using xRefCore HTTP-server. This is a default page, so you should register a request event.</p>
+    </body>
+</html>
+HTML;
+        $response->End($result);
     }
 
     /**

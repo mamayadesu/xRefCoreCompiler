@@ -3,7 +3,7 @@
 namespace Data\String;
 
 /**
- * Short aliases for ForegroundColors
+ * Укороченные алиасы для ForegroundColors
  */
 
 class Fg
@@ -24,4 +24,7 @@ class Fg
     public const y = ForegroundColors::YELLOW;
     public const g = ForegroundColors::GRAY;
     public const w = ForegroundColors::WHITE;
+    public const bd = ForegroundColors::BOLD;
+    public const ul = ForegroundColors::UNDERLINE;
+    public const rv = ForegroundColors::REVERSED;
 }

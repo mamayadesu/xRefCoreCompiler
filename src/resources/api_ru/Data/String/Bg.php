@@ -3,7 +3,7 @@
 namespace Data\String;
 
 /**
- * Short aliases for BackgroundColors
+ * Укороченные алиасы для BackgroundColors
  */
 
 class Bg
