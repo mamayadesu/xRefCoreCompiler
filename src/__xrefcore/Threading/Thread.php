@@ -430,7 +430,30 @@ abstract class Thread
         else
         {
             if (DEV_MODE) echo "[THREAD] Starting thread [" . round(microtime(true) - $microtime, 6) . "]\n";
-            $cmd .= " 1> /proc/" . $parentPid . "/fd/1 & 2> /proc/" . $parentPid . "/fd/2 &";
+
+
+            exec("printf '' > /proc/" . $parentPid . "/fd/1", $o, $t1);
+            if ($t1)
+            {
+                // It seems that parent process doesn't have an own stdout stream. Redirecting output to NULL
+                $cmd .= " 1> /dev/null";
+            }
+            else
+            {
+                $cmd .= " 1> /proc/" . $parentPid . "/fd/1";
+            }
+
+            exec("printf '' > /proc/" . $parentPid . "/fd/2", $o, $t2);
+            if ($t2)
+            {
+                // It seems that parent process doesn't have an own stderr stream. Redirecting output to NULL
+                $cmd .= " & 2> /dev/null &";
+            }
+            else
+            {
+                $cmd .= " & 2> /proc/" . $parentPid . "/fd/2 &";
+            }
+
             exec($cmd);
             if (DEV_MODE) echo "[THREAD] Started [" . round(microtime(true) - $microtime, 6) . "]\n";
         }
