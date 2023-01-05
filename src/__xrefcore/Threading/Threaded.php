@@ -296,11 +296,11 @@ final class Threaded
         }
         if (Thread::IsWindows())
         {
-            pclose(popen("taskkill /F /PID " . $this->child, "r"));
+            pclose(popen("taskkill /F /PID " . $this->child . " 2> NUL", "r"));
         }
         else
         {
-            exec("kill -9 " . $this->child);
+            exec("kill -9 " . $this->child . " 2> /dev/null");
         }
     }
 }

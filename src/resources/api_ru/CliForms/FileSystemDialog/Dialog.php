@@ -50,6 +50,14 @@ class Dialog
         $LangOverwriteConfirmation = "Файл %s0 уже существует. Сохранить его?";
 
     /**
+     * Возвращает объект MenuBox текущего запущенного диалогового окна. Если диалоговое окно не запущено, метод вернёт NULL
+     *
+     * @return MenuBox|null
+     */
+    public static function GetMenuBox() : ?MenuBox
+    {}
+
+    /**
      * Запускает консольный файловый менеджер для открытия файла
      *
      * @param string|null $defaultPath Файловый менеджер запустится с этой папки или домашнего каталога пользователя

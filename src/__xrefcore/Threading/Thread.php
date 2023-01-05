@@ -533,13 +533,30 @@ abstract class Thread
         $descriptor = "";
         $query = $remote_ip = "";
         $remote_port = -1;
+        $superwait = false;
         do
         {
             if (!$wait)
                 socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 1000));
+
+            if (!MAIN_THREAD && !Thread::IsWindows())
+            {
+                socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 1, "usec" => 0));
+                $superwait = true;
+            }
+            if ($superwait && !file_exists("/proc/" . self::$parentThreadPid))
+            {
+                exit;
+            }
             $result = @socket_recvfrom($sock, $buffer, self::BYTES_IN_PACKET + 1, 0, $remote_ip, $remote_port);
             if (!$result)
+            {
+                if ($superwait)
+                {
+                    continue;
+                }
                 return false;
+            }
             $query .= substr($buffer, 0, -1);
             $descriptor = substr($buffer, -1);
             $wait = true;

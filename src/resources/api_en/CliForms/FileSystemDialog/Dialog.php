@@ -50,6 +50,14 @@ class Dialog
         $LangOverwriteConfirmation = "Do you really want to overwrite file %s0?";
 
     /**
+     * Returns a MenuBox's object of current running Dialog. If Dialog is not running, this method will return NULL
+     *
+     * @return MenuBox|null
+     */
+    public static function GetMenuBox() : ?MenuBox
+    {}
+
+    /**
      * Launches CLI file manager to select file to open
      *
      * @param string|null $defaultPath File manager will start from this directory or from user's home path

@@ -218,7 +218,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.16.4.1";
+    return "1.16.5.0";
 }
 
 function __CHECK_WINSIZE() : string
@@ -388,8 +388,6 @@ function __tick_function() : void
         call_user_func($tickFunc);
     }
 }
-
-register_tick_function("__tick_function");
 
 if (MAIN_THREAD)
 {

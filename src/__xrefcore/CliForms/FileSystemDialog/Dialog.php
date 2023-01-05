@@ -77,6 +77,16 @@ class Dialog
     private static ?string $result = null;
 
     /**
+     * Returns a MenuBox's object of current running Dialog. If Dialog is not running, this method will return NULL
+     *
+     * @return MenuBox|null
+     */
+    public static function GetMenuBox() : ?MenuBox
+    {
+        return self::$menu;
+    }
+
+    /**
      * Launches CLI file manager to select file to open
      *
      * @param string|null $defaultPath File manager will start from this directory or from user's home path

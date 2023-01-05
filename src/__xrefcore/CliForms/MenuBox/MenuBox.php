@@ -25,7 +25,7 @@ use Data\String\ForegroundColors;
 use IO\Console;
 
 /**
- * Creation of pseudo-GUI with elements such as buttons, radiobuttons, checkboxes and some others.
+ * Creation of an interactive pseudo-GUI menu with elements such as buttons, radio buttons, checkboxes and some others
  */
 
 class MenuBox extends ListBox
@@ -104,7 +104,14 @@ class MenuBox extends ListBox
     /**
      * @ignore
      */
-    private bool $DISPOSED = false, $closeMenu = true, $preventOffsetChangedEvent = false, $preventSelectedChangedEvent = false, $superPreventRefresh = false, $preventRefresh = false, $refreshCalled = false, $callbackExecuting = false;
+    private bool $DISPOSED = false,
+        $closeMenu = true,
+        $preventOffsetChangedEvent = false,
+        $preventSelectedChangedEvent = false,
+        $superPreventRefresh = false,
+        $preventRefresh = false,
+        $refreshCalled = false,
+        $callbackExecuting = false;
 
     /**
      * @ignore
@@ -430,6 +437,7 @@ class MenuBox extends ListBox
         }
         $item->__setattached($this, $this->closeMenu);
         $this->items[] = $item;
+        $this->items = array_values($this->items);
         $this->setcachestoupdate();
         if (!$this->closeMenu)
             $this->Refresh();
@@ -900,6 +908,28 @@ class MenuBox extends ListBox
         }
 
         $copiedArray = $this->items;
+
+        // Case where all items have the same ordering
+        $same_ordering = true;
+        $ordering = null;
+        foreach ($this->items as $item)
+        {if(!$item instanceof MenuBoxControl)continue;
+            if ($ordering === null)
+            {
+                $ordering = $item->Ordering();
+            }
+            else if ($ordering != $item->Ordering())
+            {
+                $same_ordering = false;
+                break;
+            }
+        }
+        if ($same_ordering)
+        {
+            $this->sortedCache = array_values(array_merge([$this->zeroItem], $this->items));
+            $this->__updatesortedcache = false;
+            return $this->sortedCache;
+        }
 
         foreach ($this->items as $item)
         {if(!$item instanceof MenuBoxControl)continue;

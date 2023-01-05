@@ -23,7 +23,7 @@ final class SchedulerMaster
     /**
      * @ignore
      */
-    private bool $HasAtLeastOneTask = false;
+    private bool $HasAtLeastOneTask = false, $GlobalFunctionRegistered = false;
 
     /**
      * @ignore
@@ -49,6 +49,11 @@ final class SchedulerMaster
         {
             $this->HasAtLeastOneTask = true;
             $GLOBALS["system.tick_functions"]["schedulermaster"] = [$this, "Handle"];
+            if (!$this->GlobalFunctionRegistered)
+            {
+                $this->GlobalFunctionRegistered = true;
+                register_tick_function("__tick_function");
+            }
         }
     }
 

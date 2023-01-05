@@ -20,6 +20,11 @@ final class Server
     public int $DataReadTimeout = 5;
 
     /**
+     * @var int The max length of request. If this length exceeded, the request will be closed immediately. Set -1 for no limit (on current version may work incorrectly).
+     */
+    public int $MaxRequestLength = 8192;
+
+    /**
      * Server constructor.
      * @param string $address Listening IP-address. Pass "0.0.0.0" to use all available interfaces
      * @param int $port Port

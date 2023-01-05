@@ -57,6 +57,11 @@ final class Server
     public int $DataReadTimeout = 5;
 
     /**
+     * @var int The max length of request. If this length exceeded, the request will be closed immediately. Set -1 for no limit (on current version may work incorrectly).
+     */
+    public int $MaxRequestLength = 8192;
+
+    /**
      * Server constructor.
      * @param string $address Listening IP-address
      * @param int $port Port
@@ -173,7 +178,7 @@ HTML;
      */
     private function Handle() : void
     {
-        while ($this->socket != null && $connect = @stream_socket_accept($this->socket, 0))
+        while ($this->socket != null && $connect = @stream_socket_accept($this->socket, (isset($GLOBALS["system.tick_functions"]["schedulermaster"]) ? 0 : -1)))
         {
             $requestDump = "";
             $responseDump = "";
@@ -253,12 +258,44 @@ HTML;
                 }
                 $requestDump .= $headerName . ": " . $headerValue . "\n";
             }
-            $body = "";
-            if (isset($parsedHeaders["Content-Length"]) && intval($parsedHeaders["Content-Length"]) > 0)
+            $response = new Response($connect);
+            $this->responses[] = $response;
+
+            $response->Header("Content-Type", "text/html");
+            $response->Header("Connection", "close");
+            $contentLength = 0;
+            if (isset($parsedHeaders["Content-Length"]))
             {
-                if (DEV_MODE) echo "[HttpServer] Reading content. Length " . intval($parsedHeaders["Content-Length"]) . "\n";
                 $contentLength = intval($parsedHeaders["Content-Length"]);
-                $body = fread($connect, intval($parsedHeaders["Content-Length"]));
+            }
+
+            $body = "";
+
+            if ($this->MaxRequestLength > -1 && $contentLength > $this->MaxRequestLength)
+            {
+                $response->Status(413);
+                $response->End("<h1>413 Payload Too Large</h1>");
+                if (DEV_MODE) echo "[HttpServer] Content length is " . $contentLength . " but max length is " . $this->MaxRequestLength . "\n";
+                continue;
+            }
+
+            $contentLengthLeft = $contentLength;
+            if ($contentLength > 0)
+            {
+                if (DEV_MODE) echo "[HttpServer] Reading content. Length " . $contentLength . "\n";
+                while (true)
+                {
+                    if ($contentLengthLeft > 8192)
+                    {
+                        $body .= fread($connect, 8192);
+                        $contentLengthLeft -= 8192;
+                    }
+                    else
+                    {
+                        $body .= fread($connect, $contentLengthLeft);
+                        break;
+                    }
+                }
             }
             $meta = stream_get_meta_data($connect);
             if ($meta["timed_out"])
@@ -273,6 +310,16 @@ HTML;
             }
             //$body = urldecode($body);
             $requestDump .= $body;
+            if (DEV_MODE)
+            {
+                $http_server_dumps_path = Application::GetExecutableDirectory() . "http_server_dumps" . DIRECTORY_SEPARATOR;
+                @mkdir($http_server_dumps_path);
+                $http_server_dump = "dump-" . date("Y-m-d=H-i-s", time()) . "-" . microtime(true) . ".txt";
+                $f = fopen($http_server_dumps_path . $http_server_dump, "w+");
+                fwrite($f, $requestDump);
+                fclose($f);
+                echo "[HttpServer] Dump saved as " . $http_server_dump . "\n";
+            }
             $request = new Request($headers, $body, $name);
             $request->ServerPort = $this->port;
             $request->Headers = $parsedHeaders;
@@ -294,8 +341,6 @@ HTML;
             {
                 parse_str($body, $request->Post);
             }
-            $response = new Response($connect);
-            $this->responses[] = $response;
             if ($request->RequestError)
             {
                 if (DEV_MODE) echo "[HttpServer] Request Error\n";
@@ -309,8 +354,6 @@ HTML;
                 $response->End("<h1>405 Method Not Allowed</h1>");
                 continue;
             }
-            $response->Header("Content-Type", "text/html");
-            $response->Header("Connection", "close");
 
             try
             {

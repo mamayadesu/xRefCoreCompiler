@@ -9,9 +9,11 @@ use Scheduler\Exceptions\InvalidNewExecutionTimeException;
 use Throwable;
 
 /**
- * Creates an asynchronous task
+ * Creates an asynchronous task and adds it to the queue.
+ * Asynchronous tasks in xRefCore are tick-based and run on the same thread as the rest of the application.
+ * This implementation of asynchronous tasks is designed to execute some lightweight code at a specified interval.
  *
- * Important note! There is maybe a small bug in PHP. If your asynchronous task doesn't work correctly, try to add "declare(ticks = 1);" right after "<?php"
+ * Note! If your asynchronous task doesn't work correctly, or it works in not whole application, try to add "declare(ticks = 1);" right after "<?php"
  */
 
 final class AsyncTask

@@ -36,7 +36,7 @@ require_once $pathToPharContent . "common.php";
 
 including($pathToPharContent . "__xrefcore");
 
-@cli_set_process_title(\Application\Application::GetName() . " : " . $garecport);
+@cli_set_process_title(\Application\Application::GetName());
 
 if (!\Threading\Thread::SendLongQuery($sock, $json, \Threading\Thread::ADDRESS, $port))
 {
