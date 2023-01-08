@@ -26,18 +26,7 @@ final class Response
     /**
      * @ignore
      */
-    private bool $closed = false;
-
-    /**
-     * @ignore
-     */
-    private bool $aborted = false;
-
-    /**
-     * @ignore
-     */
-
-    private bool $headersPrinted = false;
+    private bool $closed = false, $aborted = false, $headersPrinted = false;
 
     /**
      * @ignore
@@ -153,6 +142,7 @@ final class Response
      *
      * @param string $header
      * @param string $value
+     * @throws HeadersSentException
      */
     public function Header(string $header, string $value) : void
     {
@@ -169,6 +159,7 @@ final class Response
      * Sets HTTP-status
      *
      * @param int $status
+     * @throws HeadersSentException
      */
     public function Status(int $status) : void
     {

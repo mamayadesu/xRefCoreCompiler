@@ -46,8 +46,14 @@ final class Request
     /**
      * @ignore
      */
-    public function __construct(array $headers, string $rawcontent, string $name)
+    private Server $server;
+
+    /**
+     * @ignore
+     */
+    public function __construct(array $headers, string $rawcontent, string $name, Server $server)
     {
+        $this->server = $server;
         $name1 = explode(':', $name);
         $remote_addr = $name1[0];
         $remote_port = $name1[1];
@@ -88,5 +94,15 @@ final class Request
     public function GetRawContent() : string
     {
         return $this->rc;
+    }
+
+    /**
+     * Returns an HTTP-server object
+     *
+     * @return Server
+     */
+    public function GetServer() : Server
+    {
+        return $this->server;
     }
 }

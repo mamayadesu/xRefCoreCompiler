@@ -900,52 +900,29 @@ class MenuBox extends ListBox
             }
             return $result;
         }
-        /** @var array<int, ?MenuBoxControl> $result */$result = array();
-        $k = 1;
-        if ($includeZeroItem)
-        {
-            $result = array($this->zeroItem);
-        }
+        /** @var array<int, ?MenuBoxControl> $result */$result = array($this->zeroItem);
 
-        $copiedArray = $this->items;
-
-        // Case where all items have the same ordering
-        $same_ordering = true;
-        $ordering = null;
-        foreach ($this->items as $item)
-        {if(!$item instanceof MenuBoxControl)continue;
-            if ($ordering === null)
-            {
-                $ordering = $item->Ordering();
-            }
-            else if ($ordering != $item->Ordering())
-            {
-                $same_ordering = false;
-                break;
-            }
-        }
-        if ($same_ordering)
-        {
-            $this->sortedCache = array_values(array_merge([$this->zeroItem], $this->items));
-            $this->__updatesortedcache = false;
-            return $this->sortedCache;
-        }
+        $orderingArray = array();
 
         foreach ($this->items as $item)
-        {if(!$item instanceof MenuBoxControl)continue;
-            /** @var ?MenuBoxControl $maxItem */$maxItem = null;
-            $maxItemIndex = -1;
-            foreach ($copiedArray as $index => $copiedItem)
-            {if(!$copiedItem instanceof MenuBoxControl)continue;
-                if ($maxItem == null || $copiedItem->Ordering() < $maxItem->Ordering())
-                {
-                    $maxItem = $copiedItem;
-                    $maxItemIndex = $index;
-                }
+        {
+            if (!isset($orderingArray[$item->Ordering()]))
+            {
+                $orderingArray[$item->Ordering()] = [];
             }
-            array_splice($copiedArray, $maxItemIndex, 1);
-            $result[$k] = $maxItem;
-            $k++;
+            $orderingArray[$item->Ordering()][] = $item;
+        }
+
+        ksort($orderingArray);
+
+        foreach ($orderingArray as $order => $items)
+        {
+            $result = array_merge($result, $items);
+        }
+
+        if (!$includeZeroItem)
+        {
+            unset($result[0]);
         }
         $this->sortedCache = $result;
         $this->sortedCache[0] = $this->zeroItem;

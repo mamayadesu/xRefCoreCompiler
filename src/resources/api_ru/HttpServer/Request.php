@@ -44,4 +44,12 @@ final class Request
      */
     public function GetRawContent() : string
     {}
+
+    /**
+     * Возвращает объект HTTP-сервера
+     *
+     * @return Server
+     */
+    public function GetServer() : Server
+    {}
 }
