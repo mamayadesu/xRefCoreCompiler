@@ -112,4 +112,12 @@ final class AsyncTask
      */
     public function GetExecutedTimes() : int
     {}
+
+    /**
+     * Возвращает TRUE, если это одноразовая задача и она была выполнена (или отменена), или это многоразовая задача и она была отменена. В противном случае возвращает FALSE.
+     *
+     * @return bool
+     */
+    public function IsFinished() : bool
+    {}
 }

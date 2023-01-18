@@ -1,4 +1,5 @@
 <?php
+declare(ticks = 1);
 
 namespace Scheduler;
 
@@ -254,6 +255,21 @@ final class AsyncTask
     public function GetExecutedTimes() : int
     {
         return $this->ExecutedTimes;
+    }
+
+    /**
+     * Returns TRUE if it is one-off task and was executed, or it's reusable task and was cancelled. Otherwise, returns FALSE.
+     *
+     * @return bool
+     */
+    public function IsFinished() : bool
+    {
+        $runOnce = $this->RunOnce;
+        if (($runOnce && ($this->Executed || $this->Cancelled)) || (!$runOnce && $this->Cancelled))
+        {
+            return true;
+        }
+        return false;
     }
 
     /**

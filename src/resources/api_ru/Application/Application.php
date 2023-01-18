@@ -123,4 +123,13 @@ final class Application
      */
     public static function GetWindowSize() : array
     {}
+
+    /**
+     * Замораживает выполнение работы приложения. Является аналогом стандартных функций PHP sleep/usleep/time_nanosleep, однако также поддерживает работу асинхронных задач
+     *
+     * @param int $milliseconds Время в миллисекундах. Одна миллисекунда = 0.001 секунды, или одна секунда = 1000 миллисекунд
+     * @return void
+     */
+    public static function Wait(int $milliseconds) : void
+    {}
 }

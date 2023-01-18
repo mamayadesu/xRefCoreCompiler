@@ -339,4 +339,19 @@ final class Application
         }
         return explode("\n", $buf);
     }
+
+    /**
+     * Freezes application's execution. It is analog of sleep/usleep/time_nanosleep functions, but also supports asynchronous tasks.
+     *
+     * @param int $milliseconds Time in millisecond. One millisecond is 0.001 second, or one second is 1000 milliseconds
+     * @return void
+     */
+    public static function Wait(int $milliseconds) : void
+    {
+        $expires = microtime(true) + $milliseconds / 1000;
+        while ($expires > microtime(true))
+        {
+            usleep(1000);
+        }
+    }
 }

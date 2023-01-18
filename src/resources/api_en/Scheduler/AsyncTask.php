@@ -112,4 +112,12 @@ final class AsyncTask
      */
     public function GetExecutedTimes() : int
     {}
+
+    /**
+     * Returns TRUE if it is one-off task and was executed, or it's reusable task and was cancelled. Otherwise, returns FALSE.
+     *
+     * @return bool
+     */
+    public function IsFinished() : bool
+    {}
 }
