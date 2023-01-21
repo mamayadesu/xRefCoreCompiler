@@ -240,7 +240,7 @@ class Console
 
             $data = self::$win_a2r_port . " 1";
             socket_sendto(self::$win_a2r_socket, $data, strlen($data), 0, "127.0.0.1", self::$win_reader_port);
-            socket_set_option(self::$win_a2r_socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 5000));
+            socket_set_option(self::$win_a2r_socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 2000));
             do
             {
                 $r = @socket_recvfrom(self::$win_a2r_socket, $buf, 32, 0, $remote_ip, $remote_port);

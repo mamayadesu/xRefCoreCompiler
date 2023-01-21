@@ -29,7 +29,7 @@ final class Server
     /**
      * @ignore
      */
-    private int $port;
+    private int $port, $interval = 1;
 
     /**
      * @ignore
@@ -160,12 +160,12 @@ HTML;
         $interval = 2;
         if ($async)
         {
-            $this->asyncServer = new AsyncTask($this, $interval, false, function(AsyncTask $task, NoAsyncTaskParameters $params) : void { $this->Handle(); });
+            $this->asyncServer = new AsyncTask($this, $this->interval, false, function(AsyncTask $task, NoAsyncTaskParameters $params) : void { $this->Handle(true); });
         }
         else while (true)
         {
-            $this->Handle();
-            time_nanosleep(0, $interval * 1000000);
+            $this->Handle(false);
+            //time_nanosleep(0, $interval * 1000000);
             if ($this->shutdownWasCalled)
             {
                 return;
@@ -176,10 +176,28 @@ HTML;
     /**
      * @ignore
      */
-    private function Handle() : void
+    private function Handle(bool $async) : void
     {
-        while ($this->socket != null && $connect = @stream_socket_accept($this->socket, (isset($GLOBALS["system.tick_functions"]["schedulermaster"]) ? 0 : -1)))
+        while ($this->socket != null)
         {
+            if ($async)
+            {
+                $interval = 0;
+            }
+            else
+            {
+                if (isset($GLOBALS["system.tick_functions"]["schedulermaster"]))
+                {
+                    //$interval = $this->interval / 1000 / 2;
+                    $interval = 0.001;
+                }
+                else
+                {
+                    $interval = -1;
+                }
+            }
+            if (!($connect = @stream_socket_accept($this->socket, $interval)))
+                break;
             $requestDump = "";
             $responseDump = "";
             $headers = [];
