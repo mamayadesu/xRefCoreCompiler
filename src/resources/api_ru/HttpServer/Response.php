@@ -28,6 +28,11 @@ final class Response
     public static bool $IgnoreConnectionLost = true;
 
     /**
+     * @var int Устанавливает размер фрагментации пакета. 0 (ноль) для отключения фрагментации
+     */
+    public static int $PacketFragmentationSize = 65536;
+
+    /**
      * Добавляет заголовок ответа
      *
      * @param string $header

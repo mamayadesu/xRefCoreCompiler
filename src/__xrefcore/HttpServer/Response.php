@@ -115,6 +115,21 @@ final class Response
     );
 
     /**
+     * @ignore
+     *
+     * for debug
+     */
+    private string $dump = "";
+
+    /**
+     * @var resource
+     * @ignore
+     *
+     * for debug
+     */
+    private $f = null;
+
+    /**
      * @var bool Enables client non-block mode. It means that server won't wait when client will receive data. WARNING!!! USE THIS PARAMETER CAREFULLY! IT CAN MAKE SERVER BEHAVIOR NON-OBVIOUS OR UNPREDICTABLE! IF YOU WANT TO SEND A BIG DATA, SEND EVERY ~8KB
      */
     public bool $ClientNonBlockMode = false;
@@ -130,11 +145,36 @@ final class Response
     public static bool $IgnoreConnectionLost = true;
 
     /**
+     * @var int Sets a size of packet fragmentation. Set 0 for disable fragmentation
+     */
+    public static int $PacketFragmentationSize = 65536;
+
+    /**
      * @ignore
      */
     public function __construct($connect)
     {
         $this->connect = $connect;
+        //$this->start_debug();
+    }
+
+    private function start_debug() : void
+    {
+        $path_to_dir = \Application\Application::GetExecutableDirectory() . "xrefcore_http_srv_dumps" . DIRECTORY_SEPARATOR;
+        $path_to_file = $path_to_dir . "dump_" . date("Y-m-d_H.i.s_") . "_" . md5(microtime(true)) . ".txt";
+        @mkdir($path_to_dir);
+        @unlink($path_to_file);
+        $this->f = fopen($path_to_file, "w");
+    }
+
+    private function write_debug(string $text) : void
+    {
+        fwrite($this->f, $text);
+    }
+
+    private function stop_debug() : void
+    {
+        fclose($this->f);
     }
 
     /**
@@ -191,6 +231,7 @@ final class Response
         if ($aborted)
         {
             @fclose($this->connect);
+            //$this->stop_debug();
             $this->closed = true;
             $this->aborted = true;
         }
@@ -370,6 +411,7 @@ final class Response
         stream_set_blocking($this->connect, !$this->ClientNonBlockMode);
         $result = $this->send($message);
         @fclose($this->connect);
+        //$this->stop_debug();
         $this->closed = true;
         if ($result !== null && !self::$IgnoreConnectionLost)
         {
@@ -385,21 +427,49 @@ final class Response
      */
     private function send(string $message) : ?\ErrorException
     {
-        set_error_handler(function($errno, $errstr, $errfile, $errline) {
+        set_error_handler(function($errno, $errstr, $errfile, $errline) : void
+        {
             throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
         });
-        try
+        if (self::$PacketFragmentationSize > 0)
         {
-            fwrite($this->connect, $message);
-        }
-        catch (\ErrorException $e)
-        {
-            if ($e->getCode() == 8)
+            $part = "";
+            while (strlen($message) > 0)
             {
-                $this->closed = true;
+                $part = substr($message, 0, 65536);
+                $message = substr($message, 65536);
+                try
+                {
+                    fwrite($this->connect, $part);
+                    //$this->write_debug($part);
+                }
+                catch (\ErrorException $e)
+                {
+                    if ($e->getCode() == 8)
+                    {
+                        $this->closed = true;
+                    }
+                    restore_error_handler();
+                    return $e;
+                }
             }
-            restore_error_handler();
-            return $e;
+        }
+        else
+        {
+            try
+            {
+                fwrite($this->connect, $message);
+                //$this->write_debug($message);
+            }
+            catch (\ErrorException $e)
+            {
+                if ($e->getCode() == 8)
+                {
+                    $this->closed = true;
+                }
+                restore_error_handler();
+                return $e;
+            }
         }
         restore_error_handler();
         return null;

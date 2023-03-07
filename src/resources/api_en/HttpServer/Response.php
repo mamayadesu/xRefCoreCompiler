@@ -28,6 +28,11 @@ final class Response
     public static bool $IgnoreConnectionLost = true;
 
     /**
+     * @var int Sets a size of packet fragmentation. Set 0 for disable fragmentation
+     */
+    public static int $PacketFragmentationSize = 65536;
+
+    /**
      * Adds header for response
      *
      * @param string $header

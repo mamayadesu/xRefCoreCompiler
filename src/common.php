@@ -218,7 +218,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.16.7.1";
+    return "1.16.7.2";
 }
 
 function __CHECK_WINSIZE() : string
@@ -363,7 +363,12 @@ function __EXCEPTION_HANDLER(Throwable $e) : void
                 continue;
             }
         }
-        $err .= "    ...in " . (isset($row["file"]) ? $row["file"] : "{ANONYMOUS}") . " [" . $row["class"] . $row["type"] . $row["function"] . "(" . implode(", ", $arguments) . ")]" . $row["line"] . "\n";
+        if ($row["function"] == "Handle" && $row["class"] == "Scheduler\\SchedulerMaster")
+        {
+            $err .= "    ...in SchedulerMaster\n";
+            break;
+        }
+        $err .= "    ...in " . ($row["file"] ?? "{ANONYMOUS}") . " [" . $row["class"] . $row["type"] . $row["function"] . "(" . implode(", ", $arguments) . ")]" . $row["line"] . "\n";
     }
     $err .= "\n";
     if (defined("APPLICATION"))

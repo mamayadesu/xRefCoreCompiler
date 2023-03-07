@@ -153,6 +153,10 @@ final class AsyncTask
         if ($this->RunOnce)
         {
             $this->NextExecution = 0;
+            unset($this->Owner);
+            $sm = SchedulerMaster::GetInstance();
+            if (count($sm->__getasynctasks(false)) == 0)
+                $sm->__unregister();
         }
         if ($this->ExecutedTimes < PHP_INT_MAX)
         {

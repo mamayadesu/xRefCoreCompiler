@@ -157,7 +157,6 @@ HTML;
 
         $this->registeredEvents["start"]($this);
         if (DEV_MODE) echo "[HttpServer] Waiting for request\n";
-        $interval = 2;
         if ($async)
         {
             $this->asyncServer = new AsyncTask($this, $this->interval, false, function(AsyncTask $task, NoAsyncTaskParameters $params) : void { $this->Handle(true); });
@@ -165,7 +164,6 @@ HTML;
         else while (true)
         {
             $this->Handle(false);
-            //time_nanosleep(0, $interval * 1000000);
             if ($this->shutdownWasCalled)
             {
                 return;
@@ -369,7 +367,7 @@ HTML;
             {
                 if (DEV_MODE) echo "[HttpServer] Client expected 100, but 100 Continue not supported yet. Please wait for updates.\n";
                 $response->Status(405);
-                $response->End("<h1>405 Method Not Allowed</h1>");
+                $response->End("405 Method Not Allowed");
                 continue;
             }
 

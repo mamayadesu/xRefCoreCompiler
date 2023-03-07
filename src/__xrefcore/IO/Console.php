@@ -3,6 +3,7 @@ declare(ticks = 1);
 
 namespace IO;
 
+use Application\Application;
 use Data\String\BackgroundColors;
 use Data\String\ColoredString;
 use Data\String\ForegroundColors;
@@ -120,7 +121,7 @@ class Console
                         $e->__xrefcoreexception = true;
                         throw $e;
                     }
-                    time_nanosleep(0, 10 * 1000000);
+                    usleep(3000);
                 }
             }
             else
@@ -142,7 +143,7 @@ class Console
                         $e->__xrefcoreexception = true;
                         throw $e;
                     }
-                    time_nanosleep(0, 5 * 1000000);
+                    usleep(3000);
                 }
                 echo "\n";
             }
@@ -182,7 +183,7 @@ class Console
         socket_recvfrom(self::$win_a2r_socket, $buf, 16, 0, $remote_ip, $remote_port);
 
         self::$win_reader_pid = intval($buf);
-        time_nanosleep(0, 5000000);
+        usleep(5000);
     }
 
     /**
@@ -205,7 +206,7 @@ class Console
         $data = self::$win_a2r_port . " " . ($hideInput ? 2 : 3);
 
         socket_sendto(self::$win_a2r_socket, $data, strlen($data), 0, "127.0.0.1", self::$win_reader_port);
-        socket_set_option(self::$win_a2r_socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 5000));
+        socket_set_option(self::$win_a2r_socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 3000));
         do
         {
             $r = @socket_recvfrom(self::$win_a2r_socket, $buf, 8192, 0, $remote_ip, $remote_port);
@@ -240,7 +241,7 @@ class Console
 
             $data = self::$win_a2r_port . " 1";
             socket_sendto(self::$win_a2r_socket, $data, strlen($data), 0, "127.0.0.1", self::$win_reader_port);
-            socket_set_option(self::$win_a2r_socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 2000));
+            socket_set_option(self::$win_a2r_socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 3000));
             do
             {
                 $r = @socket_recvfrom(self::$win_a2r_socket, $buf, 32, 0, $remote_ip, $remote_port);
@@ -268,10 +269,9 @@ class Console
 
         stream_set_blocking($stdin, false);
         system("stty cbreak -echo");
-        $t = 1000000;
         while (($keypress = fread($stdin, 64)) == "")
         {
-            time_nanosleep(0, 5 * $t);
+            usleep(3000);
             if (self::$readInterrupted && $interruptible)
             {
                 self::$readInterrupted = false;

@@ -98,6 +98,23 @@ final class SchedulerMaster
     {
         $this->HasAtLeastOneTask = false;
         unset($GLOBALS["system.tick_functions"]["schedulermaster"]);
+
+        set_error_handler(function($errno, $errstr, $errfile, $errline) : void
+        {
+            throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
+        });
+
+        try
+        {
+            unregister_tick_function("__tick_function");
+        }
+        catch (\ErrorException $e)
+        {
+            restore_error_handler();
+            return;
+        }
+        $this->GlobalFunctionRegistered = false;
+        restore_error_handler();
     }
 
     /**
