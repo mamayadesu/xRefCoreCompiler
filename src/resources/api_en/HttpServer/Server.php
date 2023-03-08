@@ -36,10 +36,10 @@ final class Server
      * Subscribe to event
      *
      * Supported events:
-     * * start - triggers when server was started. Callback has argument `\HttpServer\Server`
-     * * shutdown - triggers when server was shutdown. Callback has argument `\HttpServer\Server`
-     * * request - triggers when request was received. Callback has arguments `\HttpServer\Request` and `\HttpServer\Response`
-     * * throwable - triggers on uncaught exception while proceeding request. Callback has arguments `\HttpServer\Request`, `\HttpServer\Response` and `\Throwable`
+     * * start - triggers when server was started. Signature: `function(HttpServer\Server $server) : void`
+     * * shutdown - triggers when server was shutdown. Signature: `function(HttpServer\Server $server) : void`
+     * * request - triggers when request was received. Signature: `function(HttpServer\Request $request, HttpServer\Response $response, HttpServer\Server $server) : void`
+     * * throwable - triggers on uncaught exception while proceeding request. Signature: function(HttpServer\Request $request, HttpServer\Response $response, Throwable $throwable, HttpServer\Server $server) : void`
      *
      * @param string $eventName
      * @param callable $callback

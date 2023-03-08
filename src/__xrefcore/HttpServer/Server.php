@@ -80,10 +80,10 @@ final class Server
      * Subscribe to event
      *
      * Supported events:
-     * * start - triggers when server was started. Callback has argument `\HttpServer\Server`
-     * * shutdown - triggers when server was shutdown. Callback has argument `\HttpServer\Server`
-     * * request - triggers when request was received. Callback has arguments `\HttpServer\Request` and `\HttpServer\Response`
-     * * throwable - triggers on uncaught exception while proceeding request. Callback has arguments `\HttpServer\Request`, `\HttpServer\Response` and `\Throwable`
+     * * start - triggers when server was started. Signature: `function(HttpServer\Server $server) : void`
+     * * shutdown - triggers when server was shutdown. Signature: `function(HttpServer\Server $server) : void`
+     * * request - triggers when request was received. Signature: `function(HttpServer\Request $request, HttpServer\Response $response, HttpServer\Server $server) : void`
+     * * throwable - triggers on uncaught exception while proceeding request. Signature: function(HttpServer\Request $request, HttpServer\Response $response, Throwable $throwable, HttpServer\Server $server) : void`
      *
      * @param string $eventName
      * @param callable $callback
@@ -104,7 +104,7 @@ final class Server
     /**
      * @ignore
      */
-    private function OnThrowable(Request $request, Response $response, Throwable $throwable) : void
+    private function OnThrowable(Request $request, Response $response, Throwable $throwable, Server $server) : void
     {
         $message =  "  An error occurred while handling HTTP-server request.\n";
         $message .= "  Uncaught " . get_class($throwable) . " '" . $throwable->getMessage() . "' in " . $throwable->getFile() . " on line " . $throwable->getLine() . ".\n";
@@ -119,7 +119,7 @@ final class Server
         }
     }
 
-    private function OnRequest(Request $request, Response $response) : void
+    private function OnRequest(Request $request, Response $response, Server $server) : void
     {
         $appName = basename(Application::GetExecutableFileName());
         $result = <<<HTML
@@ -373,11 +373,11 @@ HTML;
 
             try
             {
-                $this->registeredEvents["request"]($request, $response);
+                $this->registeredEvents["request"]($request, $response, $this);
             }
             catch (Throwable $e)
             {
-                $this->registeredEvents["throwable"]($request, $response, $e);
+                $this->registeredEvents["throwable"]($request, $response, $e, $this);
             }
             $this->GetUnsentResponses();
             if ($this->shutdownWasCalled)
@@ -412,6 +412,10 @@ HTML;
     {
         if ($this->shutdownWasCalled)
             return;
+        if ($this->asyncServer != null)
+        {
+            $this->asyncServer->Cancel();
+        }
         $this->shutdownWasCalled = true;
         foreach ($this->responses as $response)
         {if($response instanceof Response)continue;
@@ -420,9 +424,5 @@ HTML;
         @fclose($this->socket);
         $this->socket = null;
         $this->registeredEvents["shutdown"]($this);
-        if ($this->asyncServer != null)
-        {
-            $this->asyncServer->Cancel();
-        }
     }
 }

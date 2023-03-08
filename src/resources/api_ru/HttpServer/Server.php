@@ -36,10 +36,10 @@ final class Server
      * Подписаться на событие
      *
      * Поддерживаемые события:
-     * * start - срабатывает при запуске сервера. Callback принимает `\HttpServer\Server`
-     * * shutdown - срабатывает при выключении сервера. Callback принимает `\HttpServer\Server`
-     * * request - срабатывает при получении нового запроса. Callback принимает `\HttpServer\Request` и `\HttpServer\Response`
-     * * throwable - срабатывает при необработанном исключении при обработке запроса. Callback принимает `\HttpServer\Request`, `\HttpServer\Response` и `\Throwable`
+     * * start - срабатывает при запуске сервера. Сигнатура: `function(HttpServer\Server $server) : void`
+     * * shutdown - срабатывает при выключении сервера. Сигнатура: `function(HttpServer\Server $server) : void`
+     * * request - срабатывает при получении нового запроса. Сигнатура: `function(HttpServer\Request $request, HttpServer\Response $response, HttpServer\Server $server) : void`
+     * * throwable - срабатывает при необработанном исключении при обработке запроса. Сигнатура: function(HttpServer\Request $request, HttpServer\Response $response, Throwable $throwable, HttpServer\Server $server) : void`
      *
      * @param string $eventName
      * @param callable $callback
