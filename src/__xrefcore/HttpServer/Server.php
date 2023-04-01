@@ -34,6 +34,11 @@ final class Server
     /**
      * @ignore
      */
+    private float $bytesReceived = 0, $bytesSent = 0;
+
+    /**
+     * @ignore
+     */
     private array $registeredEvents = array();
 
     /**
@@ -136,6 +141,8 @@ HTML;
         $response->End($result);
     }
 
+
+
     /**
      * Run server
      *
@@ -220,6 +227,7 @@ HTML;
             }
             while ($buffer = rtrim(fgets($connect))) // reading headers
             {
+                $this->bytesReceived += (float)strlen($buffer);
                 if ($buffer == false)
                 {
                     if (DEV_MODE) echo "[HttpServer] Buffer is broken\n";
@@ -274,7 +282,7 @@ HTML;
                 }
                 $requestDump .= $headerName . ": " . $headerValue . "\n";
             }
-            $response = new Response($connect);
+            $response = new Response($connect, $this);
             $this->responses[] = $response;
 
             $response->Header("Content-Type", "text/html");
@@ -299,16 +307,21 @@ HTML;
             if ($contentLength > 0)
             {
                 if (DEV_MODE) echo "[HttpServer] Reading content. Length " . $contentLength . "\n";
+                $temp_read = "";
                 while (true)
                 {
                     if ($contentLengthLeft > 8192)
                     {
-                        $body .= fread($connect, 8192);
+                        $temp_read = fread($connect, 8192);
+                        $this->bytesReceived += (float)strlen($temp_read);
+                        $body .= $temp_read;
                         $contentLengthLeft -= 8192;
                     }
                     else
                     {
-                        $body .= fread($connect, $contentLengthLeft);
+                        $temp_read = fread($connect, $contentLengthLeft);
+                        $this->bytesReceived += (float)strlen($temp_read);
+                        $body .= $temp_read;
                         break;
                     }
                 }
@@ -424,5 +437,29 @@ HTML;
         @fclose($this->socket);
         $this->socket = null;
         $this->registeredEvents["shutdown"]($this);
+    }
+
+    /**
+     * @return float Count of received bytes
+     */
+    public function GetBytesReceived() : float
+    {
+        return $this->bytesReceived;
+    }
+
+    /**
+     * @return float Count of sent bytes
+     */
+    public function GetBytesSent() : float
+    {
+        return $this->bytesSent;
+    }
+
+    /**
+     * @ignore
+     */
+    public function __addBytesSent(float $bytes) : void
+    {
+        $this->bytesSent += $bytes;
     }
 }

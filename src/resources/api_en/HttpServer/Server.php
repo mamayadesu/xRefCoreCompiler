@@ -71,4 +71,16 @@ final class Server
      */
     public function Shutdown() : void
     {}
+
+    /**
+     * @return float Count of received bytes
+     */
+    public function GetBytesReceived() : float
+    {}
+
+    /**
+     * @return float Count of sent bytes
+     */
+    public function GetBytesSent() : float
+    {}
 }

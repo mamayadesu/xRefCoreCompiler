@@ -26,6 +26,11 @@ final class Response
     /**
      * @ignore
      */
+    private Server $server;
+
+    /**
+     * @ignore
+     */
     private bool $closed = false, $aborted = false, $headersPrinted = false;
 
     /**
@@ -152,9 +157,10 @@ final class Response
     /**
      * @ignore
      */
-    public function __construct($connect)
+    public function __construct($connect, Server $server)
     {
         $this->connect = $connect;
+        $this->server = $server;
         //$this->start_debug();
     }
 
@@ -441,6 +447,7 @@ final class Response
                 try
                 {
                     fwrite($this->connect, $part);
+                    $this->server->__addBytesSent((float)strlen($part));
                     //$this->write_debug($part);
                 }
                 catch (\ErrorException $e)
@@ -458,6 +465,7 @@ final class Response
         {
             try
             {
+                $this->server->__addBytesSent((float)strlen($message));
                 fwrite($this->connect, $message);
                 //$this->write_debug($message);
             }
