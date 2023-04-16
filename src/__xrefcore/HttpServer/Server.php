@@ -349,7 +349,7 @@ HTML;
                 fclose($f);
                 echo "[HttpServer] Dump saved as " . $http_server_dump . "\n";
             }
-            $request = new Request($headers, $body, $name, $this);
+            $request = new Request($headers, $body, $name, $this, $connect);
             $request->ServerPort = $this->port;
             $request->Headers = $parsedHeaders;
             $request->RequestUrl = "http://" . $parsedHeaders["Host"] . $request->RequestUri;

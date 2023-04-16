@@ -9,7 +9,7 @@ namespace HttpServer;
 
 final class Request
 {
-    public string $RequestMethod, $RequestUri, $RequestUrl, $QueryString = "", $PathInfo, $ServerProtocol, $RemoteAddress;
+    public string $RequestMethod, $RequestUri, $RequestUrl, $QueryString = "", $PathInfo, $ServerProtocol, $RemoteAddress, $ServerAddress;
     public int $RequestTime, $ServerPort, $RemotePort, $MasterTime;
     public float $RequestTimeFloat;
 
@@ -51,7 +51,7 @@ final class Request
     /**
      * @ignore
      */
-    public function __construct(array $headers, string $rawcontent, string $name, Server $server)
+    public function __construct(array $headers, string $rawcontent, string $name, Server $server, $connect)
     {
         $this->server = $server;
         $name1 = explode(':', $name);
@@ -79,10 +79,12 @@ final class Request
         $this->RequestTime = $this->MasterTime = time();
         $this->RequestTimeFloat = microtime(true);
         $this->ServerProtocol = $h0[2];
-        $this->ServerPort = 0;
+        $full_address = explode(':', stream_socket_get_name($connect, false));
+        $this->ServerPort = intval($full_address[1]);
+
         $this->RemotePort = $remote_port;
         $this->RemoteAddress = $remote_addr;
-
+        $this->ServerAddress = $full_address[0];
         $this->rc = $rawcontent;
     }
 

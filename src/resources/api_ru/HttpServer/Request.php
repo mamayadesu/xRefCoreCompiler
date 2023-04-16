@@ -8,7 +8,7 @@ namespace HttpServer;
 
 final class Request
 {
-    public string $RequestMethod, $RequestUri, $RequestUrl, $QueryString = "", $PathInfo, $ServerProtocol, $RemoteAddress;
+    public string $RequestMethod, $RequestUri, $RequestUrl, $QueryString = "", $PathInfo, $ServerProtocol, $RemoteAddress, $ServerAddress;
     public int $RequestTime, $ServerPort, $RemotePort, $MasterTime;
     public float $RequestTimeFloat;
 
