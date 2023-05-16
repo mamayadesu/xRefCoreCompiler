@@ -509,7 +509,7 @@ class Dialog
         {
             self::$menu->AddItem($item);
         }
-        self::$menu->ItemsContainerHeight(15);
+        self::$menu->ItemsContainerHeight = 15;
         self::$menu->SetRowsHeaderType(RowHeaderType::ARROW3);
         self::$menu->SetRowHeaderItemDelimiter(" ");
         self::$menu->SetDescription("F1 - " . self::$LangHelp);

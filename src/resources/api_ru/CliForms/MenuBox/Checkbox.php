@@ -11,16 +11,12 @@ use Data\String\ForegroundColors;
 
 class Checkbox extends MenuBoxItem
 {
-    public string $IconForegroundColor = ForegroundColors::BLUE, $DisabledForegroundColor = ForegroundColors::DARK_GRAY;
-
     /**
-     * Возвращает TRUE, если данный чекбокс выбран. Если задать новое значение, оно будет изменено
-     *
-     * @param bool|null $newValue
-     * @return bool
+     * @var bool Стоит ли флаг на чекбоксе
      */
-    public function Checked(?bool $newValue = null) : bool
-    {}
+    public bool $Checked = false;
+
+    public string $IconForegroundColor = ForegroundColors::BLUE, $DisabledForegroundColor = ForegroundColors::DARK_GRAY;
 
     public function Render(bool $selected = false) : string
     {}

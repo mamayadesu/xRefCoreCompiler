@@ -11,39 +11,28 @@ use Data\String\ForegroundColors;
  */
 class ListBoxDelimiter extends MenuBoxControl
 {
+    /**
+     * @var bool (всегда FALSE) Элемент некликабельный
+     * @property-read
+     */
+    public bool $Selectable = false;
+
+    /**
+     * @var string Символ разделителя
+     */
+    public string $Character = "=";
+
+    /**
+     * @var int Длина разделителя
+     */
+    public int $Length = 40;
+
     public string $ItemForegroundColor = ForegroundColors::DARK_GRAY;
 
     public function __construct(string $name = "", string $hint = "")
     {
         parent::__construct($name, $hint);
     }
-
-    /**
-     * Этот элемент в принципе никогда не может быть выбран и всегда возвращает FALSE
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Selectable(?bool $newValue = false) : bool
-    {}
-
-    /**
-     * Возвращает символ разделителя. Если задать новое значение, оно будет изменено
-     *
-     * @param string|null $newValue
-     * @return string
-     */
-    public function Character(?string $newValue = null) : string
-    {}
-
-    /**
-     * Возвращает длину разделителя. Если задать новое значение, оно будет изменено
-     *
-     * @param int|null $newValue
-     * @return int
-     */
-    public function Length(?int $newValue = null) : int
-    {}
 
     /**
      * @return string Отрендеренный разделитель

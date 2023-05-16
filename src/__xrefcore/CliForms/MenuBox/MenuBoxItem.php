@@ -112,18 +112,18 @@ class MenuBoxItem extends ListBoxItem
             $backgroundColor = $this->ItemSelectedBackgroundColor;
         }
 
-        if ($this->Disabled())
+        if ($this->Disabled)
         {
             $foregroundColor = $this->ItemDisabledForegroundColor;
             $backgroundColor = $this->ItemDisabledBackgroundColor;
         }
 
-        if ($selected && $this->Disabled())
+        if ($selected && $this->Disabled)
         {
             $foregroundColor = $this->ItemSelectedDisabledForegroundColor;
             $backgroundColor = $this->ItemSelectedDisabledBackgroundColor;
         }
 
-        return ColoredString::Get($this->Name(), $foregroundColor, $backgroundColor);
+        return ColoredString::Get($this->Name, $foregroundColor, $backgroundColor);
     }
 }

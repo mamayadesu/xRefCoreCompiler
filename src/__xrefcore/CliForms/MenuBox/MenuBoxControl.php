@@ -7,9 +7,20 @@ use CliForms\Exceptions\MenuBoxDisposedException;
 use CliForms\ListBox\ListBoxControl;
 use Data\String\BackgroundColors;
 use Data\String\ForegroundColors;
+use GetterSetter\GetterSetter;
 
+/**
+ * @property string $Name Item's title
+ * @property string $Hint Item's hint. Display when item is selected
+ * @property bool $Selectable Is item visible and allowed to be selected
+ * @property bool $Disabled Is item disabled
+ * @property bool $Visible Is item visible
+ * @property int $Ordering Item's ordering
+ */
 class MenuBoxControl extends ListBoxControl
 {
+    use GetterSetter;
+
     /**
      * @ignore
      */
@@ -34,6 +45,124 @@ class MenuBoxControl extends ListBoxControl
      * @var BackgroundColors Hint background color
      */
     public string $HintBackgroundColor = BackgroundColors::AUTO;
+
+    /**
+     * @ignore
+     */
+    protected function _gs_Name() : array
+    {return [
+        Get => function() : string
+        {
+            return $this->name;
+        },
+        Set => function(string $newValue) : void
+        {
+            $this->name = $newValue;
+            if ($this->GetMenuBox() !== null)
+                $this->GetMenuBox()->Refresh();
+        }
+    ];}
+
+    /**
+     * ignore
+     */
+    protected function _gs_Selectable(): array
+    {return [
+        Get => function() : bool
+        {
+            if (!$this->Visible)
+                return false;
+
+            return $this->itemSelectable;
+        },
+        Set => function(bool $newValue) : void
+        {
+            $this->itemSelectable = $newValue;
+            if ($this->GetMenuBox() !== null)
+            {
+                $this->GetMenuBox()->__updateallowedcache = true;
+                $this->GetMenuBox()->Refresh();
+            }
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
+    protected function _gs_Disabled() : array
+    {return [
+        Get => function() : bool
+        {
+            return $this->itemDisabled;
+        },
+        Set => function(bool $newValue) : void
+        {
+            $this->itemDisabled = $newValue;
+            if ($this->GetMenuBox() !== null)
+                $this->GetMenuBox()->Refresh();
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
+    protected function _gs_Hint() : array
+    {return [
+        Get => function() : string
+        {
+            return $this->hint;
+        },
+        Set => function(string $newValue) : void
+        {
+            $this->hint = $newValue;
+            if ($this->GetMenuBox() !== null)
+                $this->GetMenuBox()->Refresh();
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
+    protected function _gs_Visible() : array
+    {return [
+        Get => function() : bool
+        {
+            return $this->visible;
+        },
+        Set => function(bool $newValue) : void
+        {
+            $this->visible = $newValue;
+            $menu = $this->GetMenuBox();
+            if ($menu !== null)
+            {
+                $menu->__updateallowedcache = true;
+                $menu->__updatemaxoffsetvaluecache = true;
+                $menu->Refresh();
+            }
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
+    protected function _gs_Ordering(): array
+    {return [
+        Get => function() : int
+        {
+            return $this->ordering;
+        },
+        Set => function(int $newValue) : void
+        {
+            if ($this->GetMenuBox() !== null)
+            {
+                $this->GetMenuBox()->__updatesortedcache = true;
+                $this->GetMenuBox()->__updateallowedcache = true;
+                $this->GetMenuBox()->__updatemaxoffsetvaluecache = true;
+                $this->GetMenuBox()->Refresh();
+            }
+            $this->ordering = $newValue;
+        }
+    ];}
 
     /**
      * @ignore
@@ -117,39 +246,6 @@ class MenuBoxControl extends ListBoxControl
     }
 
     /**
-     * Returns TRUE if this item is allowed to be clicked. If you pass new value, it will be changed
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Disabled(?bool $newValue = null) : bool
-    {
-        $result = parent::Disabled($newValue);
-        if ($this->GetMenuBox() !== null && $newValue !== null)
-            $this->GetMenuBox()->Refresh();
-        return $result;
-    }
-
-    /**
-     * Returns TRUE if this item is allowed to select and if it's visible. If you pass new value, it will be changed
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Selectable(?bool $newValue = null) : bool
-    {
-        if (!$this->Visible())
-            return false;
-        $result = parent::Selectable($newValue);
-        if ($this->GetMenuBox() !== null && $newValue !== null)
-        {
-            $this->GetMenuBox()->__updateallowedcache = true;
-            $this->GetMenuBox()->Refresh();
-        }
-        return $result;
-    }
-
-    /**
      * Set style for item
      *
      * @param ForegroundColors $foregroundColor
@@ -161,76 +257,6 @@ class MenuBoxControl extends ListBoxControl
         $result = parent::SetItemStyle($foregroundColor, $backgroundColor);
         if ($this->GetMenuBox() !== null)
             $this->GetMenuBox()->Refresh();
-        return $result;
-    }
-
-    /**
-     * Return item hint. Hint displays right after item name and when item selected. If you pass new value, it will be changed
-     *
-     * @param string|null $newValue
-     * @return string
-     */
-    public function Hint(?string $newValue = null) : string
-    {
-        if ($newValue === null)
-        {
-            return $this->hint;
-        }
-        $this->hint = $newValue;
-        if ($this->GetMenuBox() !== null)
-            $this->GetMenuBox()->Refresh();
-        return $newValue;
-    }
-
-    /**
-     * Returns item title. If you pass new value, it will be changed
-     *
-     * @param ?string $newValue
-     * @return string
-     */
-    public function Name(?string $newValue = null) : string
-    {
-        $result = parent::Name($newValue);
-        if ($this->GetMenuBox() !== null && $newValue !== null)
-            $this->GetMenuBox()->Refresh();
-        return $result;
-    }
-
-    /**
-     * Returns TRUE if item is visible. If you pass new value, it will be changed
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Visible(?bool $newValue = null) : bool
-    {
-        $menu = $this->GetMenuBox();
-        if ($menu !== null && $newValue !== null)
-        {
-            $menu->Refresh();
-            $menu->__updateallowedcache = true;
-            $menu->__updatemaxoffsetvaluecache = true;
-        }
-
-        if ($newValue !== null)
-            $this->visible = $newValue;
-        return $this->visible;
-    }
-
-    /**
-     * Returns item's sort ordering. If you pass new value, it will be changed
-     *
-     * @param int|null $newValue
-     * @return int
-     */
-    public function Ordering(?int $newValue = null) : int
-    {
-        $result = parent::Ordering($newValue);
-        if ($this->GetMenuBox() !== null && $newValue !== null)
-        {
-            $this->GetMenuBox()->__updatesortedcache = true;
-            $this->GetMenuBox()->Refresh();
-        }
         return $result;
     }
 }

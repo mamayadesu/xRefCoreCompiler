@@ -7,6 +7,12 @@ use Data\String\ForegroundColors;
 
 class Label extends MenuBoxControl
 {
+    /**
+     * @var bool (always FALSE) Element cannot be selected because it's not clickable
+     * @property-read
+     */
+    public bool $Selectable = false;
+
     public string $ItemForegroundColor = ForegroundColors::WHITE;
     public string $ItemBackgroundColor = BackgroundColors::AUTO;
 
@@ -17,14 +23,5 @@ class Label extends MenuBoxControl
      * @param string $hint
      */
     public function __construct(string $name, string $hint = "")
-    {}
-
-    /**
-     * Label is just label and cannot be selected
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Selectable(?bool $newValue = null): bool
     {}
 }

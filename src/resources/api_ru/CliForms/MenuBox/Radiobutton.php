@@ -10,21 +10,12 @@ namespace CliForms\MenuBox;
 class Radiobutton extends Checkbox
 {
     /**
-     * Возвращает название группы радио-кнопок. Если задать новое значение, оно будет изменено.
-     *
-     * @param string|null $newValue
-     * @return string
+     * @var bool Стоит ли флажок на радио-кнопке. Если установить на элементе значение TRUE, все остальные радио-кнопки данной группы применят значение FALSE
      */
-    public function GroupName(?string $newValue = null) : string
-    {}
+    public bool $Checked = false;
 
     /**
-     * Возвращает TRUE, если текущая радио-кнопка нажата. Если задать новое значение, оно будет изменено.
-     * Если вы установите TRUE, данный параметр автоматически применит FALSE для всех остальных элементов группы.
-     *
-     * @param bool|null $newValue
-     * @return bool
+     * @var string Группа радио-кнопки
      */
-    public function Checked(?bool $newValue = null) : bool
-    {}
+    public string $GroupName = "";
 }

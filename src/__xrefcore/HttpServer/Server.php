@@ -75,10 +75,10 @@ final class Server
     {
         $this->address = $address;
         $this->port = $port;
-        $this->On("start", function (Server $server) : void { });
-        $this->On("shutdown", function (Server $server) : void { });
-        $this->On("request", [$this, "OnRequest"]);
-        $this->On("throwable", [$this, "OnThrowable"]);
+        $this->On(ServerEvents::Start, function (Server $server) : void { });
+        $this->On(ServerEvents::Shutdown, function (Server $server) : void { });
+        $this->On(ServerEvents::Request, [$this, "OnRequest"]);
+        $this->On(ServerEvents::Throwable, [$this, "OnThrowable"]);
     }
 
     /**
@@ -90,20 +90,19 @@ final class Server
      * * request - triggers when request was received. Signature: `function(HttpServer\Request $request, HttpServer\Response $response, HttpServer\Server $server) : void`
      * * throwable - triggers on uncaught exception while proceeding request. Signature: function(HttpServer\Request $request, HttpServer\Response $response, Throwable $throwable, HttpServer\Server $server) : void`
      *
-     * @param string $eventName
+     * @param ServerEvents $eventName
      * @param callable $callback
      * @throws UnknownEventException
      */
-    public function On(string $eventName, callable $callback) : void
+    public function On(string $event, callable $callback) : void
     {
-        $events = ["start", "shutdown", "request", "throwable"];
-        if (!in_array($eventName, $events))
+        if (!ServerEvents::HasItem($event))
         {
-            $e = new UnknownEventException("Unknown event '" . $eventName . "'. Supported events: " . implode(", ", $events));
+            $e = new UnknownEventException("Unknown event '" . $event . "'");
             $e->__xrefcoreexception = true;
             throw $e;
         }
-        $this->registeredEvents[$eventName] = $callback;
+        $this->registeredEvents[$event] = $callback;
     }
 
     /**
@@ -162,7 +161,7 @@ HTML;
             throw $e;
         }
 
-        $this->registeredEvents["start"]($this);
+        $this->registeredEvents[ServerEvents::Start]($this);
         if (DEV_MODE) echo "[HttpServer] Waiting for request\n";
         if ($async)
         {
@@ -386,11 +385,11 @@ HTML;
 
             try
             {
-                $this->registeredEvents["request"]($request, $response, $this);
+                $this->registeredEvents[ServerEvents::Request]($request, $response, $this);
             }
             catch (Throwable $e)
             {
-                $this->registeredEvents["throwable"]($request, $response, $e, $this);
+                $this->registeredEvents[ServerEvents::Throwable]($request, $response, $e, $this);
             }
             $this->GetUnsentResponses();
             if ($this->shutdownWasCalled)
@@ -436,7 +435,7 @@ HTML;
         }
         @fclose($this->socket);
         $this->socket = null;
-        $this->registeredEvents["shutdown"]($this);
+        $this->registeredEvents[ServerEvents::Shutdown]($this);
     }
 
     /**

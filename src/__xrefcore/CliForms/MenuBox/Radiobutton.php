@@ -6,6 +6,9 @@ namespace CliForms\MenuBox;
  * Creates radiobutton for MenuBox.
  * You should use "GroupName" method to group your radiobuttons.
  * All radiobuttons of one group have to have the same group name.
+ *
+ * @property bool $Checked Is radiobutton checked. If set to TRUE, another selected radiobutton from this group will automatically be set to FALSE
+ * @property string $GroupName Group name of the radiobutton
  */
 class Radiobutton extends Checkbox
 {
@@ -25,56 +28,53 @@ class Radiobutton extends Checkbox
     private bool $radioButtonChecked = false;
 
     /**
-     * Returns radio button group name. If you pass new value, it will be changed.
-     *
-     * @param string|null $newValue
-     * @return string
+     * @ignore
      */
-    public function GroupName(?string $newValue = null) : string
-    {
-        if ($newValue === null)
-        {
-            return $this->groupName;
-        }
-        $this->groupName = $newValue;
-        if ($this->GetMenuBox() !== null)
-        {
-            $this->CallOnSelect($this->GetMenuBox());
-            $this->GetMenuBox()->Refresh();
-        }
-        return $newValue;
-    }
-
-    /**
-     * Returns TRUE if radiobutton is checked. If you pass new value, it will be changed.
-     * If you set checked, other radio buttons will be unchecked.
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Checked(?bool $newValue = null) : bool
-    {
-        if ($newValue === null)
+    protected function _gs_Checked(): array
+    {return [
+        Get => function() : bool
         {
             return $this->radioButtonChecked;
-        }
-        $this->radioButtonChecked = $newValue;
-        if ($newValue === true && $this->GetMenuBox() !== null)
+        },
+        Set => function(bool $newValue) : void
         {
-            foreach ($this->GetMenuBox()->GetSortedItems() as $item)
-            {if(!$item instanceof MenuBoxControl)continue;
-                if (!$item instanceof Radiobutton)
-                {
-                    continue;
-                }
+            $this->radioButtonChecked = $newValue;
+            if ($newValue === true && $this->GetMenuBox() !== null)
+            {
+                foreach ($this->GetMenuBox()->GetSortedItems() as $item)
+                {if(!$item instanceof MenuBoxControl)continue;
+                    if (!$item instanceof Radiobutton)
+                    {
+                        continue;
+                    }
 
-                if ($item->GroupName() == $this->GroupName() && $item !== $this)
-                {
-                    $item->Checked(false);
+                    if ($item->GroupName == $this->GroupName && $item !== $this)
+                    {
+                        $item->Checked = false;
+                    }
                 }
+                $this->GetMenuBox()->Refresh();
             }
-            $this->GetMenuBox()->Refresh();
         }
-        return $newValue;
-    }
+    ];}
+
+    /**
+     * @ignore
+     */
+    protected function _gs_GroupName() : array
+    {return [
+        Get => function() : string
+        {
+            return $this->groupName;
+        },
+        Set => function(string $newValue) : void
+        {
+            $this->groupName = $newValue;
+            if ($this->GetMenuBox() !== null)
+            {
+                $this->CallOnSelect($this->GetMenuBox());
+                $this->GetMenuBox()->Refresh();
+            }
+        }
+    ];}
 }

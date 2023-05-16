@@ -9,6 +9,26 @@ use Data\String\ForegroundColors;
 class ControlItem
 {
     /**
+     * @var string Item's title
+     */
+    public string $Name = "";
+
+    /**
+     * @var bool Is item visible and allowed to be selected
+     */
+    public bool $Selectable = true;
+
+    /**
+     * @var bool Is item disabled
+     */
+    public bool $Disabled = false;
+
+    /**
+     * @var int Item's ordering
+     */
+    public int $Ordering = 1;
+
+    /**
      * @var string Any value here. ID is not using anywhere except your code
      */
     public string $Id = "";
@@ -37,15 +57,6 @@ class ControlItem
     {}
 
     /**
-     * Returns item title. If you pass new value, it will be changed
-     *
-     * @param ?string $newValue
-     * @return string
-     */
-    public function Name(?string $newValue = null) : string
-    {}
-
-    /**
      * Set style for item
      *
      * @param ForegroundColors $foregroundColor
@@ -53,33 +64,6 @@ class ControlItem
      * @return ControlItem
      */
     public function SetItemStyle(string $foregroundColor, $backgroundColor = BackgroundColors::AUTO) : ControlItem
-    {}
-
-    /**
-     * Returns TRUE if this item is allowed to select. If you pass new value, it will be changed
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Selectable(?bool $newValue = null) : bool
-    {}
-
-    /**
-     * Returns TRUE if this item is allowed to be clicked. If you pass new value, it will be changed
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Disabled(?bool $newValue = null) : bool
-    {}
-
-    /**
-     * Returns item's sort ordering. If you pass new value, it will be changed
-     *
-     * @param int|null $newValue
-     * @return int
-     */
-    public function Ordering(?int $newValue = null) : int
     {}
 
     /**

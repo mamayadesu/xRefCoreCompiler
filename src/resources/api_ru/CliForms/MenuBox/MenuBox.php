@@ -29,6 +29,26 @@ use IO\Console;
 class MenuBox extends ListBox
 {
     /**
+     * @var int Высота контейнера (максимальное количество элементов, которое может быть отрендерено на экране)
+     */
+    public int $ItemsContainerHeight = 0;
+
+    /**
+     * @var string Символ, который отображается наверху контейнера, если есть элементы выше
+     */
+    public string $ScrollUpCharacter = "↑";
+
+    /**
+     * @var string Символ, который отображается внизу контейнера, если есть элементы ниже
+     */
+    public string $ScrollDownCharacter = "↓";
+
+    /**
+     * @var int Текущий скролл контейнера
+     */
+    public int $ScrollOffset = 0;
+
+    /**
      * @var string ID нужен лишь для поиска вашего MenuBox и нигде более.
      */
     public string $Id = "";
@@ -72,26 +92,6 @@ class MenuBox extends ListBox
     {}
     
     /**
-     * Возвращает максимальное количество элементов, отображаемых в контейнере меню. Если задать новое значение, оно будет изменено
-     *
-     * @param int|null $newValue
-     * @return int
-     * @throws MenuBoxDisposedException
-     */
-    public function ItemsContainerHeight(?int $newValue = null) : int
-    {}
-
-    /**
-     * Возвращает количество вниз прокрученных элементов. Если задать новое значение, оно будет изменено
-     *
-     * @param int|null $newValue
-     * @return int
-     * @throws MenuBoxDisposedException
-     */
-    public function ScrollOffset(?int $newValue = null) : int
-    {}
-    
-    /**
      * Возвращает TRUE, если данный элемент содержится в MenuBox
      *
      * @param MenuBoxControl $control
@@ -99,26 +99,6 @@ class MenuBox extends ListBox
      * @throws MenuBoxDisposedException
      */
     public function HasItem(MenuBoxControl $control) : bool
-    {}
-
-    /**
-     * Возвращает символ, указывающий, что в контейнере меню есть прокрученные элементы выше. Если задать новое значение, оно будет изменено
-     *
-     * @param string|null $newValue
-     * @return string
-     * @throws MenuBoxDisposedException
-     */
-    public function ScrollUpCharacter(?string $newValue = null) : string
-    {}
-
-    /**
-     * Возвращает символ, указывающий, что внизу контейнера меню есть ещё элементы. Если задать новое значение, оно будет изменено
-     *
-     * @param string|null $newValue
-     * @return string
-     * @throws MenuBoxDisposedException
-     */
-    public function ScrollDownCharacter(?string $newValue = null) : string
     {}
 
     /**

@@ -9,6 +9,12 @@ use CliForms\ListBox\ListBoxDelimiter;
  */
 class MenuBoxDelimiter extends ListBoxDelimiter
 {
+    /**
+     * @var bool (всегда FALSE) Элемент некликабельный
+     * @property-read
+     */
+    public bool $Selectable = false;
+
     public function __construct(string $name = "", string $hint = "")
     {}
 }

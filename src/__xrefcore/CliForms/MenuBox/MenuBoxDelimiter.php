@@ -6,9 +6,26 @@ use CliForms\ListBox\ListBoxDelimiter;
 
 /**
  * Using to delimit MenuBox items
+ *
+ * @property bool $Selectable (always FALSE) Element cannot be selected because it's not clickable
  */
 class MenuBoxDelimiter extends ListBoxDelimiter
 {
+    /**
+     * @ignore
+     */
+    protected function _gs_Selectable() : array
+    {return [
+        Get => function() : bool
+        {
+            return false;
+        },
+        Set => function(bool $newValue) : void
+        {
+
+        }
+    ];}
+
     /**
      * @ignore
      */

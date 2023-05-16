@@ -22,14 +22,22 @@ use \Closure;
 use Data\String\BackgroundColors;
 use Data\String\ColoredString;
 use Data\String\ForegroundColors;
+use GetterSetter\GetterSetter;
 use IO\Console;
 
 /**
  * Creation of an interactive pseudo-GUI menu with elements such as buttons, radio buttons, checkboxes and some others
+ *
+ * @property int $ItemsContainerHeight A count of items which can be rendered
+ * @property string $ScrollUpCharacter A character which displays in top of items container if there are items above
+ * @property string $ScrollDownCharacter A character which displays in bottom of items container if there are items below
+ * @property int $ScrollOffset A scroll offset from top
  */
 
 class MenuBox extends ListBox
 {
+    use GetterSetter;
+
     /**
      * @var string This ID is using to find your MenuBox. Not for anything else.
      */
@@ -149,6 +157,152 @@ class MenuBox extends ListBox
     public ?Closure $OffsetChangedEvent = null;
 
     /**
+     * @ignore
+     */
+    private function _gs_ItemsContainerHeight() : array
+    {return [
+        Get => function() : int
+        {
+            if ($this->DISPOSED)
+            {
+                $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            return $this->itemsContainerHeight;
+        },
+        Set => function(int $value) : void
+        {
+            if ($this->DISPOSED)
+            {
+                $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            if ($value < 0)
+            {
+                 $value = 1;
+            }
+            $this->__updatemaxoffsetvaluecache = true;
+            $this->itemsContainerHeight = $value;
+            $this->Refresh();
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
+    private function _gs_ScrollUpCharacter() : array
+    {return [
+        Get => function() : string
+        {
+            if ($this->DISPOSED)
+            {
+                $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            return $this->scrollUpCharacter;
+        },
+        Set => function(string $value) : void
+        {
+            if ($this->DISPOSED)
+            {
+                $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            $this->scrollUpCharacter = $value;
+            $this->Refresh();
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
+    private function _gs_ScrollDownCharacter() : array
+    {return [
+        Get => function() : string
+        {
+            if ($this->DISPOSED)
+            {
+                $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            return $this->scrollDownCharacter;
+        },
+        Set => function(string $value) : void
+        {
+            if ($this->DISPOSED)
+            {
+                $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+
+            $this->scrollDownCharacter = $value;
+            $this->Refresh();
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
+    private function _gs_ScrollOffset() : array
+    {return [
+        Get => function() : int
+        {
+            if ($this->DISPOSED)
+            {
+                $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            return $this->scrollOffset;
+        },
+        Set => function(int $newValue) : void
+        {
+            if ($this->DISPOSED)
+            {
+                $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+
+            if ($newValue < 0)
+            {
+                $newValue = 0;
+            }
+
+            $maxValue = $this->getOffsetMaxValue();
+            $oldValue = $this->scrollOffset;
+            if ($newValue > $maxValue)
+            {
+                $newValue = $maxValue;
+            }
+
+            $callEvent = ($this->scrollOffset != $newValue);
+
+            $this->scrollOffset = $newValue;
+
+            if ($callEvent && $this->OffsetChangedEvent !== null && !$this->preventOffsetChangedEvent)
+            {
+                $this->preventOffsetChangedEvent = true;
+                $event = new OffsetChangedEvent();
+                $event->MenuBox = $this;
+                $event->PreviousOffset = $oldValue;
+                $event->Offset = $newValue;
+                $this->OffsetChangedEvent->call($this->mythis, $event);
+                $this->preventOffsetChangedEvent = false;
+            }
+
+            if (!$this->callbackExecuting)
+                $this->Refresh();
+        }
+    ];}
+
+    /**
      * MenuBox constructor.
      *
      * @param string $title Title of menu
@@ -159,88 +313,6 @@ class MenuBox extends ListBox
         parent::__construct($title);
         $this->mythis = $mythis;
         self::$MenuBoxes[] = $this;
-    }
-
-    /**
-     * Returns a count of items which can be rendered. If you pass new value, it will be changed
-     *
-     * @param int|null $newValue
-     * @return int
-     * @throws MenuBoxDisposedException
-     */
-    public function ItemsContainerHeight(?int $newValue = null) : int
-    {
-        if ($this->DISPOSED)
-        {
-            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        if ($newValue === null)
-        {
-            return $this->itemsContainerHeight;
-        }
-
-        if ($newValue < 0)
-        {
-            $newValue = 1;
-        }
-        $this->__updatemaxoffsetvaluecache = true;
-        $this->itemsContainerHeight = $newValue;
-        $this->Refresh();
-        return $newValue;
-    }
-
-    /**
-     * Returns a scroll offset from top. If you pass new value, it will be changed
-     *
-     * @param int|null $newValue
-     * @return int
-     * @throws MenuBoxDisposedException
-     */
-    public function ScrollOffset(?int $newValue = null) : int
-    {
-        if ($this->DISPOSED)
-        {
-            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        if ($newValue === null)
-        {
-            return $this->scrollOffset;
-        }
-
-        if ($newValue < 0)
-        {
-            $newValue = 0;
-        }
-
-        $maxValue = $this->getOffsetMaxValue();
-        $oldValue = $this->scrollOffset;
-        if ($newValue > $maxValue)
-        {
-            $newValue = $maxValue;
-        }
-
-        $callEvent = ($this->scrollOffset != $newValue);
-
-        $this->scrollOffset = $newValue;
-
-        if ($callEvent && $this->OffsetChangedEvent !== null && !$this->preventOffsetChangedEvent)
-        {
-            $this->preventOffsetChangedEvent = true;
-            $event = new OffsetChangedEvent();
-            $event->MenuBox = $this;
-            $event->PreviousOffset = $oldValue;
-            $event->Offset = $newValue;
-            $this->OffsetChangedEvent->call($this->mythis, $event);
-            $this->preventOffsetChangedEvent = false;
-        }
-
-        if (!$this->callbackExecuting)
-            $this->Refresh();
-        return $newValue;
     }
 
     /**
@@ -260,56 +332,6 @@ class MenuBox extends ListBox
         }
 
         return in_array($control, $this->items, true) || $this->zeroItem === $control;
-    }
-
-    /**
-     * Returns a character which displays in top of items container if there are items above. If you pass new value, it will be changed
-     *
-     * @param string|null $newValue
-     * @return string
-     * @throws MenuBoxDisposedException
-     */
-    public function ScrollUpCharacter(?string $newValue = null) : string
-    {
-        if ($this->DISPOSED)
-        {
-            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        if ($newValue === null)
-        {
-            return $this->scrollUpCharacter;
-        }
-
-        $this->scrollUpCharacter = $newValue;
-        $this->Refresh();
-        return $newValue;
-    }
-
-    /**
-     * Returns a character which displays in bottom of items container if there are items below. If you pass new value, it will be changed
-     *
-     * @param string|null $newValue
-     * @return string
-     * @throws MenuBoxDisposedException
-     */
-    public function ScrollDownCharacter(?string $newValue = null) : string
-    {
-        if ($this->DISPOSED)
-        {
-            $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
-            $e->__xrefcoreexception = true;
-            throw $e;
-        }
-        if ($newValue === null)
-        {
-            return $this->scrollDownCharacter;
-        }
-
-        $this->scrollDownCharacter = $newValue;
-        $this->Refresh();
-        return $newValue;
     }
 
     /**
@@ -586,7 +608,7 @@ class MenuBox extends ListBox
             return;
         }
         $items = $this->GetSortedItems();
-        if (!isset($items[$itemNumber]) || !$items[$itemNumber]->Selectable())
+        if (!isset($items[$itemNumber]) || !$items[$itemNumber]->Selectable)
             return;
         $this->SelectedItemNumber = $itemNumber;
         if ($this->SelectedItemChangedEvent != null)
@@ -599,45 +621,45 @@ class MenuBox extends ListBox
         }
 
         $this->preventRefresh = true;
-        if ($this->ItemsContainerHeight() == 0)
+        if ($this->ItemsContainerHeight == 0)
         {
             // Do nothing?
         }
 
         // if item is above
-        else if ($this->SelectedItemNumber <= $this->ScrollOffset() && $this->SelectedItemNumber != 0)
+        else if ($this->SelectedItemNumber <= $this->ScrollOffset && $this->SelectedItemNumber != 0)
         {
-            $this->ScrollOffset($this->SelectedItemNumber - 1);
+            $this->ScrollOffset = $this->SelectedItemNumber - 1;
         }
 
         // if item is below
-        else if ($this->SelectedItemNumber == 0 || $this->SelectedItemNumber > $this->ScrollOffset() + $this->ItemsContainerHeight())
+        else if ($this->SelectedItemNumber == 0 || $this->SelectedItemNumber > $this->ScrollOffset + $this->ItemsContainerHeight)
         {
             if ($this->SelectedItemNumber == 0)
             {
-                $this->ScrollOffset($this->getOffsetMaxValue());
+                $this->ScrollOffset = $this->getOffsetMaxValue();
             }
             else
             {
                 $hiddenItems = 0;
                 $j = $this->SelectedItemNumber + 1;
-                for ($i = $this->SelectedItemNumber; $i >= $this->SelectedItemNumber - $this->ItemsContainerHeight(); $i--)
+                for ($i = $this->SelectedItemNumber; $i >= $this->SelectedItemNumber - $this->ItemsContainerHeight; $i--)
                 {
                     $j--;
                     if ($i <= 0 || $j <= 0)
                     {
                         break;
                     }
-                    if (!$items[$j]->Visible())
+                    if (!$items[$j]->Visible)
                     {
                         $hiddenItems++;
                         $i++;
                     }
                 }
-                if ($this->SelectedItemNumber > $this->ScrollOffset() + $this->ItemsContainerHeight() + $hiddenItems)
+                if ($this->SelectedItemNumber > $this->ScrollOffset + $this->ItemsContainerHeight + $hiddenItems)
                 {
-                    $difference = $this->SelectedItemNumber - $this->ItemsContainerHeight() - $hiddenItems;
-                    $this->ScrollOffset($difference);
+                    $difference = $this->SelectedItemNumber - $this->ItemsContainerHeight - $hiddenItems;
+                    $this->ScrollOffset = $difference;
                 }
             }
         }
@@ -659,7 +681,7 @@ class MenuBox extends ListBox
         }
 
         $items = $this->GetSortedItems();
-        if (!isset($items[$this->SelectedItemNumber]) || !$items[$this->SelectedItemNumber]->Selectable())
+        if (!isset($items[$this->SelectedItemNumber]) || !$items[$this->SelectedItemNumber]->Selectable)
         {
             $this->__checkcurrentitem(false);
         }
@@ -731,14 +753,14 @@ class MenuBox extends ListBox
         $count = count($items);
         $hiddenItems = 0;
         $j = $count + 1;
-        for ($i = $count; $i >= $count - $this->ItemsContainerHeight(); $i--)
+        for ($i = $count; $i >= $count - $this->ItemsContainerHeight; $i--)
         {
             $j--;
             if ($i <= 0 || $j <= 0)
             {
                 break;
             }
-            if (!$items[$j]->Visible())
+            if (!$items[$j]->Visible)
             {
                 $hiddenItems++;
                 $i++;
@@ -755,13 +777,13 @@ class MenuBox extends ListBox
     public function __checkcurrentitem(bool $changeIndex) : void
     {
         $items = $this->GetSortedItems();
-        if (!isset($items[$this->SelectedItemNumber]) || !$items[$this->SelectedItemNumber] instanceof MenuBoxItem || $items[$this->SelectedItemNumber]->GetMenuBox() !== $this || !$items[$this->SelectedItemNumber]->Selectable())
+        if (!isset($items[$this->SelectedItemNumber]) || !$items[$this->SelectedItemNumber] instanceof MenuBoxItem || $items[$this->SelectedItemNumber]->GetMenuBox() !== $this || !$items[$this->SelectedItemNumber]->Selectable)
         {
             $itemNumber = $this->getnextalloweditemnumber(true);
-            if ($itemNumber === null || !$items[$itemNumber]->Selectable())
+            if ($itemNumber === null || !$items[$itemNumber]->Selectable)
             {
                 $itemNumber = $this->getnextalloweditemnumber(false);
-                if ($itemNumber === null || !$items[$itemNumber] || !$items[$itemNumber]->Selectable())
+                if ($itemNumber === null || !$items[$itemNumber] || !$items[$itemNumber]->Selectable)
                 {
                     $this->SetSelectedItemNumber(null);
                 }
@@ -906,11 +928,11 @@ class MenuBox extends ListBox
 
         foreach ($this->items as $item)
         {
-            if (!isset($orderingArray[$item->Ordering()]))
+            if (!isset($orderingArray[$item->Ordering]))
             {
-                $orderingArray[$item->Ordering()] = [];
+                $orderingArray[$item->Ordering] = [];
             }
-            $orderingArray[$item->Ordering()][] = $item;
+            $orderingArray[$item->Ordering][] = $item;
         }
 
         ksort($orderingArray);
@@ -1178,7 +1200,7 @@ class MenuBox extends ListBox
             $delimiterBg = $item->DelimiterSelectedBackgroundColor;
         }
 
-        if ($item->Disabled())
+        if ($item->Disabled)
         {
             $headerFg = $item->HeaderDisabledForegroundColor;
             $headerBg = $item->HeaderDisabledBackgroundColor;
@@ -1188,7 +1210,7 @@ class MenuBox extends ListBox
 
         }
 
-        if ($selected && $item->Disabled())
+        if ($selected && $item->Disabled)
         {
             $headerFg = $item->HeaderSelectedDisabledForegroundColor;
             $headerBg = $item->HeaderSelectedDisabledBackgroundColor;
@@ -1202,7 +1224,7 @@ class MenuBox extends ListBox
             $header = "";
         $itemName = $item->Render($selected);
         if ($selected)
-            $itemName .= "  " . ColoredString::Get($item->Hint(), $item->HintForegroundColor, $item->HintBackgroundColor);
+            $itemName .= "  " . ColoredString::Get($item->Hint, $item->HintForegroundColor, $item->HintBackgroundColor);
         return $header . $itemName . "\n";
     }
 
@@ -1216,7 +1238,7 @@ class MenuBox extends ListBox
         $newArray = [];
         foreach ($items as $item)
         {
-            if ($item->Visible())
+            if ($item->Visible)
             {
                 $newArray[] = $item;
             }
@@ -1229,7 +1251,7 @@ class MenuBox extends ListBox
      */
     protected function _renderBody(string &$output): void
     {
-        $output .= $this->ScrollOffset() > 0 ? $this->ScrollUpCharacter() . "\n" : "\n";
+        $output .= $this->ScrollOffset > 0 ? $this->ScrollUpCharacter . "\n" : "\n";
         $k = 1;
         $a = 0;
         $itemName = "";
@@ -1242,25 +1264,25 @@ class MenuBox extends ListBox
             if ($key == 0)
                 continue;
             $a++;
-            if ($a <= $this->ScrollOffset())
+            if ($a <= $this->ScrollOffset)
             {
-                if ($item->Visible() && !$item instanceof MenuBoxDelimiter && !$item instanceof Label && $item instanceof MenuBoxItem)
+                if ($item->Visible && !$item instanceof MenuBoxDelimiter && !$item instanceof Label && $item instanceof MenuBoxItem)
                 {
                     $k++;
                 }
 
                 continue;
             }
-            if ($renderedItems >= $this->ItemsContainerHeight() && $this->ItemsContainerHeight() != 0 && $this->SelectedItemNumber != 0)
+            if ($renderedItems >= $this->ItemsContainerHeight && $this->ItemsContainerHeight != 0 && $this->SelectedItemNumber != 0)
             {
                 // Checking are there not hidden elements below
-                $startFrom = $this->ScrollOffset() + 1;
+                $startFrom = $this->ScrollOffset + 1;
                 $has = false;
                 $j = $startFrom - 1;
                 $b = 0;
                 for ($i = $startFrom; $i < count($allItems); $i++)
                 {
-                    if ($b == $this->ItemsContainerHeight())
+                    if ($b == $this->ItemsContainerHeight)
                     {
                         break;
                     }
@@ -1270,7 +1292,7 @@ class MenuBox extends ListBox
                         break;
                     }
                     $startFrom++;
-                    if (!$allItems[$j]->Visible())
+                    if (!$allItems[$j]->Visible)
                     {
                         $i--;
                         continue;
@@ -1284,7 +1306,7 @@ class MenuBox extends ListBox
                         break;
                     }
 
-                    if ($allItems[$i]->Visible())
+                    if ($allItems[$i]->Visible)
                     {
                         $has = true;
                         break;
@@ -1294,11 +1316,11 @@ class MenuBox extends ListBox
                 {
                     break;
                 }
-                $output .= $this->ScrollDownCharacter() . "\n";
+                $output .= $this->ScrollDownCharacter . "\n";
                 $scrollDownCharacterRendered = true;
                 break;
             }
-            if (!$item->Visible())
+            if (!$item->Visible)
             {
                 continue;
             }
@@ -1418,7 +1440,7 @@ class MenuBox extends ListBox
         $result = array();
         foreach ($this->GetSortedItems() as $key => $item)
         {if(!$item instanceof MenuBoxControl)continue;
-            if ($item->Selectable())
+            if ($item->Selectable)
                 $result[$key] = $item;
         }
         $this->__updateallowedcache = false;
@@ -1555,7 +1577,6 @@ class MenuBox extends ListBox
         $selectedItemId = 0;
         $selectedItemIdStr = "0";
         /** @var MenuBoxItem $selectedItem */$selectedItem = null;
-        $this->wrongItemSelected = false;
         $callbackCalled = false;
         while (!$this->closeMenu)
         {
@@ -1580,7 +1601,6 @@ class MenuBox extends ListBox
                 Console::Write($__output);
             }
             $cleared = false;
-            $this->wrongItemSelected = false;
             do
             {
                 if ($this->closeMenu)
@@ -1609,31 +1629,24 @@ class MenuBox extends ListBox
                 $this->superPreventRefresh = true;
                 if ($selectedItemId !== null)
                     $this->SetSelectedItemNumber($selectedItemId);
-                else if ($this->ItemsContainerHeight() > 0)
+                else if ($this->ItemsContainerHeight > 0)
                 {
                     if ($pressedKey == "downarrow")
                     {
-                        $offset = count($this->GetSortedItems(false)) - $this->ItemsContainerHeight();
+                        $offset = count($this->GetSortedItems(false)) - $this->ItemsContainerHeight;
                     }
                     else
                     {
                         $offset = 0;
                     }
 
-                    $this->ScrollOffset($offset);
+                    $this->ScrollOffset = $offset;
                 }
                 $this->superPreventRefresh = false;
                 continue;
             }
 
-            // Console::ReadLine() returns an empty string if you'll input "0". So it's temporarily broken
-            /*if ($selectedItemId == 0 && $selectedItemIdStr != "0")
-            {
-                $this->wrongItemSelected = true;
-                continue;
-            }*/
-
-            if ($selectedItem === null || $selectedItem->Disabled() || !$selectedItem->Selectable())
+            if ($selectedItem === null || $selectedItem->Disabled || !$selectedItem->Selectable)
             {
                 continue;
             }
@@ -1649,12 +1662,12 @@ class MenuBox extends ListBox
                 $this->callbackExecuting = true;
                 if ($selectedItem instanceof Radiobutton)
                 {
-                    if (!$selectedItem->Checked())
-                        $selectedItem->Checked(true);
+                    if (!$selectedItem->Checked)
+                        $selectedItem->Checked = true;
                 }
                 else
                 {
-                    $selectedItem->Checked(!$selectedItem->Checked());
+                    $selectedItem->Checked = !$selectedItem->Checked;
                 }
                 $this->callbackExecuting = false;
             }

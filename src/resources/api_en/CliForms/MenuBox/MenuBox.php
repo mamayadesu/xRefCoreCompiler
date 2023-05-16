@@ -29,6 +29,26 @@ use IO\Console;
 class MenuBox extends ListBox
 {
     /**
+     * @var int A count of items which can be rendered
+     */
+    public int $ItemsContainerHeight = 0;
+
+    /**
+     * @var string A character which displays in top of items container if there are items above
+     */
+    public string $ScrollUpCharacter = "↑";
+
+    /**
+     * @var string A character which displays in bottom of items container if there are items below
+     */
+    public string $ScrollDownCharacter = "↓";
+
+    /**
+     * @var int A scroll offset from top
+     */
+    public int $ScrollOffset = 0;
+
+    /**
      * @var string This ID is using to find your MenuBox. Not for anything else.
      */
     public string $Id = "";
@@ -72,26 +92,6 @@ class MenuBox extends ListBox
     {}
     
     /**
-     * Returns a count of items which can be rendered. If you pass new value, it will be changed
-     *
-     * @param int|null $newValue
-     * @return int
-     * @throws MenuBoxDisposedException
-     */
-    public function ItemsContainerHeight(?int $newValue = null) : int
-    {}
-
-    /**
-     * Returns a scroll offset from top. If you pass new value, it will be changed
-     *
-     * @param int|null $newValue
-     * @return int
-     * @throws MenuBoxDisposedException
-     */
-    public function ScrollOffset(?int $newValue = null) : int
-    {}
-    
-    /**
      * Returns TRUE if this MenuBox contains this item
      *
      * @param MenuBoxControl $control
@@ -99,26 +99,6 @@ class MenuBox extends ListBox
      * @throws MenuBoxDisposedException
      */
     public function HasItem(MenuBoxControl $control) : bool
-    {}
-
-    /**
-     * Returns a character which displays in top of items container if there are items above. If you pass new value, it will be changed
-     *
-     * @param string|null $newValue
-     * @return string
-     * @throws MenuBoxDisposedException
-     */
-    public function ScrollUpCharacter(?string $newValue = null) : string
-    {}
-
-    /**
-     * Returns a character which displays in bottom of items container if there are items below. If you pass new value, it will be changed
-     *
-     * @param string|null $newValue
-     * @return string
-     * @throws MenuBoxDisposedException
-     */
-    public function ScrollDownCharacter(?string $newValue = null) : string
     {}
 
     /**

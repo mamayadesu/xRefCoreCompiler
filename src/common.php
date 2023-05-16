@@ -6,6 +6,7 @@ $_ALREADY_REGISTERED = [];
 $GLOBALS["__QUEUE"] = [];
 $GLOBALS["__QUEUE1"] = [];
 $GLOBALS["__QUEUE2"] = [];
+require_once "__xrefcore/GetterSetter/GetterSetter.php";
 function including($path)
 {
     global $_ALREADY_REGISTERED, $microtime, $argv;
@@ -20,6 +21,14 @@ function including($path)
     $ext = "";
     $obj1 = "";
     $toNextIncluding = [];
+    if ($phar = \Phar::running(false))
+    {
+        $phar_full_path = "phar://" . str_replace("\\", "/", $phar) . DIRECTORY_SEPARATOR;
+    }
+    else
+    {
+        $phar_full_path = __DIR__ . DIRECTORY_SEPARATOR;
+    }
     foreach ($data as $obj)
     {
         if ($obj == "." || $obj == "..")
@@ -27,6 +36,12 @@ function including($path)
             continue;
         }
         $obj1 = $path . DIRECTORY_SEPARATOR . $obj;
+        $obj1_short_path = str_replace($phar_full_path, "", $obj1);
+        $obj1_short_path = str_replace("\\", "/", $obj1_short_path);
+        if ($obj1_short_path == "__xrefcore/GetterSetter/GetterSetter.php")
+        {
+            continue;
+        }
         if (is_file($obj1))
         {
             $splitFileName = explode(".", $obj);
@@ -218,7 +233,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.16.10.0";
+    return "1.17.0.0";
 }
 
 function __CHECK_WINSIZE() : string

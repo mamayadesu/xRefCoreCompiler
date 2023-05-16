@@ -5,9 +5,18 @@ namespace CliForms\Common;
 use Data\String\BackgroundColors;
 use Data\String\ColoredString;
 use Data\String\ForegroundColors;
+use GetterSetter\GetterSetter;
 
+/**
+ * @property string $Name Item's title
+ * @property bool $Selectable Is item visible and allowed to be selected
+ * @property bool $Disabled Is item disabled
+ * @property int $Ordering Item's ordering
+ */
 class ControlItem
 {
+    use GetterSetter;
+
     /**
      * @var string Any value here. ID is not using anywhere except your code
      */
@@ -16,7 +25,7 @@ class ControlItem
     /**
      * @ignore
      */
-    private string $name = "";
+    protected string $name = "";
 
     /**
      * @var ForegroundColors Text's color
@@ -41,32 +50,76 @@ class ControlItem
     /**
      * @ignore
      */
+    protected function _gs_Name() : array
+    {return [
+        Get => function() : string
+        {
+            return $this->name;
+        },
+        Set => function(string $newValue) : void
+        {
+            $this->name = $newValue;
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
+    protected function _gs_Selectable() : array
+    {return [
+        Get => function() : bool
+        {
+            return $this->itemSelectable;
+        },
+        Set => function(bool $newValue) : void
+        {
+            $this->itemSelectable = $newValue;
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
+    protected function _gs_Disabled() : array
+    {return [
+        Get => function() : bool
+        {
+            return $this->itemDisabled;
+        },
+        Set => function(bool $newValue) : void
+        {
+            $this->itemDisabled = $newValue;
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
+    protected function _gs_Ordering() : array
+    {return [
+        Get => function() : int
+        {
+            return $this->ordering;
+        },
+        Set => function(int $newValue) : void
+        {
+            $this->ordering = $newValue;
+        }
+    ];}
+
+    /**
+     * @ignore
+     */
     public int $ordering = 1;
 
     /**
      * @ignore
      */
-    private bool $itemSelectable = true, $itemDisabled = false;
+    protected bool $itemSelectable = true, $itemDisabled = false;
 
     public function __construct(string $name = "")
     {
-        $this->Name($name);
-    }
-
-    /**
-     * Returns item title. If you pass new value, it will be changed
-     *
-     * @param ?string $newValue
-     * @return string
-     */
-    public function Name(?string $newValue = null) : string
-    {
-        if ($newValue === null)
-        {
-            return $this->name;
-        }
-        $this->name = $newValue;
-        return $newValue;
+        $this->Name = $name;
     }
 
     /**
@@ -87,62 +140,11 @@ class ControlItem
     }
 
     /**
-     * Returns TRUE if this item is allowed to select. If you pass new value, it will be changed
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Selectable(?bool $newValue = null) : bool
-    {
-        if ($newValue === null)
-        {
-            return $this->itemSelectable;
-        }
-
-        $this->itemSelectable = $newValue;
-        return $newValue;
-    }
-
-    /**
-     * Returns TRUE if this item is allowed to be clicked. If you pass new value, it will be changed
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Disabled(?bool $newValue = null) : bool
-    {
-        if ($newValue === null)
-        {
-            return $this->itemDisabled;
-        }
-
-        $this->itemDisabled = $newValue;
-        return $newValue;
-    }
-
-    /**
-     * Returns item's sort ordering. If you pass new value, it will be changed
-     *
-     * @param int|null $newValue
-     * @return int
-     */
-    public function Ordering(?int $newValue = null) : int
-    {
-        if ($newValue === null)
-        {
-            return $this->ordering;
-        }
-
-        $this->ordering = $newValue;
-        return $newValue;
-    }
-
-    /**
      * @return string Rendered item
      */
     public function Render() : string
     {
-        if ($this->Disabled())
+        if ($this->Disabled)
         {
             $foregroundColor = $this->DisabledForegroundColor;
             $backgroundColor = $this->DisabledBackgroundColor;
@@ -152,6 +154,6 @@ class ControlItem
             $foregroundColor = $this->ItemForegroundColor;
             $backgroundColor = $this->ItemBackgroundColor;
         }
-        return ColoredString::Get($this->Name(), $foregroundColor, $backgroundColor);
+        return ColoredString::Get($this->Name, $foregroundColor, $backgroundColor);
     }
 }

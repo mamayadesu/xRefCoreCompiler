@@ -4,13 +4,17 @@ namespace CliForms\MenuBox;
 
 use Data\String\ColoredString;
 use Data\String\ForegroundColors;
+use GetterSetter\GetterSetter;
 
 /**
  * Checkbox for MenuBox
+ *
+ * @property bool $Checked Is checkbox checked
  */
-
 class Checkbox extends MenuBoxItem
 {
+    use GetterSetter;
+
     /**
      * @ignore
      */
@@ -24,29 +28,28 @@ class Checkbox extends MenuBoxItem
     protected string $LeftBorder = "[", $Character = "X", $NoCharacter = " ", $RightBorder = "] ";
 
     /**
-     * Returns TRUE if checkbox is checked. If you pass new value, it will be changed
-     *
-     * @param bool|null $newValue
-     * @return bool
+     * @ignore
      */
-    public function Checked(?bool $newValue = null) : bool
-    {
-        if ($newValue === null)
+    protected function _gs_Checked() : array
+    {return [
+        Get => function() : bool
         {
             return $this->checkboxChecked;
-        }
-        $this->checkboxChecked = $newValue;
-        if ($this->GetMenuBox() !== null)
+        },
+        Set => function(bool $newValue) : void
         {
-            $this->CallOnSelect($this->GetMenuBox());
-            $this->GetMenuBox()->Refresh();
+            $this->checkboxChecked = $newValue;
+            if ($this->GetMenuBox() !== null)
+            {
+                $this->CallOnSelect($this->GetMenuBox());
+                $this->GetMenuBox()->Refresh();
+            }
         }
-        return $newValue;
-    }
+    ];}
 
     public function Render(bool $selected = false) : string
     {
-        $icon = $this->Checked() ? $this->Character : $this->NoCharacter;
+        $icon = $this->Checked ? $this->Character : $this->NoCharacter;
         $foregroundColor = $this->ItemForegroundColor;
         $backgroundColor = $this->ItemBackgroundColor;
         if ($selected)
@@ -55,7 +58,7 @@ class Checkbox extends MenuBoxItem
             $backgroundColor = $this->ItemSelectedBackgroundColor;
         }
 
-        if ($this->Disabled())
+        if ($this->Disabled)
         {
             if ($selected)
             {
@@ -72,6 +75,6 @@ class Checkbox extends MenuBoxItem
         else
             $icon = ColoredString::Get($this->LeftBorder, ForegroundColors::GRAY, $backgroundColor) . ColoredString::Get($icon, $this->IconForegroundColor, $backgroundColor) . ColoredString::Get($this->RightBorder, ForegroundColors::GRAY, $backgroundColor);
 
-        return $icon . ColoredString::Get($this->Name(), $foregroundColor, $backgroundColor);
+        return $icon . ColoredString::Get($this->Name, $foregroundColor, $backgroundColor);
     }
 }

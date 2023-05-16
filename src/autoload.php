@@ -9,6 +9,12 @@ error_reporting(E_ALL);
 
 define("MAIN_THREAD", true);
 define("DEV_MODE", false);
+define("Get", "get");
+define("Set", "set");
+define("get", "get");
+define("set", "set");
+define("GET", "get");
+define("SET", "set");
 
 if (!extension_loaded("sockets"))
 {

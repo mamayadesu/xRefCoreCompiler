@@ -10,21 +10,12 @@ namespace CliForms\MenuBox;
 class Radiobutton extends Checkbox
 {
     /**
-     * Returns radio button group name. If you pass new value, it will be changed.
-     *
-     * @param string|null $newValue
-     * @return string
+     * @var bool Is radiobutton checked. If set to TRUE, another selected radiobutton from this group will automatically be set to FALSE
      */
-    public function GroupName(?string $newValue = null) : string
-    {}
+    public bool $Checked = false;
 
     /**
-     * Returns TRUE if radiobutton is checked. If you pass new value, it will be changed.
-     * If you set checked, other radio buttons will be unchecked.
-     *
-     * @param bool|null $newValue
-     * @return bool
+     * @var string Group name of the radiobutton
      */
-    public function Checked(?bool $newValue = null) : bool
-    {}
+    public string $GroupName = "";
 }

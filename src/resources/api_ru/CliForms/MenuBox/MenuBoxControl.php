@@ -9,6 +9,35 @@ use Data\String\ForegroundColors;
 
 class MenuBoxControl extends ListBoxControl
 {
+    /**
+     * @var string Название элемента
+     */
+    public string $Name = "";
+
+    /**
+     * @var string Подсказка элемента. Отображается тогда, когда элемент выбран
+     */
+    public string $Hint = "";
+
+    /**
+     * @var bool Элемент отображается в контейнере и доступен для выбора
+     */
+    public bool $Selectable = true;
+
+    /**
+     * @var bool Элемент отключён
+     */
+    public bool $Disabled = false;
+
+    /**
+     * @var bool Элемент отображается в контейнере
+     */
+    public bool $Visible = true;
+
+    /**
+     * @var int Сортировка элемента
+     */
+    public int $Ordering = 1;
 
     /**
      * @var ForegroundColors Цвет текста подскази элемента
@@ -47,15 +76,6 @@ class MenuBoxControl extends ListBoxControl
     {}
 
     /**
-     * Возвращает TRUE, если элемент видимый и доступен для выбора. Если задать новое значение, оно будет изменено
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Selectable(?bool $newValue = null) : bool
-    {}
-
-    /**
      * Устанавливает стиль элемента
      *
      * @param ForegroundColors $foregroundColor
@@ -63,41 +83,5 @@ class MenuBoxControl extends ListBoxControl
      * @return MenuBoxControl
      */
     public function SetItemStyle(string $foregroundColor, $backgroundColor = BackgroundColors::AUTO) : MenuBoxControl
-    {}
-
-    /**
-     * Возвращает подсказку элемента. Подсказки появляются справа от элемента при наведении на них. Если задать новое значение, оно будет изменено
-     *
-     * @param string|null $newValue
-     * @return string
-     */
-    public function Hint(?string $newValue = null) : string
-    {}
-
-    /**
-     * Возвращает название элемента. Если задать новое значение, оно будет изменено
-     *
-     * @param ?string $newValue
-     * @return string
-     */
-    public function Name(?string $newValue = null) : string
-    {}
-
-    /**
-     * Возвращает TRUE, если элемент видимый. Если задать новое значение, оно будет изменено
-     *
-     * @param bool|null $newValue
-     * @return bool
-     */
-    public function Visible(?bool $newValue = null) : bool
-    {}
-
-    /**
-     * Возвращает порядок сортировки элемента внутри контейнера. Если задать новое значение, оно будет изменено
-     *
-     * @param int|null $newValue
-     * @return int
-     */
-    public function Ordering(?int $newValue = null) : int
     {}
 }

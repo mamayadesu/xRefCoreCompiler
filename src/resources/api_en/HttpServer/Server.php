@@ -41,11 +41,11 @@ final class Server
      * * request - triggers when request was received. Signature: `function(HttpServer\Request $request, HttpServer\Response $response, HttpServer\Server $server) : void`
      * * throwable - triggers on uncaught exception while proceeding request. Signature: function(HttpServer\Request $request, HttpServer\Response $response, Throwable $throwable, HttpServer\Server $server) : void`
      *
-     * @param string $eventName
+     * @param ServerEvents $event
      * @param callable $callback
      * @throws UnknownEventException
      */
-    public function On(string $eventName, callable $callback) : void
+    public function On(string $event, callable $callback) : void
     {}
     
     /**
