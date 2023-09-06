@@ -10,7 +10,7 @@ This program packs your application into PHAR with using xRefCore framework. You
 <br>
 # Installation
 <h4>Linux</h4>
-`wget -O - https://raw.githubusercontent.com/mamayadesu/xRefCoreCompiler/main/INSTALLATION%20SCRIPTS/install.sh | bash`
+<code>wget -O - https://raw.githubusercontent.com/mamayadesu/xRefCoreCompiler/main/INSTALLATION%20SCRIPTS/install.sh | bash</code>
 <h4>Windows (PowerShell only)</h4>
 <i>You must run PowerShell as Administrator</i><br>
-`iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/mamayadesu/xRefCoreCompiler/main/INSTALLATION%20SCRIPTS/install.ps1'))`
+<code>iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/mamayadesu/xRefCoreCompiler/main/INSTALLATION%20SCRIPTS/install.ps1'))</code>
