@@ -8,9 +8,9 @@ This program packs your application into PHAR with using xRefCore framework. You
 3. Fill data about application. Then it's recommended to save application config to project directory<br>
 4. Your PHAR-application will be saved to project directory<br>
 <br>
-<h3>Installation</h3>
+# Installation
 <h4>Linux</h4>
-<code>wget -O - https://raw.githubusercontent.com/mamayadesu/xRefCoreCompiler/main/INSTALLATION%20SCRIPTS/install.sh | bash</code>
+`wget -O - https://raw.githubusercontent.com/mamayadesu/xRefCoreCompiler/main/INSTALLATION%20SCRIPTS/install.sh | bash`
 <h4>Windows (PowerShell only)</h4>
 <i>You must run PowerShell as Administrator</i><br>
-<code>iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/mamayadesu/xRefCoreCompiler/main/INSTALLATION%20SCRIPTS/install.ps1'))</code>
+`iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/mamayadesu/xRefCoreCompiler/main/INSTALLATION%20SCRIPTS/install.ps1'))`
