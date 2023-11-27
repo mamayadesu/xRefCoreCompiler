@@ -20,7 +20,7 @@ use IO\FileDirectory;
 class Dialog
 {
     public static bool $HideDotFiles = true, $ExcludeWindowsSystemObjects = true;
-    public static int $TableColumnsPadding = 22;
+    public static int $TableColumnsPadding = 32;
 
     public static string
         $LangSaveAs = "Save as...",
@@ -46,6 +46,7 @@ class Dialog
         $LangHideHelp = "Hide this text",
         $LangInputPath = "Input path to file or directory",
         $LangSelectDirectory = "Select this directory",
+        $LangBack = "Back",
         $LangSelectDirectoryNote = "Also you can select any file to choose folder where you are.",
         $LangOverwriteConfirmation = "Do you really want to overwrite file %s0?";
 
@@ -55,6 +56,15 @@ class Dialog
      * @return MenuBox|null
      */
     public static function GetMenuBox() : ?MenuBox
+    {}
+
+    /**
+     * Changes pseudo-GUI locale
+     *
+     * @param array $locale Use one of constants of the class `CliForms\FileSystemDialog\DialogLocales`
+     * @return void
+     */
+    public static function SetLocale(array $locale) : void
     {}
 
     /**

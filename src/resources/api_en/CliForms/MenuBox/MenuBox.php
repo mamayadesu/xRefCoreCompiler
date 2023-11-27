@@ -49,6 +49,11 @@ class MenuBox extends ListBox
     public int $ScrollOffset = 0;
 
     /**
+     * @var bool Is autosize mode enabled
+     */
+    public bool $AutoSizeEnabled = false;
+
+    /**
      * @var string This ID is using to find your MenuBox. Not for anything else.
      */
     public string $Id = "";
@@ -124,6 +129,14 @@ class MenuBox extends ListBox
      * @return MenuBox|null
      */
     public static function GetMenuBoxById(string $id) : ?MenuBox
+    {}
+
+    /**
+     * Finds and returns current active MenuBox. Returns NULL if no one MenuBox is running
+     *
+     * @return MenuBox|null
+     */
+    public static function GetCurrentActiveMenuBox() : ?MenuBox
     {}
 
     /**

@@ -9,6 +9,8 @@ use CliForms\Common\RowHeaderType;
 use CliForms\FileSystemDialog\Exceptions\DialogAlreadyRunningException;
 use CliForms\MenuBox\Events\ItemClickedEvent;
 use CliForms\MenuBox\Events\KeyPressEvent;
+use CliForms\MenuBox\Events\MenuBoxCloseEvent;
+use CliForms\MenuBox\Events\MenuBoxOpenEvent;
 use CliForms\MenuBox\Label;
 use CliForms\MenuBox\MenuBox;
 use CliForms\MenuBox\MenuBoxItem;
@@ -22,7 +24,7 @@ use IO\FileDirectory;
 class Dialog
 {
     public static bool $HideDotFiles = true, $ExcludeWindowsSystemObjects = true;
-    public static int $TableColumnsPadding = 22;
+    public static int $TableColumnsPadding = 32;
 
     public static string
         $LangSaveAs = "Save as...",
@@ -48,6 +50,7 @@ class Dialog
         $LangHideHelp = "Hide this text",
         $LangInputPath = "Input path to file or directory",
         $LangSelectDirectory = "Select this directory",
+        $LangBack = "Back",
         $LangSelectDirectoryNote = "Also you can select any file to choose folder where you are.",
         $LangOverwriteConfirmation = "Do you really want to overwrite file %s0?";
 
@@ -69,7 +72,7 @@ class Dialog
     /**
      * @ignore
      */
-    private static array $generatedContent = [], $keyBinds = array(), $savedChoices = array();
+    private static array $generatedContent = [], $keyBinds = array(), $savedChoices = array(), $history = array();
 
     /**
      * @ignore
@@ -84,6 +87,25 @@ class Dialog
     public static function GetMenuBox() : ?MenuBox
     {
         return self::$menu;
+    }
+
+    /**
+     * Changes pseudo-GUI locale
+     *
+     * @param array $locale Use one of constants of the class `CliForms\FileSystemDialog\DialogLocales`
+     * @return void
+     */
+    public static function SetLocale(array $locale) : void
+    {
+        foreach ($locale as $key => $value)
+        {
+            if (substr($key, 0, 4) != "Lang")
+            {
+                continue;
+            }
+
+            self::$$key = $value;
+        }
     }
 
     /**
@@ -124,13 +146,13 @@ class Dialog
 
             $help  = "F1 - " . self::$LangHideHelp . "\n";
             $help .= "Q - " . self::$LangInputPath . "\n";
+            $help .= "Escape - " . self::$LangBack . "\n";
             $help .= "X - " . self::$LangClose;
 
             $no_help = "F1 - " . self::$LangHelp;
 
             self::$menu->SetDescription(self::$help ? $help : $no_help);
         };
-
         if ($defaultFileName != "")
         {
             foreach (self::$generatedContent as $key => $obj)
@@ -190,6 +212,7 @@ class Dialog
             $help  = "F1 - " . self::$LangHideHelp . "\n";
             $help .= "S - " . self::$LangSaveAs . "\n";
             $help .= "Q - " . self::$LangInputPath . "\n";
+            $help .= "Escape - " . self::$LangBack . "\n";
             $help .= "X - " . self::$LangClose;
 
             $no_help = "F1 - " . self::$LangHelp;
@@ -256,6 +279,7 @@ class Dialog
             $help  = "F1 - " . self::$LangHideHelp . "\n";
             $help .= "S - " . self::$LangSelectDirectory . "\n";
             $help .= "Q - " . self::$LangInputPath . "\n";
+            $help .= "Escape - " . self::$LangBack . "\n";
             $help .= "X - " . self::$LangClose . "\n";
             $help .= self::$LangSelectDirectoryNote;
 
@@ -441,6 +465,11 @@ class Dialog
                     self::$menu->Title = self::GetTitle();
                     return;
                 }
+                self::$history[count(self::$history) - 1]["saved_choice"] = null;
+                self::$history[] = [
+                    "path" => self::$currentDirectory,
+                    "saved_choice" => null
+                ];
                 self::$menu->PreventNextRefresh();
                 self::$menu->ClearItems();
                 foreach ($items as $item)
@@ -487,8 +516,12 @@ class Dialog
         self::$help = false;
         self::$result = null;
         self::$savedChoices = array();
+        self::$history = array();
         $title = self::GetTitle();
-
+        self::$history[] = [
+            "path" => self::$currentDirectory,
+            "saved_choice" => null
+        ];
         if (!file_exists(self::$currentDirectory) || !is_dir(self::$currentDirectory))
         {
             $text = self::$LangDirectoryNotFound;
@@ -510,6 +543,7 @@ class Dialog
             self::$menu->AddItem($item);
         }
         self::$menu->ItemsContainerHeight = 15;
+        self::$menu->AutoSizeEnabled = true;
         self::$menu->SetRowsHeaderType(RowHeaderType::ARROW3);
         self::$menu->SetRowHeaderItemDelimiter(" ");
         self::$menu->SetDescription("F1 - " . self::$LangHelp);
@@ -520,6 +554,16 @@ class Dialog
             {
                 self::$keyBinds[$event->Key]($event);
             }
+        };
+        self::$menu->OpenEvent = function(MenuBoxOpenEvent $event) : void
+        {
+            Console::HideCursor();
+        };
+        self::$menu->CloseEvent = function(MenuBoxCloseEvent $event) : void
+        {
+            self::$savedChoices = array();
+            self::$history = array();
+            Console::ShowCursor();
         };
         self::$keyBinds["x"] = function(KeyPressEvent $event) : void
         {
@@ -532,7 +576,59 @@ class Dialog
         {
             self::InputPath();
         };
+        self::$keyBinds["escape"] = function(KeyPressEvent $event) : void
+        {
+            if (count(self::$history) == 1)
+            {
+                return;
+            }
+            $new_path = self::$history[count(self::$history) - 2]["path"];
+            $old_path = self::$currentDirectory;
+            if (!file_exists($new_path) || !is_dir($new_path))
+            {
+                $text = self::$LangDirectoryNotFound;
+                $text = str_replace("%s0", $new_path, $text);
+                self::GenerateError($text)->Render();
+                return;
+            }
 
+            unset(self::$savedChoices[self::$currentDirectory]);
+
+            self::$currentDirectory = $new_path;
+            array_pop(self::$history);
+            self::$menu->Title = self::GetTitle();
+            $items = self::GenerateDirectoryContentItems();
+
+            if ($items === null)
+            {
+                self::$currentDirectory = $old_path;
+                self::$menu->Title = self::GetTitle();
+                return;
+            }
+
+            self::$history = array_values(self::$history);
+            $history_count = count(self::$history);
+            self::$menu->ClearItems();
+            foreach ($items as $item)
+            {
+                self::$menu->AddItem($item);
+            }
+
+            $itemNumber = 1;
+            if (self::$history[$history_count - 1]["saved_choice"] !== null)
+            {
+                foreach (self::$generatedContent as $key => $object)
+                {
+                    if ($object !== null && $object["name"] == self::$history[$history_count - 1]["saved_choice"])
+                    {
+                        $itemNumber = $key;
+                        break;
+                    }
+                }
+            }
+            self::$history[$history_count - 1]["saved_choice"] = null;
+            self::$menu->SetSelectedItemNumber($itemNumber);
+        };
         return self::$menu;
     }
 
@@ -698,7 +794,11 @@ class Dialog
                 self::$menu->Title = self::GetTitle();
                 return;
             }
-
+            self::$history[count(self::$history) - 1]["saved_choice"] = null;
+            self::$history[] = [
+                "path" => $new_path,
+                "saved_choice" => null
+            ];
             self::$menu->ClearItems();
             foreach ($items as $item)
             {
@@ -799,6 +899,7 @@ class Dialog
 
                     self::$savedChoices[self::$currentDirectory] = $object_name;
                     self::$currentDirectory = $new_path;
+
                     self::$menu->Title = self::GetTitle();
                     $items = self::GenerateDirectoryContentItems();
 
@@ -808,7 +909,11 @@ class Dialog
                         self::$menu->Title = self::GetTitle();
                         return;
                     }
-
+                    self::$history[count(self::$history) - 1]["saved_choice"] = $object_name;
+                    self::$history[] = [
+                        "path" => $new_path,
+                        "saved_choice" => null
+                    ];
                     self::$menu->ClearItems();
                     foreach ($items as $item)
                     {

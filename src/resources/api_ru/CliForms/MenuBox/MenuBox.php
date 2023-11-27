@@ -49,6 +49,11 @@ class MenuBox extends ListBox
     public int $ScrollOffset = 0;
 
     /**
+     * @var bool Включён ли авто-подгон размера контейнера
+     */
+    public bool $AutoSizeEnabled = false;
+
+    /**
      * @var string ID нужен лишь для поиска вашего MenuBox и нигде более.
      */
     public string $Id = "";
@@ -124,6 +129,14 @@ class MenuBox extends ListBox
      * @return MenuBox|null
      */
     public static function GetMenuBoxById(string $id) : ?MenuBox
+    {}
+
+    /**
+     * Находит и возвращает текущий активный MenuBox. Возвращает NULL, если ни один MenuBox не запущен
+     *
+     * @return MenuBox|null
+     */
+    public static function GetCurrentActiveMenuBox() : ?MenuBox
     {}
 
     /**

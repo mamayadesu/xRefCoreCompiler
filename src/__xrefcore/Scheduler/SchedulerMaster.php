@@ -2,7 +2,9 @@
 
 namespace Scheduler;
 
+use CliForms\MenuBox\MenuBox;
 use HttpServer\Server;
+use Scheduler\AsyncCurl\Curl;
 use Scheduler\Exceptions\NotInitializableClassException;
 
 /**
@@ -83,7 +85,7 @@ final class SchedulerMaster
         /** @var array<AsyncTask> $result */$result = [];
         foreach (self::GetInstance()->Queue as $Task)
         {if(!$Task instanceof AsyncTask)continue;
-            if (($removeSystemClasses && ($Task->GetThis() instanceof Server)) || ($Task->IsCancelled() || ($Task->IsOnce() && $Task->WasExecuted())))
+            if (($removeSystemClasses && ($Task->GetThis() instanceof Server || $Task->GetThis() instanceof MenuBox || $Task->GetThis() instanceof Curl)) || ($Task->IsCancelled() || ($Task->IsOnce() && $Task->WasExecuted())))
                 continue;
 
             $result[] = $Task;

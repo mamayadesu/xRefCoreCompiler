@@ -3,6 +3,7 @@ declare(ticks = 1);
 
 namespace CliForms\MenuBox;
 
+use Application\Application;
 use CliForms\Common\ControlItem;
 use CliForms\Exceptions\InvalidArgumentsPassed;
 use CliForms\Exceptions\ItemIsUsingException;
@@ -24,6 +25,8 @@ use Data\String\ColoredString;
 use Data\String\ForegroundColors;
 use GetterSetter\GetterSetter;
 use IO\Console;
+use Scheduler\AsyncTask;
+use Scheduler\IAsyncTaskParameters;
 
 /**
  * Creation of an interactive pseudo-GUI menu with elements such as buttons, radio buttons, checkboxes and some others
@@ -119,7 +122,13 @@ class MenuBox extends ListBox
         $superPreventRefresh = false,
         $preventRefresh = false,
         $refreshCalled = false,
-        $callbackExecuting = false;
+        $callbackExecuting = false,
+        $autoSizeEnabled = false;
+
+    /**
+     * @ignore
+     */
+    private ?AsyncTask $autoSizeTask = null;
 
     /**
      * @ignore
@@ -303,6 +312,34 @@ class MenuBox extends ListBox
     ];}
 
     /**
+     * @ignore
+     */
+    public function _gs_AutoSizeEnabled() : array
+    {return [
+        Get => function() : bool
+        {
+            if ($this->DISPOSED)
+            {
+                $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            return $this->autoSizeEnabled;
+        },
+        Set => function(bool $value) : void
+        {
+            if ($this->DISPOSED)
+            {
+                $e = new MenuBoxDisposedException("This MenuBox is disposed. You can't do any actions with this MenuBox.");
+                $e->__xrefcoreexception = true;
+                throw $e;
+            }
+            $this->autoSizeEnabled = $value;
+            $this->checkautosize();
+        }
+    ];}
+
+    /**
      * MenuBox constructor.
      *
      * @param string $title Title of menu
@@ -365,6 +402,7 @@ class MenuBox extends ListBox
         }
         $this->SetZeroItem(null);
 
+        $this->checkautosize();
         $this->items = [];
         $this->sortedCache = [];
         $this->allowedCache = [];
@@ -399,7 +437,7 @@ class MenuBox extends ListBox
     {
         $result = null;
         foreach (self::$MenuBoxes as $key => $menu)
-        {if(!$menu instanceof MenuBox)continue;
+        {
             if ($menu->IsDisposed())
             {
                 continue;
@@ -408,6 +446,25 @@ class MenuBox extends ListBox
             {
                 $result = $menu;
             }
+        }
+        return $result;
+    }
+
+    /**
+     * Finds and returns current active MenuBox. Returns NULL if no one MenuBox is running
+     *
+     * @return MenuBox|null
+     */
+    public static function GetCurrentActiveMenuBox() : ?MenuBox
+    {
+        $result = null;
+        foreach (self::$MenuBoxes as $key => $menu)
+        {
+            if ($menu->IsClosed())
+            {
+                continue;
+            }
+            $result = $menu;
         }
         return $result;
     }
@@ -832,10 +889,12 @@ class MenuBox extends ListBox
             $this->zeroItem->__setattached($this, true);
         }
         foreach ($this->items as $item)
-        {if(!$item instanceof MenuBoxControl)continue;
+        {
             $item->__setattached($this, true);
         }
         $this->closeMenu = true;
+        $this->checkautosize();
+        $this->checkautosize(self::GetCurrentActiveMenuBox());
         Console::ClearWindow();
         if ($this->CloseEvent != null)
         {
@@ -1504,6 +1563,64 @@ class MenuBox extends ListBox
     }
 
     /**
+     * @ignore
+     */
+    private function checkautosize(?MenuBox $menuBox = null) : void
+    {
+        if ($menuBox === null)
+        {
+            $isCurrentMenuBox = self::GetCurrentActiveMenuBox() === $this;
+            $menuBox = $this;
+        }
+        else
+        {
+            $isCurrentMenuBox = true;
+        }
+
+        if ($menuBox->autoSizeEnabled && !$isCurrentMenuBox && $menuBox->autoSizeTask !== null)
+        {
+            $menuBox->autoSizeTask->Cancel();
+            $menuBox->autoSizeTask = null;
+        }
+        else if ($menuBox->autoSizeEnabled && $isCurrentMenuBox && $menuBox->autoSizeTask === null)
+        {
+            $menuBox->runautosizetask();
+        }
+    }
+
+    /**
+     * @ignore
+     */
+    private function runautosizetask() : void
+    {
+        if ($this->autoSizeTask !== null)
+        {
+            $this->autoSizeTask->Cancel();
+        }
+
+        $this->autoSizeTask = new AsyncTask($this, 100, false, function(AsyncTask $task, IAsyncTaskParameters $parameters) : void
+        {
+            $appSize = Application::GetWindowSize();
+            $this->checkautosize();
+            if ($this->autoSizeTask === null)
+            {
+                return;
+            }
+            if ($appSize['rows'] == 0)
+            {
+                $task->Cancel();
+                $this->autoSizeEnabled = false;
+                return;
+            }
+            $rows = $appSize['rows'] - 7;
+            if ($rows != $this->ItemsContainerHeight)
+            {
+                $this->ItemsContainerHeight = $rows;
+            }
+        });
+    }
+
+    /**
      * Builds and renders your menu and runs read-line to select menu item
      * @throws NoItemsAddedException
      * @throws MenuAlreadyOpenedException
@@ -1578,6 +1695,7 @@ class MenuBox extends ListBox
         $selectedItemIdStr = "0";
         /** @var MenuBoxItem $selectedItem */$selectedItem = null;
         $callbackCalled = false;
+        $this->checkautosize();
         while (!$this->closeMenu)
         {
             $output = "";
