@@ -357,7 +357,7 @@ class Console
                 break;
 
             case "\e":
-                $keypress = "Escace";
+                $keypress = "Escape";
                 break;
 
             case "\x1BOP":
