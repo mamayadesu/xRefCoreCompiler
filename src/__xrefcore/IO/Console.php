@@ -8,6 +8,7 @@ use Data\String\BackgroundColors;
 use Data\String\ColoredString;
 use Data\String\ForegroundColors;
 use IO\Console\Exceptions\ReadInterruptedException;
+use Throwable;
 
 /**
  * Contains tools for CLI I/O
@@ -177,7 +178,14 @@ class Console
         while (!@socket_bind($check, "127.0.0.1", self::$win_reader_port));
         socket_close($check);
 
-        $cmd = "start /B /I " . $exe . " " . self::$win_a2r_port . " " . self::$win_reader_port . " 1>&2";
+        if (!DEV_MODE)
+        {
+            $cmd = "start /B /I " . $exe . " " . self::$win_a2r_port . " " . self::$win_reader_port . " 1>&2";
+        }
+        else
+        {
+            $cmd = "start " . $exe . " " . self::$win_a2r_port . " " . self::$win_reader_port . " debug";
+        }
         $proc = proc_open($cmd, [], $pipes);
         proc_close($proc);
         socket_recvfrom(self::$win_a2r_socket, $buf, 16, 0, $remote_ip, $remote_port);
@@ -244,7 +252,14 @@ class Console
             socket_set_option(self::$win_a2r_socket, SOL_SOCKET, SO_RCVTIMEO, array("sec" => 0, "usec" => 3000));
             do
             {
-                $r = @socket_recvfrom(self::$win_a2r_socket, $buf, 32, 0, $remote_ip, $remote_port);
+                try
+                {
+                    $r = @socket_recvfrom(self::$win_a2r_socket, $buf, 32, 0, $remote_ip, $remote_port);
+                }
+                catch (Throwable $throwable)
+                {
+                    $r = false;
+                }
                 if (self::$readInterrupted && $interruptible)
                 {
                     self::$readInterrupted = false;

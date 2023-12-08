@@ -62,6 +62,7 @@ namespace PhpReadkey
         static void Main(string[] args)
         {
             int port, localPort;
+            bool debugEnabled = false;
             try
             {
                 port = Convert.ToInt32(args[0]);
@@ -71,24 +72,79 @@ namespace PhpReadkey
             {
                 return;
             }
+
+            try
+            {
+                debugEnabled = args[2] == "debug";
+            }
+            catch (Exception e)
+            {
+                debugEnabled = false;
+            }
+
             Send(Process.GetCurrentProcess().Id.ToString(), port);
 
             UdpClient receiver = new UdpClient(localPort);
+            receiver.Client.ReceiveTimeout = 250;
             IPEndPoint remote_ip = null;
 
             byte[] data;
             string message, result;
             string[] a;
 
+            int previousPort = 0;
             while (true)
             {
-                data = receiver.Receive(ref remote_ip);
+                if (debugEnabled)
+                {
+                    Console.WriteLine("##### START #####");
+                }
+                if (debugEnabled)
+                {
+                    Console.WriteLine("Receiving");
+                }
+                try
+                {
+                    data = receiver.Receive(ref remote_ip);
+                }
+                catch (System.Net.Sockets.SocketException e)
+                {
+                    if (debugEnabled)
+                    {
+                        Console.WriteLine("Failed to receive.");
+                    }
+                    Input(new string[2] { previousPort.ToString(), "1" });
+                    Send("", port);
+                    continue;
+                }
+                if (debugEnabled)
+                {
+                    Console.WriteLine("Received!");
+                }
 
                 message = Encoding.UTF8.GetString(data);
+                if (debugEnabled)
+                {
+                    Console.WriteLine("message: " + message);
+                }
                 a = message.Split(' ');
                 port = Convert.ToInt32(a[0]);
+                if (previousPort == 0)
+                {
+                    previousPort = port;
+                }
                 result = Input(a);
+
+                if (debugEnabled)
+                {
+                    Console.WriteLine("Sending '" + result + "'");
+                }
+
                 Send(result, port);
+                if (debugEnabled)
+                {
+                    Console.WriteLine("###### END ######");
+                }
             }
         }
 
@@ -101,6 +157,7 @@ namespace PhpReadkey
             }
             catch (Exception e)
             {
+                Console.WriteLine("Failed to get bytes. " + e.ToString());
                 return;
             }
             try

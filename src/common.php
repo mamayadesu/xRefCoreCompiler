@@ -233,7 +233,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.18.0.1";
+    return "1.18.0.2";
 }
 
 function __CHECK_WINSIZE() : string
@@ -268,7 +268,7 @@ function __CHECK_WINSIZE() : string
 function __CHECK_READKEY() : string
 {
     global $microtime;
-    $hash = "e130b62274827d2b10f80db47f17d026";
+    $hash = "1eee14c7cce8966db09cbfcbe905c3fa";
     $readkey_path = sys_get_temp_dir() . "\\";
     $readkey_file = $readkey_path . "readkey" . __GET_FRAMEWORK_VERSION() . ".exe";
     if (!MAIN_THREAD)
