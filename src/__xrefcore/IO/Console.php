@@ -4,6 +4,7 @@ declare(ticks = 1);
 namespace IO;
 
 use Application\Application;
+use CliForms\MenuBox\MenuBox;
 use Data\String\BackgroundColors;
 use Data\String\ColoredString;
 use Data\String\ForegroundColors;
@@ -45,6 +46,11 @@ class Console
      * @ignore
      */
     private static bool $readInterrupted = false;
+
+    /**
+     * @ignore
+     */
+    public static ?MenuBox $____currentMenuBox = null;
 
     /**
      * @ignore
@@ -266,6 +272,11 @@ class Console
                     $e = new ReadInterruptedException("ReadKey was interrupted manually.");
                     $e->__xrefcoreexception = true;
                     throw $e;
+                }
+                if (self::$____currentMenuBox !== null && !self::$____currentMenuBox->IsDisposed() && self::$____currentMenuBox->IsClosed())
+                {
+                    self::$____currentMenuBox = null;
+                    return "";
                 }
             }
             while ($r === false);

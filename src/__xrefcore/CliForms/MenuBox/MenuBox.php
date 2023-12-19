@@ -1723,7 +1723,9 @@ class MenuBox extends ListBox
             {
                 if ($this->closeMenu)
                     return;
+                Console::$____currentMenuBox = $this;
                 $pressedKey = Console::ReadKey(false);
+                Console::$____currentMenuBox = null;
                 $this->lastPressedKey = $pressedKey;
                 $keyCheck = $pressedKey != "enter" && $pressedKey != "uparrow" && $pressedKey != "downarrow";
                 if ($this->KeyPressEvent !== null)
