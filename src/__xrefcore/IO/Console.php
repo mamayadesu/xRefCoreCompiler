@@ -305,6 +305,11 @@ class Console
                 $e->__xrefcoreexception = true;
                 throw $e;
             }
+            if (self::$____currentMenuBox !== null && !self::$____currentMenuBox->IsDisposed() && self::$____currentMenuBox->IsClosed())
+            {
+                self::$____currentMenuBox = null;
+                return "";
+            }
         }
         $keypress_lower = strtolower($keypress);
         stream_set_blocking($stdin, true);
