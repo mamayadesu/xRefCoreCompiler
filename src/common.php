@@ -233,7 +233,7 @@ function __GET__FILE__()
 
 function __GET_FRAMEWORK_VERSION()
 {
-    return "1.18.0.4";
+    return "1.18.0.5";
 }
 
 function __CHECK_WINSIZE() : string

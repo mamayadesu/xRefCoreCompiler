@@ -20,22 +20,7 @@ class Console
     /**
      * @ignore
      */
-    private static int $parentpid = 0;
-
-    /**
-     * @ignore
-     */
-    private static int $win_reader_pid = 0;
-
-    /**
-     * @ignore
-     */
-    private static int $win_reader_port = 0;
-
-    /**
-     * @ignore
-     */
-    private static int $win_a2r_port = 0;
+    private static int $parentpid = 0, $win_reader_pid = 0, $win_reader_port = 0, $win_a2r_port = 0, $common_read_sleep = 3000;
 
     /**
      * @ignore
@@ -128,7 +113,7 @@ class Console
                         $e->__xrefcoreexception = true;
                         throw $e;
                     }
-                    usleep(3000);
+                    usleep(self::$common_read_sleep);
                 }
             }
             else
@@ -150,7 +135,7 @@ class Console
                         $e->__xrefcoreexception = true;
                         throw $e;
                     }
-                    usleep(3000);
+                    usleep(self::$common_read_sleep);
                 }
                 echo "\n";
             }
@@ -297,7 +282,7 @@ class Console
         system("stty cbreak -echo");
         while (($keypress = fread($stdin, 64)) == "")
         {
-            usleep(3000);
+            usleep(self::$common_read_sleep);
             if (self::$readInterrupted && $interruptible)
             {
                 self::$readInterrupted = false;

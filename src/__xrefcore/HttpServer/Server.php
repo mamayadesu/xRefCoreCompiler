@@ -282,6 +282,7 @@ HTML;
                 $requestDump .= $headerName . ": " . $headerValue . "\n";
             }
             $response = new Response($connect, $this);
+            $this->GetUnsentResponses();
             $this->responses[] = $response;
 
             $response->Header("Content-Type", "text/html");
