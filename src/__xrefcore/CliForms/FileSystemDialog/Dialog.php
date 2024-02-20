@@ -693,7 +693,8 @@ class Dialog
         $files = [];
         $directories = [];
 
-        set_error_handler(function($errno, $errstr, $errfile, $errline) {
+        set_error_handler(function($errno, $errstr, $errfile, $errline)
+        {
             throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
         });
 

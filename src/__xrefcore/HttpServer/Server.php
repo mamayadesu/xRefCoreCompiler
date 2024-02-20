@@ -200,8 +200,17 @@ HTML;
                     $interval = -1;
                 }
             }
-            if (!($connect = @stream_socket_accept($this->socket, $interval)))
+
+            try
+            {
+                if (!($connect = @stream_socket_accept($this->socket, $interval)))
+                    break;
+            }
+            catch (\ErrorException $e)
+            {
                 break;
+            }
+
             $requestDump = "";
             $responseDump = "";
             $headers = [];
